@@ -157,3 +157,10 @@ if (env('DEV_MODE', false)) {
         )->with('success', "Sekarang kamu login sebagai {$role}");
     });
 }
+
+// katalog
+Route::get('/katalog', [ProductController::class, 'showKatalog'])->name('katalog');
+
+// profile
+Route::get('/profil', [ProfileController::class, 'index'])->name('profil');
+Route::post('/profil/update', [ProfileController::class, 'update'])->name('profil.update');

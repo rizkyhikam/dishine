@@ -11,14 +11,25 @@ class ProductController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('role:admin')->only(['store', 'update', 'destroy']);
+        if (!env('DEV_MODE', false)) {
+            $this->middleware('role:admin')->only(['store', 'update', 'destroy']);
+        }
     }
+
 
     public function index()
     {
         $products = Product::all();
         return response()->json(['products' => $products], 200);
     }
+
+    public function showKatalog()
+    {
+        $products = \App\Models\Product::all();
+
+        return view('katalog', compact('products'));
+    }
+
 
     public function show($id)
     {

@@ -22,10 +22,10 @@
                 </div>
                 <div class="flex items-center space-x-4">
                     <a href="/" class="text-[#3c2f2f] hover:text-[#b48a60]">Home</a>
-                    <a href="/products" class="text-[#3c2f2f] hover:text-[#b48a60]">Katalog</a>
+                    <a href="/katalog" class="text-[#3c2f2f] hover:text-[#b48a60]">Katalog</a>
                     <a href="/faq" class="text-[#3c2f2f] hover:text-[#b48a60]">FAQ</a>
                     @auth
-                        <a href="/profile" class="text-[#3c2f2f] hover:text-[#b48a60]">Profil</a>
+                        <a href="/profil" class="text-[#3c2f2f] hover:text-[#b48a60]">Profil</a>
                         <form action="/logout" method="POST" class="inline">
                             @csrf
                             <button type="submit" class="text-[#3c2f2f] hover:text-[#b48a60]">Logout</button>
