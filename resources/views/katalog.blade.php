@@ -25,7 +25,11 @@
                             <p class="fw-bold mb-2 text-success">
                                 Rp {{ number_format($product->harga_normal, 0, ',', '.') }}
                             </p>
-                            <button class="btn btn-primary w-100">Tambah ke Keranjang</button>
+                            <form action="{{ route('cart.add', $product->id) }}" method="POST">
+    @csrf
+    <button type="submit" class="btn btn-primary w-100">Tambah ke Keranjang</button>
+</form>
+
                         </div>
                     </div>
                 </div>

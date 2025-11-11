@@ -50,13 +50,13 @@
                 <!-- Home -->
                 <a href="/" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
                     <i data-lucide="home" class="w-5 h-5"></i>
-                    <span>Home</span>
+                    <span>Beranda</span>
                 </a>
 
                 <!-- Catalog -->
-                <a href="/catalog" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
+                <a href="/katalog" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
                     <i data-lucide="tag" class="w-5 h-5"></i>
-                    <span>Catalog</span>
+                    <span>Katalog Produk</span>
                 </a>
 
                 <!-- Auth Section -->

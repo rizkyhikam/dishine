@@ -9,7 +9,12 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\FAQController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\ProfileController;
 use App\Models\User;
+use App\Http\Controllers\HomeController;
+
+Route::get('/home', [HomeController::class, 'index'])->name('home');
+
 
 
 // Halaman utama
@@ -51,11 +56,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 // CART ROUTES
 // ====================
 Route::middleware('auth')->group(function () {
-    Route::get('/cart', [CartController::class, 'index']);
-    Route::post('/cart/add/{id}', [CartController::class, 'addToCart']);
-    Route::delete('/cart/remove/{id}', [CartController::class, 'removeFromCart']);
-    Route::put('/cart/update/{id}', [CartController::class, 'updateCart']);
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add/{id}', [CartController::class, 'addToCart'])->name('cart.add');
+    Route::put('/cart/update/{id}', [CartController::class, 'updateCart'])->name('cart.update');
+    Route::delete('/cart/remove/{id}', [CartController::class, 'removeFromCart'])->name('cart.remove');
 });
+
 
 // ====================
 // ORDER ROUTES
@@ -65,6 +71,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/orders', [OrderController::class, 'storeOrder']);
     Route::get('/orders', [OrderController::class, 'viewOrders']);
 });
+
+Route::post('/cart/add/{id}', [CartController::class, 'addToCart'])->name('cart.add');
+
 
 // ====================
 // PAYMENT ROUTES

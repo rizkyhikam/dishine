@@ -2,70 +2,75 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    // Tampilkan isi keranjang user
+    // 🧺 Tampilkan isi keranjang user
     public function index()
     {
-        $carts = Cart::with('product')
+        $cartItems = CartItem::with('product')
             ->where('user_id', Auth::id())
             ->get();
 
-        return view('cart.index', compact('carts'));
+        $total = $cartItems->sum(function ($item) {
+            return $item->product->harga_normal * $item->quantity;
+        });
+
+        return view('cart.index', compact('cartItems', 'total'));
     }
 
-    // Tambah produk ke keranjang
+    // ➕ Tambah produk ke keranjang
     public function addToCart($id)
     {
         $product = Product::findOrFail($id);
 
-        $cart = Cart::where('user_id', Auth::id())
+        $cartItem = CartItem::where('user_id', Auth::id())
             ->where('product_id', $id)
             ->first();
 
-        if ($cart) {
-            $cart->update(['quantity' => $cart->quantity + 1]);
+        if ($cartItem) {
+            $cartItem->quantity += 1;
+            $cartItem->save();
         } else {
-            Cart::create([
+            CartItem::create([
                 'user_id' => Auth::id(),
                 'product_id' => $id,
                 'quantity' => 1,
             ]);
         }
 
-        return redirect('/cart')->with('success', 'Produk ditambahkan ke keranjang.');
+        return redirect()->back()->with('success', 'Produk ditambahkan ke keranjang.');
     }
 
-    // Update jumlah barang di keranjang
-    public function updateCart(Request $request, $id)
+    // 🗑️ Hapus produk dari keranjang
+    public function removeFromCart($id)
     {
-        $cart = Cart::where('id', $id)
-            ->where('user_id', Auth::id())
+        $item = CartItem::where('user_id', Auth::id())
+            ->where('id', $id)
             ->firstOrFail();
 
+        $item->delete();
+
+        return redirect()->route('cart.index')->with('success', 'Item berhasil dihapus.');
+    }
+
+    // 🔁 Update jumlah barang
+    public function updateCart(Request $request, $id)
+    {
         $request->validate([
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $cart->update(['quantity' => $request->quantity]);
-
-        return redirect('/cart')->with('success', 'Jumlah produk diperbarui.');
-    }
-
-    // Hapus produk dari keranjang
-    public function removeFromCart($id)
-    {
-        $cart = Cart::where('id', $id)
-            ->where('user_id', Auth::id())
+        $cartItem = CartItem::where('user_id', Auth::id())
+            ->where('id', $id)
             ->firstOrFail();
 
-        $cart->delete();
+        $cartItem->update(['quantity' => $request->quantity]);
 
-        return redirect('/cart')->with('success', 'Produk dihapus dari keranjang.');
+        return redirect()->route('cart.index')->with('success', 'Keranjang diperbarui.');
     }
 }

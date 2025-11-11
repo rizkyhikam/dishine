@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
         ]);
 
+        $this->call(UsersTableSeeder::class);
+
         // (Opsional) Tambah akun admin / user kalau mau
         // \App\Models\User::factory()->create([
         //     'name' => 'Admin Dishine',

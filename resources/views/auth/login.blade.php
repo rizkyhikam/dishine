@@ -7,7 +7,7 @@
   <div class="container mx-auto px-4 py-10 flex justify-center">
     <div class="w-full max-w-sm py-8">
         <h1 class="text-3xl font-serif font-extrabold text-center mb-6" style="color: #AE8B56;">
-            Login ke Dishine
+            Login
         </h1>
         <form action="/login" method="POST">
             @csrf
