@@ -4,7 +4,6 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-10 flex justify-center">
-  <div class="container mx-auto px-4 py-10 flex justify-center">
     <div class="w-full max-w-sm py-8">
         <h1 class="text-3xl font-serif font-extrabold text-center mb-6" style="color: #AE8B56;">
             Login
@@ -26,9 +25,9 @@
         </form>
         <p class="text-center mt-4">Belum punya akun? <a href="/register" class="text-[#b48a60] hover:underline">Daftar di sini</a></p>
             <div class="text-center mt-12"> 
-                <img src="{{ asset('Logo Dishine HD no BG 1.png') }}" 
+                <img src="{{ asset('logodishine.png') }}" 
                     alt="Dishine Logo - Design with Quality" 
-                    class="mx-auto" 
+                    class="mx-auto h-35 mb-6" 
                     style="max-width: 200px;">
                  <p class="text-xs mt-1" style="color: #AE8B56;"></p>
             </div>
