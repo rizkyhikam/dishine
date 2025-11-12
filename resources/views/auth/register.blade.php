@@ -8,7 +8,7 @@
     <div class="w-full max-w-md py-8">
         
         <h1 class="text-3xl font-serif font-extrabold text-center mb-6" style="color: #AE8B56;">
-            Daftar Akun Dishine
+            Daftar
         </h1>
         
         @if ($errors->any())
