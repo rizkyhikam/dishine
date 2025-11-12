@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('title', 'Login - Dishine')
 
@@ -25,11 +25,12 @@
         </form>
         <p class="text-center mt-4">Belum punya akun? <a href="/register" class="text-[#b48a60] hover:underline">Daftar di sini</a></p>
             <div class="text-center mt-12"> 
+                <a href="/" class="inline-block">
                 <img src="{{ asset('logodishine.png') }}" 
-                    alt="Dishine Logo - Design with Quality" 
-                    class="mx-auto h-35 mb-6" 
-                    style="max-width: 200px;">
-                 <p class="text-xs mt-1" style="color: #AE8B56;"></p>
+                alt="Dishine Logo - Design with Quality" 
+                class="mx-auto h-35 mb-6 hover:opacity-90 transition duration-200" 
+                style="max-width: 200px;">
+                </a>
             </div>
     </div>
 </div>

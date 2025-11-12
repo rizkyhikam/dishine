@@ -20,7 +20,9 @@
 
             <!-- Left: Logo -->
             <div class="flex items-center space-x-2">
+                <a href="/" class="inline-block">
                 <img src="{{ asset('logo.png') }}" alt="Dishine Logo" class="h-12">
+                </a>
             </div>
 
             <!-- Center: Search Bar + Cart -->
