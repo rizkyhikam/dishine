@@ -12,6 +12,7 @@
         .btn-primary { background-color: #b48a60; color: white; }
         .btn-primary:hover { background-color: #a07850; }
     </style>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
 <body class="bg-[#f8f5f2] text-[#3c2f2f]">
     <!-- Navbar -->
@@ -111,6 +112,12 @@
     <script>
         lucide.createIcons();
     </script>
-
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({
+        duration: 800, // Durasi animasi dalam milidetik (800ms = 0.8 detik)
+        once: true     // Animasi hanya berjalan sekali saat elemen pertama kali terlihat
+    });
+</script>
 </body>
 </html>

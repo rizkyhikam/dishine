@@ -8,7 +8,9 @@
     <div id="slider" class="flex transition-transform duration-700 ease-in-out">
         <img src="{{ asset('modelhome.png') }}" 
              alt="Dishine 1" 
-             class="w-full h-auto object-cover max-h-[550px] flex-shrink-0">
+             class="w-full h-auto object-cover max-h-[550px] flex-shrink-0"
+             data-aos="fade-in"
+             data-aos-duration="1000">
         <img src="{{ asset('modelhome2.jpg') }}" 
              alt="Dishine 2" 
              class="w-full h-auto object-cover max-h-[550px] flex-shrink-0">
@@ -37,7 +39,8 @@
 <div class="text-center py-20" style="background-color: #f8f5f2;" data-aos="fade-up">
     <img src="{{ asset('logodishine.png') }}" 
          alt="Dishine Logo" 
-         class="mx-auto h-40 mb-6" data-aos="fade-up">
+         class="mx-auto h-40 mb-6"
+         data-aos="fade-up">
 
     <h1 class="text-4xl font-serif font-extrabold mb-4" style="color: #AE8B56;"
         data-aos="fade-up" data-aos-delay="200">
@@ -45,7 +48,7 @@
         <span style="color: #3c2f2f;">Style with Faith</span>
     </h1>
 
-    <p class="mb-8 max-w-lg mx-auto text-sm" style="color: #CC8550;">
+    <p class="mb-8 max-w-lg mx-auto text-sm" style="color: #CC8550;" data-aos="fade-up" data-aos-delay="300">
         Koleksi eksklusif Dishine untuk muslimah yang ingin tampil menawan tanpa meninggalkan kesederhanaan.
     </p> 
 

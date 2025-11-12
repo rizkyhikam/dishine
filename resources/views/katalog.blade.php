@@ -3,8 +3,12 @@
 @section('content')
 <div class="bg-[#f3e8e3] py-12">
     <div class="text-center mb-10">
-        <h2 class="text-3xl font-semibold text-[#3c2f2f] mb-2">🛍️ Katalog Produk Dishine</h2>
-        <p class="text-[#6b5a4a]">Koleksi eksklusif Dishine untuk muslimah yang ingin tampil menawan tanpa meninggalkan kesederhanaan.</p>
+        <h2 class="text-3xl font-semibold text-[#3c2f2f] mb-2" data-aos="fade-down">🛍️ Katalog Produk Dishine</h2> <br>
+        <img src="{{ asset('modelkatalog.png') }}" 
+                 alt="Dishine Collection Models" 
+                 class="w-full h-64 md:h-80 lg:h-100 object-cover"
+                 data-aos="fade-up"> <br>
+        <p class="text-[#6b5a4a]" data-aos="fade-up" data-aos-delay="80">Koleksi eksklusif Dishine untuk muslimah yang ingin tampil menawan tanpa meninggalkan kesederhanaan.</p>
     </div>
 
     @if($products->isEmpty())
@@ -12,10 +16,13 @@
     @else
         <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 px-6">
             @foreach($products as $product)
-                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300">
-                    <img src="{{ asset('storage/' . $product->gambar) }}" 
+                <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300"
+                        data-aos="fade-up" 
+                        data-aos-delay="{{ $loop->index * 30 }}">
+                <a href="{{ url('detailproduk.blade.php' . $product->id) }}" class="block">    
+                <img src="{{ asset('storage/' . $product->gambar) }}" 
                          alt="{{ $product->nama }}" 
-                         class="w-full h-64 object-cover">
+                         class="w-full h-64 object-cover"></a>
                     <div class="p-4">
                         <h3 class="text-lg font-semibold text-[#3c2f2f] mb-2">{{ $product->nama }}</h3>
                         <p class="text-sm text-[#7a6a5a] mb-3 min-h-[48px]">
@@ -34,6 +41,7 @@
                         </form>
                     </div>
                 </div>
+            </a>
             @endforeach
         </div>
     @endif
