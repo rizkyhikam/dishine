@@ -10,14 +10,9 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, $role)
     {
-        if (!Auth::check()) {
-            return redirect('/login')->with('error', 'Silakan login terlebih dahulu.');
-        }
-
-        if (Auth::user()->role !== $role) {
-            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
-        }
-
+       if (! $request->user() || $request->user()->role != $role) {
+        abort(403);
+       }
         return $next($request);
     }
 }
