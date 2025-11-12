@@ -56,7 +56,7 @@
                 <!-- Catalog -->
                 <a href="/katalog" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
                     <i data-lucide="tag" class="w-5 h-5"></i>
-                    <span>Katalog Produk</span>
+                    <span>Katalog</span>
                 </a>
 
                 <!-- Auth Section -->
@@ -78,11 +78,6 @@
         </div>
     </nav>
 
-    <!-- Aktifkan ikon -->
-    <script>
-        lucide.createIcons();
-    </script>
-
 
     <!-- Main Content -->
     <main class="min-h-screen">
@@ -90,15 +85,30 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white shadow-md mt-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex justify-center space-x-6">
-                <a href="https://instagram.com/dishine" class="text-[#3c2f2f] hover:text-[#b48a60]">Instagram</a>
-                <a href="https://tiktok.com/@dishine" class="text-[#3c2f2f] hover:text-[#b48a60]">TikTok</a>
-                <a href="https://shopee.co.id/dishine" class="text-[#3c2f2f] hover:text-[#b48a60]">Shopee</a>
+    <footer class="bg-[#5d4a42] text-[#cbbbaa] py-6 mt-10">
+        <div class="flex justify-between items-start px-10 md:px-16 lg:px-24">
+            
+            <!-- Left: Logo dan Copyright -->
+            <div class="flex flex-col items-start space-y-2">
+                <img src="{{ asset('logo.png') }}" alt="Dishine Logo" class="h-12">
+                <p class="text-sm">&copy; 2025 Dishine. All rights reserved.</p>
             </div>
-            <p class="text-center text-sm mt-4">&copy; 2023 Dishine. Semua hak dilindungi.</p>
+
+            <!-- Right: Links -->
+            <div class="flex space-x-6 text-sm mt-2">
+                <a href="#" class="hover:text-white transition">Privacy Policy</a>
+                <a href="#" class="hover:text-white transition">Terms & Conditions</a>
+                <a href="#" class="hover:text-white transition">Cookie Policy</a>
+                <a href="#" class="hover:text-white transition">Contact</a>
+            </div>
         </div>
     </footer>
+
+
+    <!-- Aktifkan ikon -->
+    <script>
+        lucide.createIcons();
+    </script>
+
 </body>
 </html>

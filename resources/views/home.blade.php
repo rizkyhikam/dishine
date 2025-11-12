@@ -4,19 +4,34 @@
 
 @section('content')
 <!-- HERO / SLIDER -->
-<div class="relative">
-    <img src="{{ asset('modelhome.png') }}" 
-         alt="Dishine Models" 
-         class="w-full h-auto object-cover max-h-[550px]"> 
-
-    <!-- Tombol navigasi slider -->
-    <button class="absolute top-1/2 left-4 transform -translate-y-1/2 bg-transparent text-white p-2">
-        <i data-lucide="arrow-left" class="w-6 h-6"></i>
-    </button>
-    <button class="absolute top-1/2 right-4 transform -translate-y-1/2 bg-transparent text-white p-2">
-        <i data-lucide="arrow-right" class="w-6 h-6"></i>
-    </button>
+<div class="relative overflow-hidden">
+    <div id="slider" class="flex transition-transform duration-700 ease-in-out">
+        <img src="{{ asset('modelhome.png') }}" 
+             alt="Dishine 1" 
+             class="w-full h-auto object-cover max-h-[550px] flex-shrink-0">
+        <img src="{{ asset('modelhome2.jpg') }}" 
+             alt="Dishine 2" 
+             class="w-full h-auto object-cover max-h-[550px] flex-shrink-0">
+        <img src="{{ asset('modelhome3.jpg') }}" 
+             alt="Dishine 3" 
+             class="w-full h-auto object-cover max-h-[550px] flex-shrink-0">
+    </div>
 </div>
+
+<!-- Script auto-slide -->
+<script>
+    const slider = document.getElementById('slider');
+    const totalSlides = slider.children.length;
+    let index = 0;
+
+    function autoSlide() {
+        index = (index + 1) % totalSlides;
+        slider.style.transform = `translateX(-${index * 100}%)`;
+    }
+
+    setInterval(autoSlide, 4000); // ganti setiap 4 detik
+</script>
+
 
 <!-- SLOGAN / HERO TEXT -->
 <div class="text-center py-20" style="background-color: #f8f5f2;" data-aos="fade-up">
