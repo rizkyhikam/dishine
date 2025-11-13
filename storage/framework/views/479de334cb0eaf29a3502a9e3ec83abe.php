@@ -1,9 +1,7 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="container mt-4 mb-5">
 
-    {{-- ✅ Header Halaman & Search Bar (Replikasi dari HiFi) --}}
+    
     <div class="d-flex justify-content-between align-items-center py-3 mb-4" style="background-color: #f7f3f1;">
         <div class="input-group" style="width: 300px;">
             <input type="text" class="form-control" placeholder="Search" aria-label="Search" style="border-right: none;">
@@ -12,25 +10,25 @@
             </button>
         </div>
     </div>
-    {{-- End Header --}}
+    
 
-    {{-- ✅ Notifikasi sukses --}}
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+    
+    <?php if(session('success')): ?>
+        <div class="alert alert-success"><?php echo e(session('success')); ?></div>
+    <?php endif; ?>
 
-    {{-- ✅ Konten Keranjang --}}
-    @if($cartItems->isEmpty())
+    
+    <?php if($cartItems->isEmpty()): ?>
         <div class="text-center mt-5 py-5" style="background-color: #f7f3f1; border-radius: 8px;">
             <p class="fs-4 text-muted">Keranjang kamu masih kosong 😅</p>
-            <a href="{{ route('katalog') }}" class="btn btn-dark mt-3 px-4 py-2">
+            <a href="<?php echo e(route('katalog')); ?>" class="btn btn-dark mt-3 px-4 py-2">
                 🛍️ Lihat Katalog
             </a>
         </div>
-    @else
+    <?php else: ?>
         <div class="row">
             <div class="col-12">
-                {{-- ✅ Judul Kolom (Header Tabel ala HiFi) --}}
+                
                 <div class="row align-items-center text-muted fw-bold pb-2" style="border-bottom: 1px solid #ccc; font-size: 0.9em;">
                     <div class="col-6">Produk</div>
                     <div class="col-2 text-end">Harga Satuan</div>
@@ -38,96 +36,98 @@
                     <div class="col-2 text-end">Sub Total</div>
                 </div>
 
-                {{-- ✅ Daftar Produk --}}
-                @foreach($cartItems as $item)
-                    {{-- Ganti <tr> dengan <div> untuk tampilan list/HiFi --}}
+                
+                <?php $__currentLoopData = $cartItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    
                     <div class="row align-items-center py-3 my-2" style="border-bottom: 1px solid #f0f0f0; background-color: #fff;">
                         
-                        {{-- Produk Detail (Checkbox, Gambar, Nama) --}}
+                        
                         <div class="col-6 d-flex align-items-center">
-                            {{-- Checkbox --}}
+                            
                             <div class="form-check me-3">
-                                <input class="form-check-input" type="checkbox" value="{{ $item->id }}" id="item-{{ $item->id }}" checked style="width: 20px; height: 20px;">
+                                <input class="form-check-input" type="checkbox" value="<?php echo e($item->id); ?>" id="item-<?php echo e($item->id); ?>" checked style="width: 20px; height: 20px;">
                             </div>
                             
-                            {{-- Gambar --}}
-                            <img src="{{ asset('storage/' . $item->product->gambar) }}" alt="{{ $item->product->nama }}" class="me-3" style="width: 80px; height: 80px; object-fit: cover;">
                             
-                            {{-- Nama Produk --}}
-                            <span class="fw-semibold">{{ $item->product->nama }}</span>
+                            <img src="<?php echo e(asset('storage/' . $item->product->gambar)); ?>" alt="<?php echo e($item->product->nama); ?>" class="me-3" style="width: 80px; height: 80px; object-fit: cover;">
+                            
+                            
+                            <span class="fw-semibold"><?php echo e($item->product->nama); ?></span>
                         </div>
                         
-                        {{-- Harga Satuan --}}
+                        
                         <div class="col-2 text-end">
-                            Rp {{ number_format($item->product->harga_normal, 0, ',', '.') }}
+                            Rp <?php echo e(number_format($item->product->harga_normal, 0, ',', '.')); ?>
+
                         </div>
                         
-                        {{-- Kuantitas & Update (Sesuai HiFi: Tombol +/-) --}}
+                        
                         <div class="col-2 text-center">
-                            <form action="{{ url('/cart/update/'.$item->id) }}" method="POST" class="d-inline-flex align-items-center">
-                                @csrf
-                                @method('PUT')
+                            <form action="<?php echo e(url('/cart/update/'.$item->id)); ?>" method="POST" class="d-inline-flex align-items-center">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('PUT'); ?>
                                 <div class="input-group input-group-sm" style="width: 120px;">
-                                    {{-- Tombol Kurang --}}
-                                    <button class="btn btn-outline-secondary btn-qty" type="button" data-type="minus" data-field="quantity-{{ $item->id }}">-</button>
                                     
-                                    {{-- Input Quantity --}}
+                                    <button class="btn btn-outline-secondary btn-qty" type="button" data-type="minus" data-field="quantity-<?php echo e($item->id); ?>">-</button>
+                                    
+                                    
                                     <input 
                                         type="number" 
                                         name="quantity" 
-                                        id="quantity-{{ $item->id }}"
-                                        value="{{ $item->quantity }}" 
+                                        id="quantity-<?php echo e($item->id); ?>"
+                                        value="<?php echo e($item->quantity); ?>" 
                                         min="1" 
                                         class="form-control text-center quantity-input" 
                                         style="max-width: 40px;"
-                                        onchange="this.form.submit()" {{-- Submit form saat kuantitas berubah --}}
+                                        onchange="this.form.submit()" 
                                     >
                                     
-                                    {{-- Tombol Tambah --}}
-                                    <button class="btn btn-outline-secondary btn-qty" type="button" data-type="plus" data-field="quantity-{{ $item->id }}">+</button>
+                                    
+                                    <button class="btn btn-outline-secondary btn-qty" type="button" data-type="plus" data-field="quantity-<?php echo e($item->id); ?>">+</button>
                                 </div>
                             </form>
                         </div>
 
-                        {{-- Subtotal & Hapus --}}
+                        
                         <div class="col-2 text-end d-flex justify-content-end align-items-center">
                             <strong class="me-3">
-                                Rp {{ number_format($item->product->harga_normal * $item->quantity, 0, ',', '.') }}
+                                Rp <?php echo e(number_format($item->product->harga_normal * $item->quantity, 0, ',', '.')); ?>
+
                             </strong>
                             
-                            {{-- Tombol Hapus (Ikon) --}}
-                            <form action="{{ url('/cart/remove/'.$item->id) }}" method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
+                            
+                            <form action="<?php echo e(url('/cart/remove/'.$item->id)); ?>" method="POST" class="d-inline">
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('DELETE'); ?>
                                 <button type="submit" class="btn btn-link text-danger p-0" title="Hapus">
-                                    <i class="bi bi-trash"></i> {{-- Gunakan ikon trash dari Bootstrap Icons (bi-trash) --}}
+                                    <i class="bi bi-trash"></i> 
                                 </button>
                             </form>
                         </div>
                     </div>
-                @endforeach
-                {{-- End Daftar Produk --}}
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                
 
-                {{-- ✅ Kontrol Massal & Total Bawah (Sesuai HiFi) --}}
+                
                 <div class="row mt-4 p-3 align-items-center" style="background-color: #f7f3f1; border-radius: 8px;">
-                    {{-- Checkbox Pilih Semua & Hapus --}}
+                    
                     <div class="col-6 d-flex align-items-center">
                         <div class="form-check me-4">
                             <input class="form-check-input" type="checkbox" id="selectAll" style="width: 20px; height: 20px;">
                             <label class="form-check-label ms-1" for="selectAll">
-                                Pilih Semua ({{ count($cartItems) }})
+                                Pilih Semua (<?php echo e(count($cartItems)); ?>)
                             </label>
                         </div>
                         <button class="btn btn-link text-danger p-0" id="bulkDeleteBtn">Hapus Produk dari Keranjang</button>
                     </div>
 
-                    {{-- Total & Checkout --}}
+                    
                     <div class="col-6 text-end d-flex justify-content-end align-items-center">
                         <span class="text-uppercase fw-bold me-3">Total</span>
-                        <h4 class="fw-bold text-dark me-4 mb-0">Rp {{ number_format($total, 0, ',', '.') }}</h4>
+                        <h4 class="fw-bold text-dark me-4 mb-0">Rp <?php echo e(number_format($total, 0, ',', '.')); ?></h4>
                         
-                        <form action="{{ url('/checkout') }}" method="GET" class="d-inline">
-                            {{-- @csrf tidak diperlukan untuk method GET, tapi jika menggunakan POST diperlukan --}}
+                        <form action="<?php echo e(url('/checkout')); ?>" method="GET" class="d-inline">
+                            
                             <button class="btn btn-success btn-lg px-4" style="background-color: #92584e; border-color: #92584e;">
                                 Checkout
                             </button>
@@ -137,10 +137,10 @@
 
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 </div>
 
-{{-- ✅ Skrip JavaScript untuk logika tombol +/- kuantitas (opsional, tapi disarankan untuk UX yang lebih baik) --}}
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.btn-qty').forEach(button => {
@@ -173,4 +173,5 @@
         });
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/cart/index.blade.php ENDPATH**/ ?>
