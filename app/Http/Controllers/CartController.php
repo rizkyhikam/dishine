@@ -11,40 +11,47 @@ class CartController extends Controller
 {
     // 🧺 Tampilkan isi keranjang user
     public function index()
-    {
-        $cartItems = CartItem::with('product')
-            ->where('user_id', Auth::id())
-            ->get();
+{
+    $user = Auth::user();
 
-        $total = $cartItems->sum(function ($item) {
-            return $item->product->harga_normal * $item->quantity;
-        });
+    $cartItems = \App\Models\Cart::where('user_id', $user->id)
+        ->with('product')
+        ->get();
 
-        return view('cart.index', compact('cartItems', 'total'));
-    }
+    $total = $cartItems->sum(fn($item) => $item->product->harga_normal * $item->quantity);
+
+    return view('cart.index', compact('cartItems', 'total'));
+
+}
+
 
     // ➕ Tambah produk ke keranjang
     public function addToCart($id)
-    {
-        $product = Product::findOrFail($id);
+{
+    $product = \App\Models\Product::findOrFail($id);
+    $userId = auth()->id();
 
-        $cartItem = CartItem::where('user_id', Auth::id())
-            ->where('product_id', $id)
-            ->first();
+    // Cek apakah sudah ada di cart user ini
+    $cartItem = \App\Models\Cart::where('user_id', $userId)
+        ->where('product_id', $id)
+        ->first();
 
-        if ($cartItem) {
-            $cartItem->quantity += 1;
-            $cartItem->save();
-        } else {
-            CartItem::create([
-                'user_id' => Auth::id(),
-                'product_id' => $id,
-                'quantity' => 1,
-            ]);
-        }
-
-        return redirect()->back()->with('success', 'Produk ditambahkan ke keranjang.');
+    if ($cartItem) {
+        // Jika sudah ada → tambah jumlah
+        $cartItem->quantity += 1;
+        $cartItem->save();
+    } else {
+        // Jika belum ada → buat baru
+        \App\Models\Cart::create([
+            'user_id' => $userId,
+            'product_id' => $id,
+            'quantity' => 1,
+        ]);
     }
+
+    return redirect()->route('cart.index')->with('success', 'Produk berhasil ditambahkan ke keranjang!');
+}
+
 
     // 🗑️ Hapus produk dari keranjang
     public function removeFromCart($id)

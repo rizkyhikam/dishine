@@ -1,47 +1,40 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CartController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\PaymentController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\FAQController;
+use App\Http\Controllers\{
+    AuthController,
+    ProductController,
+    CartController,
+    OrderController,
+    PaymentController,
+    AdminController,
+    FAQController,
+    ProfileController,
+    HomeController,
+    CheckoutController,
+    Api\OngkirController
+};
+use App\Models\User;
+use App\Services\RajaOngkirService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\ProfileController;
-use App\Models\User;
-use App\Http\Controllers\HomeController;
 
+// ====================
+// HALAMAN UTAMA & HOME
+// ====================
+Route::get('/', fn() => view('home'));
 Route::get('/home', [HomeController::class, 'index'])->name('home');
-
-
-
-// Halaman utama
-Route::get('/', function () {
-    return view('home');
-});
 
 // ====================
 // AUTH ROUTES
 // ====================
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
-
-// Tampilkan form register
-Route::get('/register', function () {
-    return view('auth.register');
-})->name('register.form');
-
-// Proses login & register
+Route::view('/login', 'auth.login')->name('login');
+Route::view('/register', 'auth.register')->name('register.form');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
 
-
 // ====================
-// PRODUCT ROUTES
+// PRODUK
 // ====================
 Route::get('/products', [ProductController::class, 'index']);
 Route::get('/products/{id}', [ProductController::class, 'show']);
@@ -53,7 +46,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 // ====================
-// CART ROUTES
+// KERANJANG (CART)
 // ====================
 Route::middleware('auth')->group(function () {
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -62,21 +55,17 @@ Route::middleware('auth')->group(function () {
     Route::delete('/cart/remove/{id}', [CartController::class, 'removeFromCart'])->name('cart.remove');
 });
 
-
 // ====================
-// ORDER ROUTES
+// CHECKOUT & ORDER
 // ====================
 Route::middleware('auth')->group(function () {
-    Route::get('/checkout', [OrderController::class, 'checkout']);
-    Route::post('/orders', [OrderController::class, 'storeOrder']);
-    Route::get('/orders', [OrderController::class, 'viewOrders']);
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout/full', [CheckoutController::class, 'storeFullCheckout'])->name('checkout.store');
+    Route::get('/orders', [OrderController::class, 'viewOrders'])->name('orders.view');
 });
 
-Route::post('/cart/add/{id}', [CartController::class, 'addToCart'])->name('cart.add');
-
-
 // ====================
-// PAYMENT ROUTES
+// PEMBAYARAN
 // ====================
 Route::middleware('auth')->group(function () {
     Route::post('/payments/upload/{id}', [PaymentController::class, 'uploadProof']);
@@ -86,25 +75,20 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 // ====================
-// DASHBOARD PENGGUNA (PELANGGAN & RESELLER)
+// DASHBOARD USER
 // ====================
-Route::middleware(['auth'])->get('/dashboard', function () {
+Route::middleware('auth')->get('/dashboard', function () {
     $user = Auth::user();
-    
-    // Ambil semua produk
     $query = \App\Models\Product::query();
 
-    // Kalau reseller, hanya tampilkan produk dengan stok >= 5
+    // Kalau reseller, hanya tampilkan produk stok >= 5
     if ($user->role === 'reseller') {
         $query->where('stok', '>=', 5);
     }
 
     $products = $query->get();
-
     return view('user.dashboard', compact('user', 'products'));
 })->name('user.dashboard');
-
-
 
 // ====================
 // ADMIN ROUTES
@@ -130,46 +114,52 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 });
 
 // ====================
-// FAQ PUBLIC ROUTE
+// FAQ PUBLIC
 // ====================
-Route::get('/faq', [FAQController::class, 'index']);
+Route::get('/faq', [FAQController::class, 'index'])->name('faq');
 
-// ===============================
-// 🚧 DEV MODE: Switch User Role
-// ===============================
+// ====================
+// PROFIL
+// ====================
+Route::get('/profil', [ProfileController::class, 'index'])->name('profil');
+Route::post('/profil/update', [ProfileController::class, 'update'])->name('profil.update');
+
+// ====================
+// KATALOG
+// ====================
+Route::get('/katalog', [ProductController::class, 'showKatalog'])->name('katalog');
+
+// ====================
+// RAJAONGKIR API ROUTES
+// ====================
+Route::prefix('api/ongkir')->group(function () {
+    Route::get('/provinces', [OngkirController::class, 'getProvinces']);
+    Route::get('/cities/{provinceId}', [OngkirController::class, 'getCities']);
+    Route::get('/districts/{cityId}', [OngkirController::class, 'getDistricts']);
+    Route::get('/sub-districts/{districtId}', [OngkirController::class, 'getSubDistricts']);
+    Route::post('/cost', [OngkirController::class, 'getCost']);
+});
+
+// ====================
+// DEV MODE: GANTI ROLE
+// ====================
 if (env('DEV_MODE', false)) {
-
     Route::get('/switch-role/{role}', function ($role) {
-        // Cek role valid
         if (!in_array($role, ['admin', 'reseller', 'pelanggan'])) {
             abort(400, 'Role tidak valid.');
         }
 
-        // Cari user pertama dengan role tersebut
-        $user = User::where('role', $role)->first();
+        $user = User::where('role', $role)->first() ?? User::create([
+            'name' => ucfirst($role) . ' Demo',
+            'email' => $role . '@demo.com',
+            'password' => bcrypt('password'),
+            'role' => $role,
+        ]);
 
-        if (!$user) {
-            // Kalau belum ada, bikin user dummy
-            $user = User::create([
-                'name' => ucfirst($role) . ' Demo',
-                'email' => $role . '@demo.com',
-                'password' => bcrypt('password'),
-                'role' => $role,
-            ]);
-        }
-
-        // Login otomatis
         Auth::login($user);
 
         return redirect()->route(
-            $role === 'admin' ? 'admin.dashboard' : 'dashboard'
+            $role === 'admin' ? 'admin.dashboard' : 'user.dashboard'
         )->with('success', "Sekarang kamu login sebagai {$role}");
     });
 }
-
-// katalog
-Route::get('/katalog', [ProductController::class, 'showKatalog'])->name('katalog');
-
-// profile
-Route::get('/profil', [ProfileController::class, 'index'])->name('profil');
-Route::post('/profil/update', [ProfileController::class, 'update'])->name('profil.update');
