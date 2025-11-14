@@ -1,215 +1,444 @@
 @extends('layouts.app')
 
+{{-- 
+    TAMBAHKAN STYLE INI UNTUK DAFTAR AUTOCOMPLETE 
+    Bisa ditaruh di file .css Anda atau di sini
+--}}
+<style>
+    #search-container {
+        position: relative;
+    }
+    #search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 999;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        border-radius: 0 0 0.25rem 0.25rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .result-item {
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+    }
+    .result-item:hover {
+        background: #f4f4f4;
+    }
+    .result-item small {
+        color: #6c757d;
+        display: block;
+    }
+</style>
+
 @section('content')
-<div class="container mt-5 mb-5">
-    <h2 class="text-center mb-4">💳 Checkout Pesanan</h2>
+<div class="container py-5">
 
-    <form id="checkoutForm" enctype="multipart/form-data">
-        @csrf
+    <h2 class="fw-bold mb-4">Checkout</h2>
 
-        {{-- =========================
-             ALAMAT PENGIRIMAN
-        ========================== --}}
-        <div class="mb-3">
-            <label class="form-label fw-bold">Provinsi</label>
-            <select id="provinsi" class="form-select" required>
-                <option value="">-- Pilih Provinsi --</option>
-            </select>
-        </div>
+    <div class="row">
 
-        <div class="mb-3">
-            <label class="form-label fw-bold">Kota / Kabupaten</label>
-            <select id="kota" class="form-select" required>
-                <option value="">-- Pilih Kota --</option>
-            </select>
-        </div>
+        {{-- =======================
+            ALAMAT PENGIRIMAN
+        ======================== --}}
+        <div class="col-lg-8">
 
-        <div class="mb-3">
-            <label class="form-label fw-bold">Kecamatan</label>
-            <select id="kecamatan" class="form-select" required>
-                <option value="">-- Pilih Kecamatan --</option>
-            </select>
-        </div>
+            <div class="card mb-4 p-4">
+                <h4 class="fw-semibold mb-3">📍 Detail Pengiriman</h4>
 
-        <div class="mb-3">
-            <label class="form-label fw-bold">Alamat Lengkap</label>
-            <textarea id="alamat_pengiriman" name="alamat_pengiriman" class="form-control" required></textarea>
-        </div>
+                {{-- KOTAK PENCARIAN BARU --}}
+                <label class="fw-semibold">Cari Lokasi (Kecamatan / Kelurahan / Kode Pos)</label>
+                <div id="search-container">
+                    <input type="text" id="search-input" class="form-control" 
+                           placeholder="Ketik nama lokasi (min. 3 huruf)..." required>
+                    {{-- Ini tempat hasil pencarian muncul --}}
+                    <div id="search-results" class="shadow-sm" style="display:none;"></div>
+                </div>
 
-        {{-- =========================
-             KURIR & ONGKIR
-        ========================== --}}
-        <div class="mb-3">
-            <label class="form-label fw-bold">Pilih Kurir</label>
-            <select id="kurir" name="kurir" class="form-select" required>
-                <option value="">-- Pilih Kurir --</option>
-                <option value="jne">JNE</option>
-                <option value="pos">POS Indonesia</option>
-                <option value="tiki">TIKI</option>
-            </select>
-        </div>
+                {{-- Input tersembunyi untuk menyimpan ID destinasi --}}
+                <input type="hidden" id="destination_id">
+                
+                <small class="form-text text-muted mb-3">
+                    Contoh: "Beji Depok", "Sukaraja Bogor", atau "40111"
+                </small>
 
-        <div class="mb-3">
-            <label class="form-label fw-bold">Ongkir</label>
-            <input type="text" id="ongkir" name="ongkir" class="form-control" readonly placeholder="Pilih kurir dulu...">
-        </div>
+                {{-- Alamat lengkap --}}
+                <label class="fw-semibold">Alamat Lengkap</label>
+                <textarea id="alamat_pengiriman" class="form-control mb-3" 
+                          placeholder="Nama jalan, nomor rumah, RT/RW, patokan..." required></textarea>
+            </div>
 
-        {{-- =========================
-             BUKTI TRANSFER
-        ========================== --}}
-        <div class="mb-3">
-            <label class="form-label fw-bold">Upload Bukti Transfer</label>
-            <input type="file" name="bukti_transfer" id="bukti_transfer" class="form-control" accept="image/*" required>
-            <small class="text-muted">*Format: JPG/PNG, Maks 2MB</small>
+            {{-- =======================
+                 PRODUK DI CART
+            ======================== --}}
+            <div class="card p-4 mb-4">
+                {{-- ... (Bagian ini sama, tidak perlu diubah) ... --}}
+                <h4 class="fw-semibold mb-3">🛒 Produk Dipesan</h4>
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Produk</th>
+                            <th>Harga Satuan</th>
+                            <th>Jumlah</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($cartItems as $item)
+                            <tr>
+                                <td class="fw-semibold">{{ $item->product->nama }}</td>
+                                <td>Rp {{ number_format($item->product->harga_normal, 0, ',', '.') }}</td>
+                                <td>{{ $item->quantity }}</td>
+                                <td>Rp {{ number_format($item->product->harga_normal * $item->quantity, 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
-            <div class="mt-3 text-center" id="preview-container" style="display:none;">
-                <p class="fw-semibold">📸 Pratinjau Bukti Transfer:</p>
-                <img id="preview-image" src="#" alt="Preview" class="img-thumbnail" style="max-width: 250px; border: 2px solid #ccc;">
+            {{-- =======================
+                 METODE PEMBAYARAN
+            ======================== --}}
+            <div class="card p-4 mb-4">
+                {{-- ... (Bagian ini sama, tidak perlu diubah) ... --}}
+                <h4 class="fw-semibold mb-3">💰 Metode Pembayaran</h4>
+                <p class="mb-1">BCA : <b>872947210</b></p>
+                <p class="mb-1">Mandiri : <b>52374233</b></p>
+                <p class="mb-1">Gopay : <b>0894758342</b></p>
+                <p class="mb-3">Dana : <b>0893675432</b></p>
+                <label class="fw-semibold">Upload Bukti Pembayaran</label>
+                <input type="file" id="bukti_transfer" class="form-control" accept="image/*" required>
+                <div id="preview-container" class="text-center mt-3" style="display:none;">
+                    <img id="preview-image" class="img-thumbnail" style="max-width: 200px;">
+                </div>
             </div>
         </div>
 
-        {{-- =========================
-             TOTAL PEMBAYARAN
-        ========================== --}}
-        <div class="mb-3">
-            <label class="form-label fw-bold">Total Pembayaran</label>
-            <input type="text" id="total" class="form-control" readonly placeholder="Rp 0">
-        </div>
+        {{-- =======================
+             SIDEBAR RINGKASAN
+        ======================== --}}
+        <div class="col-lg-4">
+            <div class="card p-4 mb-4">
 
-        <div class="d-grid mt-4">
-            <button type="submit" class="btn btn-success btn-lg">
-                ✅ Selesaikan Pesanan
-            </button>
+                {{-- KURIR --}}
+                <h5 class="fw-semibold mb-3">🚚 Pilih Ekspedisi</h5>
+
+                <label class="fw-semibold">Kurir</label>
+                <select id="kurir" class="form-select mb-3" disabled>
+                    <option value="">-- Pilih Lokasi Dulu --</option>
+                    <option value="jne">JNE</option>
+                    <option value="pos">POS Indonesia</option>
+                    <option value="tiki">TIKI</option>
+                </select>
+
+                {{-- LAYANAN (ONGKIR) --}}
+                <label class="fw-semibold">Layanan Pengiriman</label>
+                <select id="layanan_ongkir" class="form-select mb-4" disabled>
+                    <option value="">-- Pilih Kurir Dulu --</option>
+                </select>
+
+                <h5 class="fw-semibold mb-3">📦 Rincian Pembayaran</h5>
+
+                <p class="d-flex justify-content-between">
+                    <span>Subtotal Pesanan:</span>
+                    <span>Rp {{ number_format($total, 0, ',', '.') }}</span>
+                </p>
+
+                <p class="d-flex justify-content-between">
+                    <span>Ongkir:</span>
+                    <span id="ongkir_label">Rp 0</span>
+                </p>
+
+                <hr>
+
+                <h4 class="d-flex justify-content-between">
+                    <b>Total:</b>
+                    <b id="total_label">Rp {{ number_format($total, 0, ',', '.') }}</b>
+                </h4>
+                
+                {{-- Hidden input untuk menyimpan ongkir --}}
+                <input type="hidden" id="ongkir_value" value="0">
+                <input type="hidden" id="layanan_selected_name" value="">
+
+                {{-- BUTTON --}}
+                <button id="submitCheckout" class="btn btn-dark w-100 mt-4">
+                    Pesan Sekarang
+                </button>
+
+            </div>
         </div>
-    </form>
+    </div>
 </div>
 
-{{-- =========================
-     SCRIPT JS INTERAKTIF
-========================= --}}
+{{-- =======================
+     SCRIPT (REVISI TOTAL)
+======================== --}}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const provinsiSelect = document.getElementById('provinsi');
-    const kotaSelect = document.getElementById('kota');
-    const kecamatanSelect = document.getElementById('kecamatan');
-    const kurirSelect = document.getElementById('kurir');
-    const ongkirInput = document.getElementById('ongkir');
-    const totalInput = document.getElementById('total');
-    const checkoutForm = document.getElementById('checkoutForm');
-    const buktiTransfer = document.getElementById('bukti_transfer');
-    const previewContainer = document.getElementById('preview-container');
-    const previewImage = document.getElementById('preview-image');
 
-    let totalProduk = 0;
+    const subtotal = {{ $total }};
     let ongkir = 0;
 
-    // 🔹 Ambil total produk dari backend
-    fetch('/api/cart/total')
-        .then(res => res.json())
-        .then(data => {
-            totalProduk = data.total || 0;
-            totalInput.value = `Rp ${totalProduk.toLocaleString('id-ID')}`;
-        });
+    const searchInput = document.getElementById("search-input");
+    const searchResults = document.getElementById("search-results");
+    const destinationId = document.getElementById("destination_id");
+    
+    const kurirSelect = document.getElementById("kurir");
+    const layananSelect = document.getElementById("layanan_ongkir");
+    
+    const ongkirLabel = document.getElementById("ongkir_label");
+    const ongkirValue = document.getElementById("ongkir_value");
+    const totalLabel = document.getElementById("total_label");
+    const layananName = document.getElementById("layanan_selected_name");
 
-    // 🔹 Load provinsi
-    fetch('/api/ongkir/provinces')
-        .then(res => res.json())
-        .then(data => {
-            data.forEach(prov => {
-                provinsiSelect.innerHTML += `<option value="${prov.province_id}">${prov.province}</option>`;
+    // ================== FUNGSI DEBOUNCE ==================
+    // Ini untuk mencegah API dipanggil setiap kali user mengetik
+    // Akan ada jeda 500ms setelah user berhenti mengetik
+    let debounceTimer;
+    function debounce(func, delay) {
+        return function(...args) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                func.apply(this, args);
+            }, delay);
+        };
+    }
+
+    // ================== FUNGSI CARI LOKASI (BARU) ==================
+    async function cariLokasi() {
+        let keyword = searchInput.value;
+
+        if (keyword.length < 3) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        searchResults.style.display = 'block';
+        searchResults.innerHTML = `<div class="result-item">Mencari...</div>`;
+
+        try {
+            const res = await fetch(`/api/ongkir/search-destination?q=${keyword}`);
+            const data = await res.json();
+
+            searchResults.innerHTML = ''; // Kosongkan hasil
+
+            if (data.length === 0) {
+                searchResults.innerHTML = `<div class="result-item">Lokasi tidak ditemukan</div>`;
+                return;
+            }
+
+            data.forEach(lokasi => {
+                // Tampilkan hasil di dropdown
+                let item = document.createElement('div');
+                item.className = 'result-item';
+                // Tampilkan nama lengkap lokasi
+                item.innerHTML = `
+                    <b>${lokasi.subdistrict_name}, ${lokasi.district_name}</b>
+                    <small>${lokasi.city_name}, ${lokasi.province_name} (${lokasi.postal_code})</small>
+                `;
+                // Tambahkan event klik ke setiap item
+                item.addEventListener('click', () => {
+                    pilihLokasi(lokasi);
+                });
+                searchResults.appendChild(item);
             });
-        });
 
-    // 🔹 Load kota setelah pilih provinsi
-    provinsiSelect.addEventListener('change', async () => {
-        kotaSelect.innerHTML = '<option value="">-- Memuat kota... --</option>';
-        const res = await fetch(`/api/ongkir/cities/${provinsiSelect.value}`);
-        const data = await res.json();
-        kotaSelect.innerHTML = '<option value="">-- Pilih Kota --</option>';
-        data.forEach(city => {
-            kotaSelect.innerHTML += `<option value="${city.city_id}">${city.type} ${city.city_name}</option>`;
-        });
-    });
-
-    // 🔹 Load kecamatan setelah pilih kota
-    kotaSelect.addEventListener('change', async () => {
-        kecamatanSelect.innerHTML = '<option value="">-- Memuat kecamatan... --</option>';
-        const res = await fetch(`/api/ongkir/districts/${kotaSelect.value}`);
-        const data = await res.json();
-        kecamatanSelect.innerHTML = '<option value="">-- Pilih Kecamatan --</option>';
-        data.forEach(d => {
-            kecamatanSelect.innerHTML += `<option value="${d.subdistrict_id}">${d.subdistrict_name}</option>`;
-        });
-    });
-
-    // 🚚 Hitung ongkir (origin: Bogor)
-    async function hitungOngkir() {
-        const destination = kecamatanSelect.value;
-        const kurir = kurirSelect.value;
-        if (!destination || !kurir) return;
-
-        const res = await fetch('/api/ongkir/cost', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                origin: 2307, // ⚙️ ID Kecamatan Bogor
-                destination,
-                weight: 1000,
-                courier: kurir
-            })
-        });
-
-        const data = await res.json();
-        if (data.success) {
-            ongkir = data.cost;
-            ongkirInput.value = `Rp ${ongkir.toLocaleString('id-ID')}`;
-            totalInput.value = `Rp ${(totalProduk + ongkir).toLocaleString('id-ID')}`;
-        } else {
-            alert('❌ Gagal menghitung ongkir');
+        } catch (error) {
+            console.error('Error cariLokasi:', error);
+            searchResults.innerHTML = `<div class="result-item text-danger">Gagal memuat data</div>`;
         }
     }
 
-    kurirSelect.addEventListener('change', hitungOngkir);
-    kecamatanSelect.addEventListener('change', hitungOngkir);
+    // ================== FUNGSI SAAT LOKASI DIPILIH ==================
+    function pilihLokasi(lokasi) {
+        // Isi kotak input dengan nama lokasi
+        searchInput.value = `${lokasi.subdistrict_name}, ${lokasi.city_name}`;
+        // Simpan ID destinasi di input tersembunyi
+        destinationId.value = lokasi.subdistrict_id;
+        
+        // Sembunyikan hasil pencarian
+        searchResults.style.display = 'none';
 
-    // 🔹 Preview gambar bukti transfer
-    buktiTransfer.addEventListener('change', function () {
-        const file = this.files[0];
+        // Aktifkan dropdown kurir
+        kurirSelect.disabled = false;
+        kurirSelect.value = '';
+        layananSelect.innerHTML = `<option value="">-- Pilih Kurir Dulu --</option>`;
+        layananSelect.disabled = true;
+
+        // Reset ongkir
+        updateTotal(0);
+    }
+
+    // ================== FUNGSI CARI HARGA (BARU) ==================
+    async function cariHarga() {
+        if (!kurirSelect.value || !destinationId.value) {
+            return;
+        }
+
+        layananSelect.disabled = true;
+        layananSelect.innerHTML = `<option value="">Loading...</option>`;
+
+        try {
+            const res = await fetch("/api/ongkir/search-price", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}" // Jangan lupa CSRF token
+                },
+                body: JSON.stringify({
+                    destination_id: parseInt(destinationId.value),
+                    weight: 1000, // Ganti dengan berat total jika ada
+                    courier: kurirSelect.value
+                })
+            });
+            
+            const data = await res.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            layananSelect.innerHTML = `<option value="">-- Pilih Layanan --</option>`;
+
+            if (data.length === 0) {
+                layananSelect.innerHTML = `<option value="">Layanan tidak tersedia</option>`;
+                return;
+            }
+
+            // 'data' sekarang berisi array 'costs' dari kurir yg dipilih
+            data.forEach(layanan => {
+                let cost = layanan.cost[0].value;
+                let etd = layanan.cost[0].etd;
+                let serviceName = layanan.service;
+                // Format harga
+                let formattedCost = `Rp ${cost.toLocaleString('id-ID')}`;
+                
+                // Value-nya akan berisi: HARGA|NAMA LAYANAN
+                let optionValue = `${cost}|${serviceName}`; 
+
+                layananSelect.innerHTML += `
+                    <option value="${optionValue}">
+                        ${serviceName} (${formattedCost}) - (Estimasi ${etd} hari)
+                    </option>
+                `;
+            });
+
+            layananSelect.disabled = false;
+
+        } catch (error) {
+            console.error('Error cariHarga:', error);
+            layananSelect.innerHTML = `<option value="">Gagal memuat layanan</option>`;
+        }
+    }
+
+    // ================== FUNGSI UPDATE TOTAL HARGA ==================
+    function updateTotal(biayaOngkir) {
+        ongkir = parseInt(biayaOngkir);
+        
+        ongkirLabel.innerText = `Rp ${ongkir.toLocaleString('id-ID')}`;
+        ongkirValue.value = ongkir; // Simpan di hidden input
+        
+        let total = subtotal + ongkir;
+        totalLabel.innerText = `Rp ${total.toLocaleString('id-ID')}`;
+    }
+
+    // ==================== EVENT LISTENERS (BARU) ===================
+
+    // Saat user mengetik di kotak pencarian
+    searchInput.addEventListener("input", debounce(cariLokasi, 500));
+
+    // Saat user memilih kurir (JNE/POS/TIKI)
+    kurirSelect.addEventListener("change", cariHarga);
+    
+    // Saat user memilih layanan (REG/OKE/YES)
+    layananSelect.addEventListener("change", () => {
+        let selected = layananSelect.value;
+        if (!selected) {
+            updateTotal(0);
+            layananName.value = '';
+            return;
+        }
+
+        // Pecah value "HARGA|NAMA LAYANAN"
+        let parts = selected.split('|');
+        let harga = parseInt(parts[0]);
+        let nama = parts[1];
+        
+        updateTotal(harga);
+        layananName.value = nama; // Simpan nama layanan
+    });
+
+    // ==================== PREVIEW GAMBAR ===================
+    // ... (Kode ini sama, tidak diubah) ...
+    document.getElementById("bukti_transfer").addEventListener("change", function(){
+        let file = this.files[0];
         if (!file) return;
-        const reader = new FileReader();
+        let reader = new FileReader();
         reader.onload = e => {
-            previewContainer.style.display = 'block';
-            previewImage.src = e.target.result;
+            document.getElementById("preview-container").style.display = "block";
+            document.getElementById("preview-image").src = e.target.result;
         };
         reader.readAsDataURL(file);
     });
 
-    // 🧾 Submit checkout form
-    checkoutForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(checkoutForm);
-        formData.append('ongkir', ongkir);
+    // ==================== SUBMIT CHECKOUT ===================
+    // Perlu di-update untuk mengirim data baru
+    document.getElementById("submitCheckout").addEventListener("click", async () => {
+        
+        // Validasi Sederhana
+        if (!destinationId.value) {
+            alert("Lokasi pengiriman belum dipilih. Silakan cari dan pilih lokasi Anda.");
+            return;
+        }
+        if (ongkirValue.value == 0 || !layananName.value) {
+            alert("Layanan pengiriman belum dipilih.");
+            return;
+        }
+        if (!document.getElementById("bukti_transfer").files[0]) {
+             alert("Bukti transfer belum di-upload.");
+            return;
+        }
+
+        let formData = new FormData();
+        formData.append("alamat_pengiriman", document.getElementById("alamat_pengiriman").value);
+        formData.append("kurir", kurirSelect.value); // 'jne', 'pos', 'tiki'
+        formData.append("layanan_kurir", layananName.value); // 'REG', 'OKE', 'YES'
+        formData.append("ongkir", ongkirValue.value); // '10000'
+        formData.append("destination_id", destinationId.value); // ID dari Komerce
+        formData.append("bukti_transfer", document.getElementById("bukti_transfer").files[0]);
+
+        // Tampilkan loading
+        document.getElementById("submitCheckout").disabled = true;
+        document.getElementById("submitCheckout").innerText = "Memproses...";
 
         try {
-            const response = await fetch('/checkout/full', {
-                method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value },
+            const res = await fetch("/checkout/full", { // Panggil Controller Anda
+                method: "POST",
+                headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}" },
                 body: formData
             });
 
-            const data = await response.json();
+            const data = await res.json();
 
-            if (response.ok) {
-                alert('✅ Pesanan berhasil dibuat dan bukti transfer diterima!');
-                window.location.href = '/orders';
+            if (res.ok) {
+                alert("Pesanan berhasil dibuat!");
+                window.location.href = "/orders"; // Arahkan ke halaman pesanan
             } else {
-                alert(data.message || 'Gagal memproses pesanan.');
+                alert(data.message || "Gagal membuat pesanan. Cek kembali data Anda.");
             }
         } catch (error) {
-            console.error(error);
-            alert('Terjadi kesalahan saat checkout.');
+            console.error('Submit Error:', error);
+            alert("Terjadi kesalahan. Silakan coba lagi.");
+        } finally {
+            document.getElementById("submitCheckout").disabled = false;
+            document.getElementById("submitCheckout").innerText = "Pesan Sekarang";
         }
     });
+
 });
 </script>
+
 @endsection

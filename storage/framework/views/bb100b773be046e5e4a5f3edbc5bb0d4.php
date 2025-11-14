@@ -15,14 +15,15 @@
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
 <body class="bg-[#f8f5f2] text-[#3c2f2f]">
+
     <!-- Navbar -->
-    <nav class="bg-[#f8f5f2] border-b border-[#d6c3b3] py-3 pl-6 pr-6">
+    <nav class="fixed top-0 left-0 w-full bg-[#f8f5f2] border-b border-[#d6c3b3] py-3 pl-6 pr-6 z-50">
         <div class="flex justify-between items-center">
 
             <!-- Left: Logo -->
             <div class="flex items-center space-x-2">
                 <a href="/" class="inline-block">
-                <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-12">
+                    <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-12">
                 </a>
             </div>
 
@@ -66,10 +67,8 @@
                 <!-- Auth Section -->
                 <?php if(auth()->guard()->check()): ?>
                     <div class="flex items-center space-x-2 cursor-pointer">
-                        <!-- Profile picture -->
                         <img src="<?php echo e(Auth::user()->profile_photo_url ?? asset('images/default-user.jpg')); ?>"
                             alt="Profile" class="h-8 w-8 rounded-full object-cover border border-[#d6c3b3]">
-                        <!-- Username -->
                         <span class="text-[#3c2f2f] font-medium"><?php echo e(Auth::user()->name); ?></span>
                     </div>
                 <?php else: ?>
@@ -82,9 +81,8 @@
         </div>
     </nav>
 
-
     <!-- Main Content -->
-    <main class="min-h-screen">
+    <main class="pt-20 min-h-screen">
         <?php echo $__env->yieldContent('content'); ?>
     </main>
 
@@ -113,12 +111,12 @@
     <script>
         lucide.createIcons();
     </script>
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-<script>
-    AOS.init({
-        duration: 800, // Durasi animasi dalam milidetik (800ms = 0.8 detik)
-        once: true     // Animasi hanya berjalan sekali saat elemen pertama kali terlihat
-    });
-</script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800, // Durasi animasi dalam milidetik (800ms = 0.8 detik)
+            once: true     // Animasi hanya berjalan sekali saat elemen pertama kali terlihat
+        });
+    </script>
 </body>
 </html><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/layouts/app.blade.php ENDPATH**/ ?>

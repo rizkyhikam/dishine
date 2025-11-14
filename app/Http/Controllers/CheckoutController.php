@@ -16,26 +16,20 @@ class CheckoutController extends Controller
 
     public function index()
 {
+    $userId = auth()->id();
 
-    $user = Auth::user();
-    $cartItems = \App\Models\Cart::with('product')->where('user_id', $user->id)->get();
-    $total = $cartItems->sum(fn($i) => $i->product->harga_normal * $i->quantity);
-    
-    // Ambil data cart user login
-    $cart = \App\Models\Cart::with('product')
-        ->where('user_id', auth()->id())
+    // Ambil cart user
+    $cartItems = \App\Models\Cart::with('product')
+        ->where('user_id', $userId)
         ->get();
 
-    if ($cart->isEmpty()) {
-        return redirect()->route('cart.index')->with('error', 'Keranjang kamu masih kosong!');
-    }
+    $total = $cartItems->sum(function ($item) {
+        return $item->product->harga_normal * $item->quantity;
+    });
 
-    // Hitung total harga produk
-    $total = $cart->sum(fn($item) => $item->product->harga_normal * $item->quantity);
-
-    // Tampilkan halaman checkout
-    return view('checkout.index', compact('user','cart', 'total'));
+    return view('checkout.index', compact('cartItems', 'total'));
 }
+
 
 
     public function storeFullCheckout(Request $request, RajaOngkirService $rajaOngkir, WhatsAppService $whatsapp)
