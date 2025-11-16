@@ -30,14 +30,25 @@
                             Rp <?php echo e(number_format($product->harga_normal, 0, ',', '.')); ?>
 
                         </p>
+                        <div class="flex items-center space-x-3 w-full">
+
+                        <!-- Tombol beli sekarang -->
+                        <a href="/checkout">
+                        <button class="bg-[#44351f] text-white w-full px-7 py-2 rounded-md hover:bg-[#a07850] transition text-center">
+                            Beli Sekarang
+                        </button>
+                        </a>
+
+                        <!-- Tombol tambah ke keranjang -->
                         <form action="<?php echo e(route('cart.add', $product->id)); ?>" method="POST">
                             <?php echo csrf_field(); ?>
                             <button type="submit" 
-                                    class="bg-[#b48a60] text-white w-full py-2 rounded-md hover:bg-[#a07850] transition flex items-center justify-center space-x-2">
-                                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
-                                <span>Beli Sekarang</span>
+                                class="text-[#b48a60] hover:text-[#a07850]">
+                                <i data-lucide="shopping-cart" class="w-6 h-6"></i>
                             </button>
                         </form>
+
+                    </div>
                     </div>
                 </div>
             </a>
