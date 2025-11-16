@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Dishine - E-commerce Terpercaya')</title>
+    <title><?php echo $__env->yieldContent('title', 'Dishine - E-commerce Terpercaya'); ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -23,7 +23,7 @@
             <!-- Left: Logo -->
             <div class="flex items-center space-x-2">
                 <a href="/" class="inline-block">
-                    <img src="{{ asset('logo.png') }}" alt="Dishine Logo" class="h-12">
+                    <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-12">
                 </a>
             </div>
 
@@ -32,11 +32,12 @@
                 <!-- Cart icon -->
                 <a href="/cart" class="p-2 text-[#b48a60] hover:text-[#a07850] relative">
                     <i data-lucide="shopping-cart" class="w-6 h-6"></i>
-                    @if(session('cart_count', 0) > 0)
+                    <?php if(session('cart_count', 0) > 0): ?>
                         <span class="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full px-1.5">
-                            {{ session('cart_count') }}
+                            <?php echo e(session('cart_count')); ?>
+
                         </span>
-                    @endif
+                    <?php endif; ?>
                 </a>
 
                 <!-- Search -->
@@ -64,27 +65,27 @@
                 </a>
 
                 <!-- Auth Section -->
-                @auth
+                <?php if(auth()->guard()->check()): ?>
                     <div class="flex items-center space-x-2 cursor-pointer">
                         <a href="/profil" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
-                        <img src="{{ Auth::user()->profile_photo_url ?? asset('images/default-user.jpg') }}"
+                        <img src="<?php echo e(Auth::user()->profile_photo_url ?? asset('images/default-user.jpg')); ?>"
                             alt="Profile" class="h-8 w-8 rounded-full object-cover border border-[#d6c3b3]">
-                        <span class="text-[#3c2f2f] font-medium">{{ Auth::user()->name }}</span>
+                        <span class="text-[#3c2f2f] font-medium"><?php echo e(Auth::user()->name); ?></span>
                         </a>
                     </div>
-                @else
+                <?php else: ?>
                     <a href="/login" class="bg-[#b48a60] text-white px-4 py-2 rounded-md hover:bg-[#a07850] flex items-center space-x-1">
                         <i data-lucide="log-in" class="w-5 h-5"></i>
                         <span>Login</span>
                     </a>
-                @endauth
+                <?php endif; ?>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
     <main class="pt-20 min-h-screen">
-        @yield('content')
+        <?php echo $__env->yieldContent('content'); ?>
     </main>
 
     <!-- Footer -->
@@ -93,7 +94,7 @@
             
             <!-- Left: Logo dan Copyright -->
             <div class="flex flex-col items-start space-y-2">
-                <img src="{{ asset('logo.png') }}" alt="Dishine Logo" class="h-12">
+                <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-12">
                 <p class="text-sm">&copy; 2025 Dishine. All rights reserved.</p>
             </div>
 
@@ -120,4 +121,4 @@
         });
     </script>
 </body>
-</html>
+</html><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/layouts/app.blade.php ENDPATH**/ ?>

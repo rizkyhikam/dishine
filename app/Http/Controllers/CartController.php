@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CartItem;
+use App\Models\Cart;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -56,7 +57,7 @@ class CartController extends Controller
     // 🗑️ Hapus produk dari keranjang
     public function removeFromCart($id)
     {
-        $item = CartItem::where('user_id', Auth::id())
+        $item = Cart::where('user_id', Auth::id())
             ->where('id', $id)
             ->firstOrFail();
 
@@ -72,7 +73,7 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1',
         ]);
 
-        $cartItem = CartItem::where('user_id', Auth::id())
+        $cartItem = Cart::where('user_id', Auth::id())
             ->where('id', $id)
             ->firstOrFail();
 
