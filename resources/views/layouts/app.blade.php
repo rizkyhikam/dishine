@@ -39,14 +39,27 @@
                     @endif
                 </a>
 
-                <!-- Search -->
-                <div class="flex items-center border border-[#d6c3b3] rounded-md w-full bg-white">
-                    <input type="text" placeholder="Search"
-                        class="w-full px-3 py-2 text-sm focus:outline-none">
-                    <button class="px-3 text-[#b48a60] hover:text-[#a07850]">
+                <!-- 
+                    =================================
+                    SEARCH BAR (SUDAH DIPERBAIKI)
+                    =================================
+                    Ini sekarang adalah <form> yang mengarah ke '/katalog'
+                -->
+                <form action="{{ url('/katalog') }}" method="GET" 
+                      class="flex items-center border border-[#d6c3b3] rounded-md w-full bg-white overflow-hidden">
+                    
+                    <input type="text" 
+                           name="q"  {{-- 'name="q"' SANGAT PENTING --}}
+                           value="{{ request('q') }}" {{-- Ini agar teks pencarian tidak hilang --}}
+                           placeholder="Cari dress, kerudung..."
+                           class="w-full px-3 py-2 text-sm focus:outline-none">
+                    
+                    <button type="submit" class="px-3 text-[#b48a60] hover:text-[#a07850]">
                         <i data-lucide="search" class="w-5 h-5"></i>
                     </button>
-                </div>
+                </form>
+                <!-- =============================== -->
+
             </div>
 
             <!-- Right: Menu -->
@@ -68,7 +81,7 @@
                     <div class="flex items-center space-x-2 cursor-pointer">
                         <a href="/profil" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
                         <img src="{{ Auth::user()->profile_photo_url ?? asset('images/default-user.jpg') }}"
-                            alt="Profile" class="h-8 w-8 rounded-full object-cover border border-[#d6c3b3]">
+                             alt="Profile" class="h-8 w-8 rounded-full object-cover border border-[#d6c3b3]">
                         <span class="text-[#3c2f2f] font-medium">{{ Auth::user()->name }}</span>
                         </a>
                     </div>
@@ -116,7 +129,7 @@
     <script>
         AOS.init({
             duration: 800, // Durasi animasi dalam milidetik (800ms = 0.8 detik)
-            once: true     // Animasi hanya berjalan sekali saat elemen pertama kali terlihat
+            once: true    // Animasi hanya berjalan sekali saat elemen pertama kali terlihat
         });
     </script>
 </body>

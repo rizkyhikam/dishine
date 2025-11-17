@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -23,11 +24,45 @@ class ProductController extends Controller
         return response()->json(['products' => $products], 200);
     }
 
-    public function showKatalog()
+        public function showKatalog(Request $request)
     {
-        $products = \App\Models\Product::all();
+        // Cek apakah ada query pencarian di URL (misal: ?q=dress)
+        if ($request->has('q') && $request->q != '') {
+            
+            // --- MODE PENCARIAN ---
+            $q = $request->q;
 
-        return view('katalog', compact('products'));
+            // 1. Cari produk yang namanya mirip 'q'
+            // 2. ATAU cari produk yang nama kategorinya mirip 'q'
+            $products = Product::with('category')
+                ->where('nama', 'LIKE', "%$q%")
+                ->orWhereHas('category', function($query) use ($q) {
+                    $query->where('name', 'LIKE', "%$q%");
+                })
+                ->get();
+
+            // 2. Kirim hasil pencarian (datar) ke view
+            return view('katalog', [
+                'is_search' => true,
+                'search_term' => $q,
+                'search_results' => $products
+            ]);
+
+        } else {
+            
+            // --- MODE BROWSE (DEFAULT) ---
+
+            // 1. Ambil SEMUA kategori
+            // 2. 'with('products')' = Sekaligus ambil SEMUA produk di dalam setiap kategori
+            // 3. 'has('products')' = Hanya ambil kategori yang ADA isinya (tidak kosong)
+            $categories = Category::with('products')->has('products')->get();
+
+            // 2. Kirim data (yang sudah dikelompokkan) ke view
+            return view('katalog', [
+                'is_search' => false,
+                'categories' => $categories
+            ]);
+        }
     }
 
 
