@@ -67,9 +67,11 @@
                 <!-- Auth Section -->
                 <?php if(auth()->guard()->check()): ?>
                     <div class="flex items-center space-x-2 cursor-pointer">
+                        <a href="/profil" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
                         <img src="<?php echo e(Auth::user()->profile_photo_url ?? asset('images/default-user.jpg')); ?>"
                             alt="Profile" class="h-8 w-8 rounded-full object-cover border border-[#d6c3b3]">
                         <span class="text-[#3c2f2f] font-medium"><?php echo e(Auth::user()->name); ?></span>
+                        </a>
                     </div>
                 <?php else: ?>
                     <a href="/login" class="bg-[#b48a60] text-white px-4 py-2 rounded-md hover:bg-[#a07850] flex items-center space-x-1">

@@ -130,6 +130,8 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
         Route::put('/products/{id}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
         Route::delete('/products/{id}', [AdminController::class, 'destroyProduct'])->name('admin.products.delete');
+        Route::get('/admin/products/{id}/edit', [\App\Http\Controllers\AdminController::class, 'editProduct'])->name('admin.products.edit');
+        Route::put('/admin/products/{id}', [\App\Http\Controllers\AdminController::class, 'updateProduct'])->name('admin.products.update');
 
         // Orders
         Route::get('/orders', [AdminController::class, 'manageOrders'])->name('admin.orders');

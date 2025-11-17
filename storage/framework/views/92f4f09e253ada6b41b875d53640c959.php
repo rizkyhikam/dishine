@@ -1,18 +1,16 @@
-@extends('layouts.admin')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <h1 class="mb-4">Manajemen Produk</h1>
 
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
+<?php if(session('success')): ?>
+    <div class="alert alert-success"><?php echo e(session('success')); ?></div>
+<?php endif; ?>
 
 <!-- Form Tambah Produk -->
 <div class="card mb-4">
     <div class="card-header">Tambah Produk Baru</div>
     <div class="card-body">
-        <form action="{{ route('admin.products') }}" method="POST" enctype="multipart/form-data">
-            @csrf
+        <form action="<?php echo e(route('admin.products')); ?>" method="POST" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label>Nama Produk</label>
@@ -67,32 +65,32 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($products as $index => $product)
+                <?php $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $product->nama }}</td>
-                        <td>Rp{{ number_format($product->harga_normal, 0, ',', '.') }}</td>
-                        <td>Rp{{ number_format($product->harga_reseller, 0, ',', '.') }}</td>
-                        <td>{{ $product->stok }}</td>
+                        <td><?php echo e($index + 1); ?></td>
+                        <td><?php echo e($product->nama); ?></td>
+                        <td>Rp<?php echo e(number_format($product->harga_normal, 0, ',', '.')); ?></td>
+                        <td>Rp<?php echo e(number_format($product->harga_reseller, 0, ',', '.')); ?></td>
+                        <td><?php echo e($product->stok); ?></td>
 
                         <td>
-                            @if($product->gambar)
-                                <img src="{{ asset('storage/' . $product->gambar) }}" width="60">
-                            @endif
+                            <?php if($product->gambar): ?>
+                                <img src="<?php echo e(asset('storage/' . $product->gambar)); ?>" width="60">
+                            <?php endif; ?>
                         </td>
 
                         <td>
                             <!-- TOMBOL EDIT (ditambahkan) -->
-                            <a href="{{ route('admin.products.edit', $product->id) }}"
+                            <a href="<?php echo e(route('admin.products.edit', $product->id)); ?>"
                                class="btn btn-sm btn-warning me-1">
                                 Edit
                             </a>
 
                             <!-- FORM DELETE (diperbaiki pakai route) -->
-                            <form action="{{ route('admin.products.delete', $product->id) }}"
+                            <form action="<?php echo e(route('admin.products.delete', $product->id)); ?>"
                                   method="POST" class="d-inline">
-                                @csrf
-                                @method('DELETE')
+                                <?php echo csrf_field(); ?>
+                                <?php echo method_field('DELETE'); ?>
 
                                 <button class="btn btn-sm btn-danger"
                                         onclick="return confirm('Hapus produk ini?')">
@@ -102,9 +100,11 @@
                         </td>
 
                     </tr>
-                @endforeach
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </tbody>
         </table>
     </div>
 </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/admin/products.blade.php ENDPATH**/ ?>

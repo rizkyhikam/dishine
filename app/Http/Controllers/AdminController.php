@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Faq;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage; // <<< WAJIB untuk hapus gambar
 
 class AdminController extends Controller
 {
@@ -24,7 +25,6 @@ class AdminController extends Controller
         $totalProducts = Product::count();
         $totalFaqs = Faq::count();
 
-        // Statistik penjualan per bulan (total dari orders selesai)
         $salesData = Order::selectRaw('EXTRACT(MONTH FROM tanggal_pesan) as month, SUM(total) as total')
             ->where('status', Order::STATUS_SELESAI)
             ->whereYear('tanggal_pesan', now()->year)
@@ -32,7 +32,6 @@ class AdminController extends Controller
             ->orderBy('month')
             ->get();
 
-        // Notifikasi pesanan baru
         $newOrders = Order::where('status', Order::STATUS_BARU)->count();
         if ($newOrders > 0) {
             session()->flash('notification', "Ada {$newOrders} pesanan baru yang perlu diperiksa.");
@@ -41,13 +40,14 @@ class AdminController extends Controller
         return view('admin.dashboard', compact('totalUsers', 'totalResellers', 'totalProducts', 'totalFaqs', 'salesData'));
     }
 
-    // CRUD Produk
+    // ---------------------------------------------------------
+    // CRUD PRODUK
+    // ---------------------------------------------------------
     public function manageProducts()
     {
-        $products = \App\Models\Product::all();
+        $products = Product::all();
         return view('admin.products', compact('products'));
     }
-
 
     public function storeProduct(Request $request)
     {
@@ -57,7 +57,7 @@ class AdminController extends Controller
             'harga_normal' => 'required|numeric|min:0',
             'harga_reseller' => 'required|numeric|min:0',
             'stok' => 'required|integer|min:0',
-            'gambar' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'gambar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $gambarPath = $request->file('gambar')->store('products', 'public');
@@ -74,15 +74,60 @@ class AdminController extends Controller
         return redirect()->route('admin.products')->with('success', 'Produk berhasil ditambahkan.');
     }
 
+    /**
+     * -----------------------------------------------------------
+     * FUNGSI BARU — Menampilkan Form Edit Produk
+     * -----------------------------------------------------------
+     */
+    public function editProduct($id)
+    {
+        $product = Product::findOrFail($id);
+        return view('admin.products_edit', compact('product'));
+    }
+
+    /**
+     * -----------------------------------------------------------
+     * FUNGSI BARU — Update Produk + Hapus Gambar Lama
+     * -----------------------------------------------------------
+     */
     public function updateProduct(Request $request, $id)
     {
         $product = Product::findOrFail($id);
-        $product->update($request->only(['nama', 'deskripsi', 'harga_normal', 'harga_reseller', 'stok']));
+
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'harga_normal' => 'required|numeric',
+            'harga_reseller' => 'required|numeric',
+            'stok' => 'required|integer',
+            'deskripsi' => 'required|string',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048'
+        ]);
+
+        // Update data dasar
+        $product->nama = $request->nama;
+        $product->harga_normal = $request->harga_normal;
+        $product->harga_reseller = $request->harga_reseller;
+        $product->stok = $request->stok;
+        $product->deskripsi = $request->deskripsi;
+
+        // Jika upload gambar baru
         if ($request->hasFile('gambar')) {
-            $product->gambar = $request->file('gambar')->store('products', 'public');
-            $product->save();
+
+            // Hapus gambar lama
+            if ($product->gambar) {
+                Storage::disk('public')->delete($product->gambar);
+            }
+
+            // Upload gambar baru
+            $path = $request->file('gambar')->store('products', 'public');
+            $product->gambar = $path;
         }
-        return redirect()->route('admin.products')->with('success', 'Produk berhasil diperbarui.');
+
+        // Simpan perubahan
+        $product->save();
+
+        return redirect()->route('admin.products')
+                         ->with('success', 'Produk berhasil diperbarui.');
     }
 
     public function destroyProduct($id)
@@ -91,7 +136,9 @@ class AdminController extends Controller
         return redirect()->route('admin.products')->with('success', 'Produk berhasil dihapus.');
     }
 
-    // CRUD Pesanan
+    // ---------------------------------------------------------
+    // CRUD PESANAN
+    // ---------------------------------------------------------
     public function manageOrders()
     {
         $orders = Order::with('user', 'orderItems.product')->get();
@@ -105,7 +152,9 @@ class AdminController extends Controller
         return redirect()->route('admin.orders')->with('success', 'Status pesanan berhasil diperbarui.');
     }
 
+    // ---------------------------------------------------------
     // CRUD FAQ
+    // ---------------------------------------------------------
     public function manageFAQ()
     {
         $faqs = Faq::all();
