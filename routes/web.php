@@ -65,6 +65,28 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout/full', [CheckoutController::class, 'storeFullCheckout'])->name('checkout.store');
 
+    // API untuk cek ongkir
+    Route::post('/api/cek-ongkir', function (Request $request, RajaOngkirService $rajaOngkir) {
+        try {
+            $data = $rajaOngkir->cekOngkir(
+                origin: '501', // Bogor
+                destination: $request->destination,
+                weight: $request->weight ?? 1000,
+                courier: $request->kurir
+            );
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    });
+    
     // Orders
     Route::get('/orders', [OrderController::class, 'viewOrders'])->name('orders.view');
 
