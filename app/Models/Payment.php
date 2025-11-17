@@ -9,25 +9,25 @@ class Payment extends Model
 {
     use HasFactory;
 
+    // --- INI PERBAIKAN KEDUA ---
+    public const STATUS_BELUM_DIVERIFIKASI = 'belum_diverifikasi';
+    public const STATUS_BERHASIL = 'berhasil';
+    public const STATUS_GAGAL = 'gagal';
+    // -------------------------
+
+    /**
+     * Kolom yang boleh diisi (Mass Assignment)
+     */
     protected $fillable = [
         'order_id',
         'bukti_transfer',
         'status_verifikasi',
+        'metode_pembayaran',
     ];
 
-    // Enum status pembayaran
-    const STATUS_BELUM_DIVERIFIKASI = 'Belum Diverifikasi';
-    const STATUS_SUDAH_DIVERIFIKASI = 'Sudah Diverifikasi';
-
-    public static function getStatusOptions()
-    {
-        return [
-            self::STATUS_BELUM_DIVERIFIKASI => 'Belum Diverifikasi',
-            self::STATUS_SUDAH_DIVERIFIKASI => 'Sudah Diverifikasi',
-        ];
-    }
-
-    // Relasi: Payment belongsTo Order
+    /**
+     * Relasi ke Order
+     */
     public function order()
     {
         return $this->belongsTo(Order::class);

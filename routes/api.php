@@ -3,34 +3,39 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\OngkirController;
+use Illuminate\Support\Facades\Auth; // <-- Tambahkan ini
 
-Route::get('/tes-rute-saya', function () {
-    return response()->json(['status' => 'OKE, RUTE BERHASIL TERBACA']);
-});
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-| Semua route di sini otomatis memiliki prefix "/api"
-|--------------------------------------------------------------------------
 */
 
+// Rute tes (biarkan saja)
+Route::get('/tes-rute-saya', function () {
+    return response()->json(['status' => 'OKE, RUTE BERHASIL TERBACA']);
+});
+
+// --- RUTE UNTUK ALAMAT DROPDOWN (RAJAONGKIR KOMERCE) ---
 Route::prefix('ongkir')->group(function () {
-    
-    // --- RUTE BARU UNTUK FITUR SEARCH (KOMERCE API) ---
-    // URL: /api/ongkir/search-destination?q=bandung
-    Route::get('/search-destination', [OngkirController::class, 'searchDestination']);
-
-    // URL: /api/ongkir/search-price (method POST)
-    Route::post('/search-price', [OngkirController::class, 'searchPrice']);
-
-
-    // --- RUTE LAMA (RAJAONGKIR) ---
-    // Ini tidak akan dipakai di halaman checkout, tapi kita biarkan saja
-    // jika mungkin dipakai di tempat lain.
     Route::get('/provinces', [OngkirController::class, 'getProvinces']);
     Route::get('/cities/{provinceId}', [OngkirController::class, 'getCities']);
     Route::get('/districts/{cityId}', [OngkirController::class, 'getDistricts']);
     Route::get('/sub-districts/{districtId}', [OngkirController::class, 'getSubDistricts']);
     Route::post('/cost', [OngkirController::class, 'getCost']);
+});
+
+// --- RUTE BARU UNTUK SIMPAN ALAMAT ---
+Route::post('/update-alamat', function (Request $request) {
+    if (!Auth::check()) {
+        return response()->json(['message' => 'Unauthorized'], 401);
+    }
+    
+    $request->validate(['alamat' => 'required|string|max:255']);
+    
+    $user = Auth::user();
+    $user->alamat = $request->alamat;
+    $user->save();
+    
+    return response()->json(['message' => 'Alamat berhasil diperbarui']);
 });

@@ -83,12 +83,34 @@ class OrderController extends Controller
     ], 201);
 }
 
-
     public function viewOrders()
     {
-        $orders = Auth::user()->orders()->with('orderItems.product')->get();
-        return response()->json(['orders' => $orders], 200);
+        // Ambil semua pesanan milik user yang sedang login
+        // 'with('orderItems.product')' = Ambil juga detail item & produknya
+        // 'latest()' = Urutkan dari yang paling baru
+        $orders = Order::where('user_id', Auth::id())
+                        ->with('orderItems.product')
+                        ->latest()
+                        ->get();
+        
+        // Ganti dari 'return $orders;' (JSON) menjadi 'return view(...)' (Halaman HTML)
+        return view('orders.index', compact('orders'));
     }
+
+    /**
+     * Menampilkan halaman DETAIL SATU pesanan
+     */
+    public function showOrder($id)
+    {
+        // Ambil 1 pesanan, TAPI pastikan itu milik user yang sedang login
+        $order = Order::with(['orderItems.product', 'payment'])
+                    ->where('id', $id)
+                    ->where('user_id', Auth::id())
+                    ->firstOrFail(); // Jika bukan miliknya, akan 404
+
+        return view('orders.show', compact('order'));
+    }
+
 
     /**
      * Upload bukti transfer

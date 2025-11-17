@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\RajaOngkirService;
-use Illuminate\Support\Facades\Http; // <-- PENTING: TAMBAHKAN INI
+use Illuminate\Support\Facades\Http;
 
 class OngkirController extends Controller
 {
@@ -16,98 +16,6 @@ class OngkirController extends Controller
         $this->rajaOngkir = $rajaOngkir;
     }
 
-    // =================================================================
-    // FUNGSI BARU BERDASARKAN SCREENSHOT (KOMERCE API)
-    // =================================================================
-
-    /**
-     * 🔎 Mencari destinasi (untuk autocomplete)
-     * Ini dipanggil setiap kali user mengetik di kotak pencarian.
-     */
-    public function searchDestination(Request $request)
-    {
-        $keyword = $request->input('q', ''); // Ambil keyword dari ?q=...
-
-        // Jangan cari jika keyword terlalu pendek (hemat API)
-        if (strlen($keyword) < 3) {
-            return response()->json([]); // Kembalikan array kosong
-        }
-
-        try {
-            // PENTING: Pastikan Anda sudah setting KOMERCE_API_KEY di file .env Anda
-            $response = Http::withHeader(
-                'Authorization', 'Bearer ' . env('KOMERCE_API_KEY')
-            )->get('https://api.komerce.id/api/v1/destination/domestic-destination', [
-                'q' => $keyword
-            ]);
-
-            if ($response->failed()) {
-                return response()->json(['error' => 'Gagal mengambil data dari Komerce API'], $response->status());
-            }
-
-            // Kembalikan hanya array 'data' (sesuai screenshot)
-            // Di frontend, kita akan looping data ini
-            return response()->json($response->json('data'), 200);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * 💰 Mencari harga ongkir (untuk cek ongkir)
-     * Ini dipanggil setelah user memilih lokasi dan kurir.
-     */
-    public function searchPrice(Request $request)
-    {
-        $request->validate([
-            'destination_id' => 'required|integer',
-            'weight' => 'required|integer|min:1',
-            'courier' => 'required|string', // 'jne', 'pos', 'tiki'
-        ]);
-
-        try {
-            // PENTING: Pastikan Anda sudah setting KOMERCE_API_KEY di file .env Anda
-            // Kita panggil API Komerce untuk harga
-            $response = Http::withHeader(
-                'Authorization', 'Bearer ' . env('KOMERCE_API_KEY')
-            )->get('https://api.komerce.id/api/v1/shipping/domestic-shipping', [
-                'origin' => 157, // ID Kota Bogor (Sesuai kode lama Anda)
-                'destination' => $request->destination_id,
-                'weight' => $request->weight
-            ]);
-
-            if ($response->failed()) {
-                return response()->json(['error' => 'Gagal mengambil data harga'], $response->status());
-            }
-
-            // API Komerce mengembalikan SEMUA kurir.
-            // Kita filter di sini berdasarkan kurir yang dipilih user.
-            $allServices = $response->json('data');
-            $filteredServices = [];
-
-            foreach ($allServices as $service) {
-                // $service['code'] akan berisi 'jne', 'tiki', 'pos', dll.
-                if (strtolower($service['code']) == strtolower($request->courier)) {
-                    // $service['costs'] berisi layanannya (REG, OKE, YES, dll)
-                    $filteredServices = $service['costs'];
-                    break;
-                }
-            }
-            
-            // Kembalikan hanya layanan yang sudah difilter
-            return response()->json($filteredServices, 200);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
-    }
-
-
-    // =================================================================
-    // FUNGSI LAMA (RAJAONGKIR API)
-    // =================================================================
-
     /**
      * 🔹 Ambil semua provinsi
      */
@@ -115,16 +23,108 @@ class OngkirController extends Controller
     {
         try {
             $data = $this->rajaOngkir->getProvinces();
-            return response()->json($data, 200);
+            // Format agar sesuai JS: { province_id: 1, province: 'Bali' }
+            $formattedData = collect($data)->map(function ($item) {
+                return [
+                    'province_id' => $item['id'],
+                    'province' => $item['name']
+                ];
+            });
+            return response()->json($formattedData, 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
-    // ... (Fungsi getCities, getDistricts, getSubDistricts, getCost Anda yang lama) ...
-    // Biarkan saja di sini, tidak perlu dihapus
-    public function getCities($provinceId) { /* ... kode lama ... */ }
-    public function getDistricts($cityId) { /* ... kode lama ... */ }
-    public function getSubDistricts($districtId) { /* ... kode lama ... */ }
-    public function getCost(Request $request) { /* ... kode lama ... */ }
+    /**
+     * 🔹 Ambil daftar kota berdasarkan provinsi
+     */
+    public function getCities($provinceId)
+    {
+        try {
+            $data = $this->rajaOngkir->getCities($provinceId);
+            // Format agar sesuai JS: { city_id: 1, city_name: 'Denpasar', type: 'Kota' }
+            $formattedData = collect($data)->map(function ($item) {
+                return [
+                    'city_id' => $item['id'],
+                    'city_name' => $item['name'],
+                    'type' => $item['type']
+                ];
+            });
+            return response()->json($formattedData, 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 🔹 Ambil daftar kecamatan berdasarkan kota
+     * PERBAIKAN: Sertakan 'zip_code' dari dokumentasi baru
+     */
+    public function getDistricts($cityId)
+    {
+        try {
+            $data = $this->rajaOngkir->getDistricts($cityId);
+            // Format agar sesuai JS: { district_id: 1, district_name: 'Kuta', zip_code: '80361' }
+            $formattedData = collect($data)->map(function ($item) {
+                return [
+                    'district_id' => $item['id'],
+                    'district_name' => $item['name'],
+                    'zip_code' => $item['zip_code'] // <-- KODE POS ADA DI SINI
+                ];
+            });
+            return response()->json($formattedData, 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * 🔹 Ambil daftar kelurahan (sub-district) berdasarkan kecamatan
+     * (Fungsi ini tidak lagi dipakai di JS checkout, tapi kita biarkan)
+     */
+    public function getSubDistricts($districtId)
+    {
+        try {
+            $data = $this->rajaOngkir->getSubDistricts($districtId);
+            $formattedData = collect($data)->map(function ($item) {
+                return [
+                    'subdistrict_id' => $item['id'],
+                    'subdistrict_name' => $item['name'],
+                    'postal_code' => $item['zip_code'] 
+                ];
+            });
+            return response()->json($formattedData, 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * 🚚 Hitung ongkir
+     */
+    public function getCost(Request $request)
+    {
+        $request->validate([
+            'destination' => 'required|integer', // Ini ID Kecamatan (District)
+            'weight' => 'required|integer|min:1',
+            'courier' => 'required|string',
+        ]);
+
+        try {
+            // PENTING: GANTI '1989' DENGAN ID KECAMATAN ASAL TOKO ANDA
+            $costs = $this->rajaOngkir->cekOngkir(
+                originDistrictId: 1989, // <-- GANTI INI (ID Kecamatan Asal)
+                destinationDistrictId: $request->destination,
+                weight: $request->weight,
+                courier: $request->courier
+            );
+            
+            // Service sudah mem-format 'success' dan 'data'
+            return response()->json($costs, 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
 }

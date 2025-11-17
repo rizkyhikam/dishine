@@ -39,59 +39,73 @@
                     @endif
                 </a>
 
-                <!-- 
-                    =================================
-                    SEARCH BAR (SUDAH DIPERBAIKI)
-                    =================================
-                    Ini sekarang adalah <form> yang mengarah ke '/katalog'
-                -->
+                <!-- Search Bar (Sudah Benar) -->
                 <form action="{{ url('/katalog') }}" method="GET" 
                       class="flex items-center border border-[#d6c3b3] rounded-md w-full bg-white overflow-hidden">
-                    
                     <input type="text" 
-                           name="q"  {{-- 'name="q"' SANGAT PENTING --}}
-                           value="{{ request('q') }}" {{-- Ini agar teks pencarian tidak hilang --}}
+                           name="q"
+                           value="{{ request('q') }}"
                            placeholder="Cari dress, kerudung..."
                            class="w-full px-3 py-2 text-sm focus:outline-none">
-                    
                     <button type="submit" class="px-3 text-[#b48a60] hover:text-[#a07850]">
                         <i data-lucide="search" class="w-5 h-5"></i>
                     </button>
                 </form>
-                <!-- =============================== -->
-
             </div>
 
-            <!-- Right: Menu -->
+            <!-- 
+                =================================
+                Right: Menu (DENGAN HIGHLIGHT AKTIF)
+                =================================
+            -->
             <div class="flex items-center space-x-5">
+                
                 <!-- Home -->
-                <a href="/" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
+                <a href="/" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1 
+                                  pb-1 border-b-2 
+                                  {{ request()->is('/') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
                     <i data-lucide="home" class="w-5 h-5"></i>
                     <span>Beranda</span>
                 </a>
 
                 <!-- Catalog -->
-                <a href="/katalog" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
+                <a href="/katalog" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1 
+                                     pb-1 border-b-2 
+                                     {{ request()->is('katalog*') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
                     <i data-lucide="tag" class="w-5 h-5"></i>
                     <span>Katalog</span>
                 </a>
 
                 <!-- Auth Section -->
                 @auth
-                    <div class="flex items-center space-x-2 cursor-pointer">
-                        <a href="/profil" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1">
-                        <img src="{{ Auth::user()->profile_photo_url ?? asset('images/default-user.jpg') }}"
-                             alt="Profile" class="h-8 w-8 rounded-full object-cover border border-[#d6c3b3]">
+                    <!-- Link ke Riwayat Pesanan -->
+                    <a href="{{ route('orders.view') }}" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1 
+                                                        pb-1 border-b-2 
+                                                        {{ request()->is('orders*') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
+                        <i data-lucide="archive" class="w-5 h-5"></i>
+                        <span>Pesanan Saya</span>
+                    </a>
+
+                    <!-- Link Profil -->
+                    <a href="/profil" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1 
+                                            pb-1 border-b-2 
+                                            {{ request()->is('profil*') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
+                        <div class="h-8 w-8 rounded-full border border-[#d6c3b3] flex items-center justify-center bg-white">
+                            <i data-lucide="user" class="w-4 h-4 text-[#6b5a4a]"></i>
+                        </div>
                         <span class="text-[#3c2f2f] font-medium">{{ Auth::user()->name }}</span>
-                        </a>
-                    </div>
+                    </a>
+                
                 @else
+                    <!-- Link Login (Jika tidak login) -->
                     <a href="/login" class="bg-[#b48a60] text-white px-4 py-2 rounded-md hover:bg-[#a07850] flex items-center space-x-1">
                         <i data-lucide="log-in" class="w-5 h-5"></i>
                         <span>Login</span>
                     </a>
                 @endauth
             </div>
+            <!-- =============================== -->
+            
         </div>
     </nav>
 
@@ -128,8 +142,8 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
         AOS.init({
-            duration: 800, // Durasi animasi dalam milidetik (800ms = 0.8 detik)
-            once: true    // Animasi hanya berjalan sekali saat elemen pertama kali terlihat
+            duration: 800,
+            once: true
         });
     </script>
 </body>

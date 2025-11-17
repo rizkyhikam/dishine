@@ -43,15 +43,16 @@ class CheckoutController extends Controller
 
     public function storeFullCheckout(Request $request, RajaOngkirService $rajaOngkir, WhatsAppService $whatsapp)
     {
-        // Validasi data profil
-        if (empty(Auth::user()->alamat) || empty(Auth::user()->no_hp)) {
+        // 1. Validasi Alamat (Kita cek langsung dari data user, bukan request)
+        $user = Auth::user();
+        if (empty($user->alamat) || empty($user->no_hp)) {
             return response()->json([
                 'message' => 'Silakan lengkapi alamat dan nomor HP Anda terlebih dahulu.'
             ], 400);
         }
 
+        // 2. Validasi Request (Sama seperti sebelumnya)
         $request->validate([
-            'alamat_pengiriman' => 'required|string|max:500',
             'kurir' => 'required|string|in:jne,pos,tiki',
             'destination' => 'required|string',
             'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg|max:2048',
@@ -59,87 +60,128 @@ class CheckoutController extends Controller
             'layanan_selected_name' => 'required|string',
         ]);
         
-        return DB::transaction(function () use ($request, $rajaOngkir, $whatsapp) {
-            // Ambil cart dari database
-            $cartItems = Cart::with('product')
-                ->where('user_id', Auth::id())
-                ->get();
+        // -----------------------------------------------------------------
+        // KITA GUNAKAN DB::TRANSACTION AGAR AMAN
+        // -----------------------------------------------------------------
+        try {
+            $result = DB::transaction(function () use ($request, $user, $whatsapp) {
+                // Ambil cart dari database
+                $cartItems = Cart::with('product')
+                    ->where('user_id', $user->id)
+                    ->get();
 
-            if ($cartItems->isEmpty()) {
-                return response()->json(['message' => 'Keranjang kosong'], 400);
-            }
+                if ($cartItems->isEmpty()) {
+                    return response()->json(['message' => 'Keranjang kosong'], 400);
+                }
 
-            // Hitung total produk
-            $totalProduk = $cartItems->sum(function ($item) {
-                return $item->product->harga_normal * $item->quantity;
+                // --- LANGKAH 1 (BARU): VALIDASI STOK ---
+                foreach ($cartItems as $cartItem) {
+                    // Cek apakah produk masih ada
+                    if (!$cartItem->product) {
+                         return response()->json([
+                            'message' => 'Produk ' . ($cartItem->product_id ?? 'N/A') . ' tidak ditemukan.'
+                        ], 404);
+                    }
+                    // Cek apakah stok cukup
+                    if ($cartItem->product->stok < $cartItem->quantity) {
+                        return response()->json([
+                            'message' => 'Stok untuk produk ' . $cartItem->product->nama . ' tidak mencukupi (sisa ' . $cartItem->product->stok . ').'
+                        ], 422); // 422 Unprocessable Entity
+                    }
+                }
+
+                // --- LANGKAH 2: HITUNG TOTAL (SAMA SEPERTI LAMA) ---
+                $totalProduk = $cartItems->sum(function ($item) {
+                    return $item->product->harga_normal * $item->quantity;
+                });
+
+                $biayaLayanan = 2000;
+                $ongkir = $request->ongkir_value;
+                $total = $totalProduk + $ongkir + $biayaLayanan;
+
+                // --- LANGKAH 3: BUAT ORDER (SAMA SEPERTI LAMA) ---
+                $order = Order::create([
+                    'user_id' => $user->id,
+                    'tanggal_pesan' => now(),
+                    'total' => $totalProduk,
+                    'ongkir' => $ongkir,
+                    'biaya_layanan' => $biayaLayanan, // Pastikan kolom ini ada
+                    'total_bayar' => $total, // Pastikan kolom ini ada
+                    'status' => Order::STATUS_MENUNGGU_VERIFIKASI,
+                    'alamat_pengiriman' => $user->alamat,
+                    'kurir' => $request->kurir,
+                    'layanan_kurir' => $request->layanan_selected_name, // Pastikan kolom ini ada
+                    'kota_tujuan' => $request->destination, // Pastikan kolom ini ada
+                ]);
+
+                // --- LANGKAH 4: SIMPAN ORDER ITEM & KURANGI STOK (UPGRADE) ---
+                foreach ($cartItems as $cartItem) {
+                    OrderItem::create([
+                        'order_id' => $order->id,
+                        'product_id' => $cartItem->product_id,
+                        'jumlah' => $cartItem->quantity,
+                        'harga_satuan' => $cartItem->product->harga_normal,
+                        'subtotal' => $cartItem->product->harga_normal * $cartItem->quantity, // Pastikan kolom ini ada
+                    ]);
+                    
+                    // --- INI LOGIKA BARU UNTUK KURANGI STOK ---
+                    $product = $cartItem->product;
+                    $product->stok -= $cartItem->quantity; // Kurangi stok
+                    $product->save(); // Simpan perubahan stok
+                    // ------------------------------------------
+                }
+
+                // --- LANGKAH 5: UPLOAD BUKTI TRANSFER (SAMA) ---
+                $buktiPath = $request->file('bukti_transfer')->store('payments', 'public');
+
+                Payment::create([
+                    'order_id' => $order->id,
+                    'bukti_transfer' => $buktiPath,
+                    'status_verifikasi' => Payment::STATUS_BELUM_DIVERIFIKASI,
+                    'metode_pembayaran' => 'transfer', // Pastikan kolom ini ada
+                ]);
+
+                // --- LANGKAH 6: BERSIHKAN KERANJANG (SAMA) ---
+                Cart::where('user_id', $user->id)->delete();
+
+                // --- LANGKAH 7: KIRIM WA (DIPERBAIKI) ---
+                try {
+                    $buktiUrl = asset('storage/' . $buktiPath);
+                    $message = "💸 *Pesanan Baru Masuk!*\n\n"
+                        . "👤 *Nama:* " . $user->nama . "\n"
+                        . "📞 *No HP:* " . ($user->no_hp ?? '-') . "\n"
+                        . "🚚 *Kurir:* " . strtoupper($request->kurir) . " ({$request->layanan_selected_name})\n"
+                        . "🏠 *Alamat:* {$order->alamat_pengiriman}\n"
+                        . "💰 *Total Produk:* Rp " . number_format($totalProduk, 0, ',', '.') . "\n"
+                        . "🚛 *Ongkir:* Rp " . number_format($ongkir, 0, ',', '.') . "\n"
+                        . "💳 *Biaya Layanan:* Rp " . number_format($biayaLayanan, 0, ',', '.') . "\n"
+                        . "💵 *Total Bayar:* Rp " . number_format($total, 0, ',', '.') . "\n\n"
+                        . "📎 *Bukti Transfer:* (lihat gambar di bawah)";
+
+                    // INI FUNGSI YANG BENAR (dari pesan sebelumnya)
+                    $whatsapp->sendToAdmin($message, $buktiUrl); 
+
+                } catch (\Exception $e) {
+                    // Jika WA gagal, jangan batalkan pesanan
+                    \Log::error('Gagal kirim notifikasi WA ke admin: ' . $e->getMessage());
+                }
+
+                // Jika semua berhasil, kembalikan JSON sukses
+                return response()->json([
+                    'message' => '✅ Pesanan berhasil dibuat & bukti transfer dikirim ke admin.',
+                    'order_id' => $order->id,
+                ], 200);
             });
 
-            $biayaLayanan = 2000;
-            $ongkir = $request->ongkir_value;
-            $total = $totalProduk + $ongkir + $biayaLayanan;
+            // Kembalikan hasil dari DB::transaction
+            return $result;
 
-            // Buat order
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'tanggal_pesan' => now(),
-                'total' => $totalProduk,
-                'ongkir' => $ongkir,
-                'biaya_layanan' => $biayaLayanan,
-                'total_bayar' => $total,
-                'status' => Order::STATUS_MENUNGGU_VERIFIKASI,
-                'alamat_pengiriman' => $request->alamat_pengiriman,
-                'kurir' => $request->kurir,
-                'layanan_kurir' => $request->layanan_selected_name,
-                'kota_tujuan' => $request->destination,
-            ]);
-
-            // Simpan item order
-            foreach ($cartItems as $cartItem) {
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $cartItem->product_id,
-                    'jumlah' => $cartItem->quantity,
-                    'harga_satuan' => $cartItem->product->harga_normal,
-                    'subtotal' => $cartItem->product->harga_normal * $cartItem->quantity,
-                ]);
-            }
-
-            // Upload bukti transfer
-            $buktiPath = $request->file('bukti_transfer')->store('payments', 'public');
-
-            Payment::create([
-                'order_id' => $order->id,
-                'bukti_transfer' => $buktiPath,
-                'status_verifikasi' => Payment::STATUS_BELUM_DIVERIFIKASI,
-                'metode_pembayaran' => 'transfer',
-            ]);
-
-            // Bersihkan keranjang
-            Cart::where('user_id', Auth::id())->delete();
-
-            // Kirim notifikasi WA ke admin
-            try {
-                $buktiUrl = asset('storage/' . $buktiPath);
-                $message = "💸 *Pesanan Baru Masuk!*\n\n"
-                    . "👤 *Nama:* " . Auth::user()->nama . "\n"
-                    . "📞 *No HP:* " . (Auth::user()->no_hp ?? '-') . "\n"
-                    . "🚚 *Kurir:* " . strtoupper($request->kurir) . " ({$request->layanan_selected_name})\n"
-                    . "🏠 *Alamat:* {$order->alamat_pengiriman}\n"
-                    . "💰 *Total Produk:* Rp " . number_format($totalProduk, 0, ',', '.') . "\n"
-                    . "🚛 *Ongkir:* Rp " . number_format($ongkir, 0, ',', '.') . "\n"
-                    . "💳 *Biaya Layanan:* Rp " . number_format($biayaLayanan, 0, ',', '.') . "\n"
-                    . "💵 *Total Bayar:* Rp " . number_format($total, 0, ',', '.') . "\n\n"
-                    . "📎 *Bukti Transfer:* (lihat gambar di bawah)";
-
-                $whatsapp->sendImageToAdmin($buktiUrl, $message);
-            } catch (\Exception $e) {
-                \Log::error('Gagal kirim notifikasi WA ke admin: ' . $e->getMessage());
-            }
-
+        } catch (\Exception $e) {
+            // Tangkap error jika transaksi gagal
+            \Log::error('Checkout Gagal Total: ' . $e->getMessage());
             return response()->json([
-                'message' => '✅ Pesanan berhasil dibuat & bukti transfer dikirim ke admin.',
-                'order_id' => $order->id,
-            ], 200);
-        });
+                'message' => 'Terjadi error internal: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

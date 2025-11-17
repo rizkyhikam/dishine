@@ -177,267 +177,319 @@
      SCRIPT (REVISI TOTAL)
 ======================== --}}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-
+document.addEventListener('DOMContentLoaded', function() {
+    // ================== VARIABEL GLOBAL ==================
     const subtotal = {{ $total }};
+    const biayaLayanan = 2000;
     let ongkir = 0;
+    let selectedDistrictId = null; // Ini akan menyimpan ID kecamatan
 
-    const searchInput = document.getElementById("search-input");
-    const searchResults = document.getElementById("search-results");
-    const destinationId = document.getElementById("destination_id");
+    // Elemen DOM
+    const kurirSelect = document.getElementById('kurir');
+    const layananSelect = document.getElementById('layanan_ongkir');
+    const form = document.getElementById('checkoutForm');
     
-    const kurirSelect = document.getElementById("kurir");
-    const layananSelect = document.getElementById("layanan_ongkir");
+    const provinsiSelect = document.getElementById('provinsi');
+    const kotaSelect = document.getElementById('kota');
+    const kecamatanSelect = document.getElementById('kecamatan');
+    const kodePosInput = document.getElementById('kode_pos');
+    const alamatLengkapTextarea = document.getElementById('alamat_lengkap');
+    const destinationInput = document.querySelector('input[name="destination"]');
     
-    const ongkirLabel = document.getElementById("ongkir_label");
-    const ongkirValue = document.getElementById("ongkir_value");
-    const totalLabel = document.getElementById("total_label");
-    const layananName = document.getElementById("layanan_selected_name");
+    const alamatDisplay = document.getElementById('alamatDisplay');
+    const alamatForm = document.getElementById('alamatForm');
 
-    // ================== FUNGSI DEBOUNCE ==================
-    // Ini untuk mencegah API dipanggil setiap kali user mengetik
-    // Akan ada jeda 500ms setelah user berhenti mengetik
-    let debounceTimer;
-    function debounce(func, delay) {
-        return function(...args) {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                func.apply(this, args);
-            }, delay);
-        };
-    }
-
-    // ================== FUNGSI CARI LOKASI (BARU) ==================
-    async function cariLokasi() {
-        let keyword = searchInput.value;
-
-        if (keyword.length < 3) {
-            searchResults.style.display = 'none';
-            return;
-        }
-
-        searchResults.style.display = 'block';
-        searchResults.innerHTML = `<div class="result-item">Mencari...</div>`;
-
-        try {
-            const res = await fetch(`/api/ongkir/search-destination?q=${keyword}`);
-            const data = await res.json();
-
-            searchResults.innerHTML = ''; // Kosongkan hasil
-
-            if (data.length === 0) {
-                searchResults.innerHTML = `<div class="result-item">Lokasi tidak ditemukan</div>`;
-                return;
-            }
-
-            data.forEach(lokasi => {
-                // Tampilkan hasil di dropdown
-                let item = document.createElement('div');
-                item.className = 'result-item';
-                // Tampilkan nama lengkap lokasi
-                item.innerHTML = `
-                    <b>${lokasi.subdistrict_name}, ${lokasi.district_name}</b>
-                    <small>${lokasi.city_name}, ${lokasi.province_name} (${lokasi.postal_code})</small>
-                `;
-                // Tambahkan event klik ke setiap item
-                item.addEventListener('click', () => {
-                    pilihLokasi(lokasi);
-                });
-                searchResults.appendChild(item);
-            });
-
-        } catch (error) {
-            console.error('Error cariLokasi:', error);
-            searchResults.innerHTML = `<div class="result-item text-danger">Gagal memuat data</div>`;
-        }
-    }
-
-    // ================== FUNGSI SAAT LOKASI DIPILIH ==================
-    function pilihLokasi(lokasi) {
-        // Isi kotak input dengan nama lokasi
-        searchInput.value = `${lokasi.subdistrict_name}, ${lokasi.city_name}`;
-        // Simpan ID destinasi di input tersembunyi
-        destinationId.value = lokasi.subdistrict_id;
-        
-        // Sembunyikan hasil pencarian
-        searchResults.style.display = 'none';
-
-        // Aktifkan dropdown kurir
-        kurirSelect.disabled = false;
-        kurirSelect.value = '';
-        layananSelect.innerHTML = `<option value="">-- Pilih Kurir Dulu --</option>`;
-        layananSelect.disabled = true;
-
-        // Reset ongkir
-        updateTotal(0);
-    }
-
-    // ================== FUNGSI CARI HARGA (BARU) ==================
-    async function cariHarga() {
-        if (!kurirSelect.value || !destinationId.value) {
-            return;
-        }
-
-        layananSelect.disabled = true;
-        layananSelect.innerHTML = `<option value="">Loading...</option>`;
-
-        try {
-            const res = await fetch("/api/ongkir/search-price", {
-                method: "POST",
-                headers: { 
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": "{{ csrf_token() }}" // Jangan lupa CSRF token
-                },
-                body: JSON.stringify({
-                    destination_id: parseInt(destinationId.value),
-                    weight: 1000, // Ganti dengan berat total jika ada
-                    courier: kurirSelect.value
-                })
-            });
-            
-            const data = await res.json();
-
-            if (data.error) {
-                throw new Error(data.error);
-            }
-
-            layananSelect.innerHTML = `<option value="">-- Pilih Layanan --</option>`;
-
-            if (data.length === 0) {
-                layananSelect.innerHTML = `<option value="">Layanan tidak tersedia</option>`;
-                return;
-            }
-
-            // 'data' sekarang berisi array 'costs' dari kurir yg dipilih
-            data.forEach(layanan => {
-                let cost = layanan.cost[0].value;
-                let etd = layanan.cost[0].etd;
-                let serviceName = layanan.service;
-                // Format harga
-                let formattedCost = `Rp ${cost.toLocaleString('id-ID')}`;
-                
-                // Value-nya akan berisi: HARGA|NAMA LAYANAN
-                let optionValue = `${cost}|${serviceName}`; 
-
-                layananSelect.innerHTML += `
-                    <option value="${optionValue}">
-                        ${serviceName} (${formattedCost}) - (Estimasi ${etd} hari)
-                    </option>
-                `;
-            });
-
-            layananSelect.disabled = false;
-
-        } catch (error) {
-            console.error('Error cariHarga:', error);
-            layananSelect.innerHTML = `<option value="">Gagal memuat layanan</option>`;
-        }
-    }
-
-    // ================== FUNGSI UPDATE TOTAL HARGA ==================
+    // ================== FUNGSI UPDATE TOTAL ==================
     function updateTotal(biayaOngkir) {
         ongkir = parseInt(biayaOngkir);
-        
-        ongkirLabel.innerText = `Rp ${ongkir.toLocaleString('id-ID')}`;
-        ongkirValue.value = ongkir; // Simpan di hidden input
-        
-        let total = subtotal + ongkir;
-        totalLabel.innerText = `Rp ${total.toLocaleString('id-ID')}`;
+        document.getElementById('ongkir_label').textContent = `Rp ${ongkir.toLocaleString('id-ID')}`;
+        document.getElementById('ongkir_value').value = ongkir;
+        let total = subtotal + ongkir + biayaLayanan;
+        document.getElementById('total_label').textContent = `Rp ${total.toLocaleString('id-ID')}`;
     }
 
-    // ==================== EVENT LISTENERS (BARU) ===================
-
-    // Saat user mengetik di kotak pencarian
-    searchInput.addEventListener("input", debounce(cariLokasi, 500));
-
-    // Saat user memilih kurir (JNE/POS/TIKI)
-    kurirSelect.addEventListener("change", cariHarga);
-    
-    // Saat user memilih layanan (REG/OKE/YES)
-    layananSelect.addEventListener("change", () => {
-        let selected = layananSelect.value;
-        if (!selected) {
-            updateTotal(0);
-            layananName.value = '';
-            return;
-        }
-
-        // Pecah value "HARGA|NAMA LAYANAN"
-        let parts = selected.split('|');
-        let harga = parseInt(parts[0]);
-        let nama = parts[1];
-        
-        updateTotal(harga);
-        layananName.value = nama; // Simpan nama layanan
-    });
-
-    // ==================== PREVIEW GAMBAR ===================
-    // ... (Kode ini sama, tidak diubah) ...
-    document.getElementById("bukti_transfer").addEventListener("change", function(){
-        let file = this.files[0];
+    // ================== PREVIEW GAMBAR ==================
+    document.getElementById('bukti_transfer').addEventListener('change', function() {
+        const file = this.files[0];
         if (!file) return;
-        let reader = new FileReader();
-        reader.onload = e => {
-            document.getElementById("preview-container").style.display = "block";
-            document.getElementById("preview-image").src = e.target.result;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('preview-container').classList.remove('hidden');
+            document.getElementById('preview-image').src = e.target.result;
         };
         reader.readAsDataURL(file);
     });
 
-    // ==================== SUBMIT CHECKOUT ===================
-    // Perlu di-update untuk mengirim data baru
-    document.getElementById("submitCheckout").addEventListener("click", async () => {
-        
-        // Validasi Sederhana
-        if (!destinationId.value) {
-            alert("Lokasi pengiriman belum dipilih. Silakan cari dan pilih lokasi Anda.");
-            return;
-        }
-        if (ongkirValue.value == 0 || !layananName.value) {
-            alert("Layanan pengiriman belum dipilih.");
-            return;
-        }
-        if (!document.getElementById("bukti_transfer").files[0]) {
-             alert("Bukti transfer belum di-upload.");
-            return;
-        }
-
-        let formData = new FormData();
-        formData.append("alamat_pengiriman", document.getElementById("alamat_pengiriman").value);
-        formData.append("kurir", kurirSelect.value); // 'jne', 'pos', 'tiki'
-        formData.append("layanan_kurir", layananName.value); // 'REG', 'OKE', 'YES'
-        formData.append("ongkir", ongkirValue.value); // '10000'
-        formData.append("destination_id", destinationId.value); // ID dari Komerce
-        formData.append("bukti_transfer", document.getElementById("bukti_transfer").files[0]);
-
-        // Tampilkan loading
-        document.getElementById("submitCheckout").disabled = true;
-        document.getElementById("submitCheckout").innerText = "Memproses...";
-
-        try {
-            const res = await fetch("/checkout/full", { // Panggil Controller Anda
-                method: "POST",
-                headers: { "X-CSRF-TOKEN": "{{ csrf_token() }}" },
-                body: formData
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                alert("Pesanan berhasil dibuat!");
-                window.location.href = "/orders"; // Arahkan ke halaman pesanan
-            } else {
-                alert(data.message || "Gagal membuat pesanan. Cek kembali data Anda.");
-            }
-        } catch (error) {
-            console.error('Submit Error:', error);
-            alert("Terjadi kesalahan. Silakan coba lagi.");
-        } finally {
-            document.getElementById("submitCheckout").disabled = false;
-            document.getElementById("submitCheckout").innerText = "Pesan Sekarang";
+    // ================== TOGGLE FORM ALAMAT ==================
+    document.getElementById('toggleAlamatBtn').addEventListener('click', function() {
+        alamatDisplay.classList.toggle('hidden');
+        alamatForm.classList.toggle('hidden');
+        if (!alamatForm.classList.contains('hidden')) {
+            loadProvinces();
         }
     });
 
+    document.getElementById('batalAlamatBtn').addEventListener('click', function() {
+        alamatDisplay.classList.remove('hidden');
+        alamatForm.classList.add('hidden');
+    });
+
+    // ================== LOAD DATA WILAYAH (LOGIKA DIPERBAIKI) ==================
+    
+    // 1. Load Provinsi
+    async function loadProvinces() {
+        try {
+            const response = await fetch('/api/ongkir/provinces');
+            const provinces = await response.json();
+            
+            provinsiSelect.innerHTML = '<option value="">Pilih Provinsi</option>';
+            provinces.forEach(province => {
+                provinsiSelect.innerHTML += `<option value="${province.province_id}">${province.province}</option>`;
+            });
+        } catch (error) { console.error('Error loading provinces:', error); }
+    }
+
+    // 2. Load Kota (saat Provinsi dipilih)
+    provinsiSelect.addEventListener('change', async function() {
+        const provinceId = this.value;
+        kotaSelect.disabled = true;
+        kecamatanSelect.disabled = true;
+        kotaSelect.innerHTML = '<option value="">Loading...</option>';
+        kecamatanSelect.innerHTML = '<option value="">Pilih Kecamatan</option>';
+        kodePosInput.value = '';
+        if (!provinceId) {
+            kotaSelect.innerHTML = '<option value="">Pilih Kota</option>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/ongkir/cities/${provinceId}`);
+            const cities = await response.json();
+            
+            kotaSelect.innerHTML = '<option value="">Pilih Kota</option>';
+            cities.forEach(city => {
+                kotaSelect.innerHTML += `<option value="${city.city_id}">${city.type} ${city.city_name}</option>`;
+            });
+            kotaSelect.disabled = false;
+        } catch (error) { 
+            console.error('Error loading cities:', error); 
+            kotaSelect.innerHTML = '<option value="">Gagal memuat</option>';
+        }
+    });
+
+    // 3. Load KECAMATAN (saat Kota dipilih)
+    kotaSelect.addEventListener('change', async function() {
+        const cityId = this.value;
+        kecamatanSelect.disabled = true;
+        kecamatanSelect.innerHTML = '<option value="">Loading...</option>';
+        kodePosInput.value = '';
+        if (!cityId) {
+            kecamatanSelect.innerHTML = '<option value="">Pilih Kecamatan</option>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/ongkir/districts/${cityId}`); 
+            const districts = await response.json();
+            
+            kecamatanSelect.innerHTML = '<option value="">Pilih Kecamatan</option>';
+            districts.forEach(district => {
+                kecamatanSelect.innerHTML += `<option value="${district.district_id}" data-postal="${district.zip_code}">${district.district_name}</option>`;
+            });
+            kecamatanSelect.disabled = false;
+        } catch (error) { 
+            console.error('Error loading districts:', error); 
+            kecamatanSelect.innerHTML = '<option value="">Gagal memuat</option>';
+        }
+    });
+
+    // 4. Saat Kecamatan dipilih
+    kecamatanSelect.addEventListener('change', async function() {
+        const selectedOption = this.options[this.selectedIndex];
+        
+        if (!this.value) {
+            kodePosInput.value = '';
+            selectedDistrictId = null;
+            destinationInput.value = '';
+            return;
+        }
+
+        const districtId = this.value;
+        const kodePos = selectedOption.getAttribute('data-postal');
+
+        kodePosInput.value = kodePos || 'N/A';
+        selectedDistrictId = districtId; 
+        destinationInput.value = districtId; 
+    });
+
+    // ================== SIMPAN ALAMAT ==================
+    document.getElementById('simpanAlamatBtn').addEventListener('click', async function() {
+        const provinsi = provinsiSelect.options[provinsiSelect.selectedIndex]?.textContent;
+        const kota = kotaSelect.options[kotaSelect.selectedIndex]?.textContent;
+        const kecamatan = kecamatanSelect.options[kecamatanSelect.selectedIndex]?.textContent;
+        const alamatLengkap = alamatLengkapTextarea.value;
+        const kodePos = kodePosInput.value;
+
+        if (!provinsi || !kota || !kecamatan || !alamatLengkap || !kodePos || !selectedDistrictId) {
+            alert('Harap lengkapi semua data alamat (Provinsi, Kota, Kecamatan, dan Alamat Lengkap).');
+            return;
+        }
+
+        const alamatFinal = `${alamatLengkap}, ${kecamatan}, ${kota}, ${provinsi} ${kodePos}`;
+
+        try {
+            const response = await fetch('/api/update-alamat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ alamat: alamatFinal })
+            });
+
+            if (response.ok) {
+                document.getElementById('alamatDisplay').querySelector('p:last-child').textContent = alamatFinal;
+                alamatDisplay.classList.remove('hidden');
+                alamatForm.classList.add('hidden');
+                alert('Alamat berhasil diperbarui');
+            } else {
+                alert('Gagal menyimpan alamat');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan');
+        }
+    });
+
+    // ================== CEK ONGKIR ==================
+    kurirSelect.addEventListener('change', async function() {
+        const kurir = this.value;
+        let destinationId = selectedDistrictId || destinationInput.value;
+
+        if (!kurir || !destinationId) {
+            if (!destinationId) alert('Harap pilih alamat (Kecamatan) Anda terlebih dahulu.');
+            layananSelect.innerHTML = '<option value="">-- Pilih Layanan --</option>';
+            layananSelect.disabled = true;
+            return;
+        }
+
+        layananSelect.disabled = true;
+        layananSelect.innerHTML = '<option value="">Loading...</option>';
+
+        try {
+            const response = await fetch('/api/ongkir/cost', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    destination: destinationId, // ID Kecamatan
+                    kurir: kurir,
+                    weight: 1000 // Berat default 1kg
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                layananSelect.innerHTML = '<option value="">-- Pilih Layanan --</option>';
+                
+                if (data.data.length === 0) {
+                     layananSelect.innerHTML = '<option value="">Layanan tidak tersedia</option>';
+                }
+
+                data.data.forEach(layanan => {
+                    const option = document.createElement('option');
+                    option.value = `${layanan.cost}|${layanan.service}`;
+                    option.textContent = `${layanan.service} (${layanan.description}) - Rp ${layanan.cost.toLocaleString('id-ID')}`;
+                    layananSelect.appendChild(option);
+                });
+
+                layananSelect.disabled = false;
+            } else {
+                throw new Error(data.message || 'Gagal mengambil data ongkir');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            layananSelect.innerHTML = '<option value="">Gagal memuat layanan</option>';
+        }
+    });
+
+    // ================== SAAT LAYANAN DIPILIH ==================
+    layananSelect.addEventListener('change', function() {
+        if (this.value) {
+            const [cost, service] = this.value.split('|');
+            updateTotal(parseInt(cost));
+            document.getElementById('layanan_selected_name').value = service;
+        } else {
+            updateTotal(0);
+        }
+    });
+
+    // ================== SUBMIT CHECKOUT (DIPERBAIKI) ==================
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // --- PERBAIKAN BARU ---
+        // Cek apakah user sedang mengedit alamat tapi belum disimpan
+        if (!alamatForm.classList.contains('hidden')) {
+            alert('Alamat Anda sedang diubah. Klik "Simpan Alamat" atau "Batal" terlebih dahulu sebelum memesan.');
+            return;
+        }
+        // --- AKHIR PERBAIKAN ---
+
+        // Validasi (sama seperti sebelumnya)
+        const buktiTransfer = document.getElementById('bukti_transfer').files[0];
+        const layananSelected = document.getElementById('layanan_selected_name').value;
+        const ongkirValue = document.getElementById('ongkir_value').value;
+        const kurir = document.getElementById('kurir').value;
+        const destinationId = selectedDistrictId || destinationInput.value;
+
+        if (!layananSelected || ongkirValue === '0' || !kurir) {
+            alert('Silakan pilih layanan pengiriman.');
+            return;
+        }
+        if (!buktiTransfer) {
+            alert('Bukti transfer belum diupload.');
+            return;
+        }
+        if (!destinationId) {
+             alert('Alamat (Kecamatan) tujuan belum dipilih.');
+            return;
+        }
+
+        const formData = new FormData(this);
+        const submitBtn = document.getElementById('submitCheckout');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Memproses...';
+
+        try {
+            const response = await fetch('{{ route("checkout.store") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json' 
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('Pesanan berhasil dibuat!');
+                window.location.href = '{{ route("orders.view") }}';
+            } else {
+                alert(result.message || 'Terjadi kesalahan. Silakan coba lagi.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan. Silakan coba lagi.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Pesan';
+        }
+    });
 });
 </script>
 

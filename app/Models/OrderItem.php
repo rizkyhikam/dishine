@@ -9,18 +9,29 @@ class OrderItem extends Model
 {
     use HasFactory;
 
+    /**
+     * Kolom yang boleh diisi (Mass Assignment)
+     * INI ADALAH PERBAIKANNYA
+     */
     protected $fillable = [
         'order_id',
         'product_id',
-        'quantity',
-        'price',
+        'jumlah',
+        'harga_satuan',
+        'subtotal',
     ];
 
+    /**
+     * Relasi ke Order
+     */
     public function order()
     {
         return $this->belongsTo(Order::class);
     }
 
+    /**
+     * Relasi ke Product
+     */
     public function product()
     {
         return $this->belongsTo(Product::class);
