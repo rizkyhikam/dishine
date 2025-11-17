@@ -31,10 +31,19 @@ class ProductController extends Controller
     }
 
 
+    /**
+     * Menampilkan halaman detail untuk satu produk.
+     */
     public function show($id)
     {
-        $product = Product::findOrFail($id);
-        return response()->json(['product' => $product], 200);
+        // 1. Ambil 1 produk berdasarkan ID-nya.
+        // 2. 'with' adalah perintah EFEKTIF untuk langsung mengambil
+        //    data 'category' (Kategori) dan 'images' (Galeri Foto)
+        //    yang terhubung dengan produk ini.
+        $product = Product::with(['category', 'images'])->findOrFail($id);
+
+        // 3. Kirim data '$product' ke view bernama 'detail_produk'
+        return view('detail_produk', compact('product'));
     }
 
     public function store(Request $request)

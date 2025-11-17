@@ -16,7 +16,7 @@
                 <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-all duration-300"
                         data-aos="fade-up" 
                         data-aos-delay="<?php echo e($loop->index * 30); ?>">
-                <a href="<?php echo e(url('detailproduk.blade.php' . $product->id)); ?>" class="block">    
+                <a href="<?php echo e(url('/products/' . $product->id)); ?>" class="block">    
                 <img src="<?php echo e(asset('storage/' . $product->gambar)); ?>" 
                          alt="<?php echo e($product->nama); ?>" 
                          class="w-full h-64 object-cover"></a>

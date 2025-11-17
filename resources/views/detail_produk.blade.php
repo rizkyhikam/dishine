@@ -1,0 +1,137 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="bg-[#f3e8e3] py-12">
+    <div class="max-w-6xl mx-auto px-6">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            
+            <!-- 
+                =================================
+                KOLOM KIRI: GALERI FOTO
+                =================================
+            -->
+            <div data-aos="fade-right">
+                <!-- GAMBAR UTAMA (BESAR) -->
+                <div class="mb-4 rounded-xl overflow-hidden shadow-md">
+                    <img id="main-image" 
+                         src="{{ asset('storage/' . $product->gambar) }}" 
+                         alt="{{ $product->nama }}" 
+                         class="w-full h-auto object-cover transition-all duration-300 aspect-square">
+                </div>
+                
+                <!-- THUMBNAIL (KECIL) -->
+                <div class="flex space-x-3 overflow-x-auto pb-2">
+                    
+                    <!-- Thumbnail 1: Gambar Sampul (Cover) -->
+                    <div class="w-24 h-24 flex-shrink-0">
+                        <img src="{{ asset('storage/' . $product->gambar) }}" 
+                             alt="Thumbnail (Cover)" 
+                             class="thumbnail-image w-full h-full object-cover rounded-md cursor-pointer border-2 border-[#a07850]">
+                    </div>
+
+                    <!-- Thumbnail 2, 3, 4, dst: Dari Galeri -->
+                    @foreach($product->images as $image)
+                        <div class="w-24 h-24 flex-shrink-0">
+                            <img src="{{ asset('storage/' . $image->path) }}" 
+                                 alt="Thumbnail Galeri" 
+                                 class="thumbnail-image w-full h-full object-cover rounded-md cursor-pointer border-2 border-transparent hover:border-[#a07850]">
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- 
+                =================================
+                KOLOM KANAN: INFO PRODUK
+                =================================
+            -->
+            <div data-aos="fade-left" data-aos-delay="100">
+                <!-- Kategori -->
+                <p class="text-sm text-[#a07850] font-semibold mb-2">
+                    Kategori: {{ $product->category->name ?? 'N/A' }}
+                </p>
+
+                <!-- Nama Produk -->
+                <h1 class="text-3xl lg:text-4xl font-bold text-[#3c2f2f] mb-3">
+                    {{ $product->nama }}
+                </h1>
+                
+                <!-- Harga -->
+                <p class="text-2xl font-bold text-[#4a3b2f] mb-4">
+                    Rp {{ number_format($product->harga_normal, 0, ',', '.') }}
+                </p>
+                
+                <!-- Stok -->
+                <p class="text-sm text-[#7a6a5a] mb-4">
+                    Stok Tersedia: <span class="font-semibold">{{ $product->stok }}</span>
+                </p>
+
+                <!-- Form Keranjang (Kita tambahkan kuantitas) -->
+                <form action="{{ route('cart.add', $product->id) }}" method="POST">
+                    @csrf
+                    
+                    <div class="flex items-center space-x-4 mb-6">
+                        <!-- Kuantitas -->
+                        <div class="w-24">
+                            <label for="quantity" class="text-sm font-medium text-[#6b5a4a]">Jumlah:</label>
+                            <input type="number" id="quantity" name="quantity" 
+                                   class="w-full border border-[#b48a60] rounded-md p-2 text-center" 
+                                   value="1" min="1" max="{{ $product->stok }}">
+                        </div>
+
+                        <!-- Tombol Keranjang -->
+                        <div class="flex-1">
+                            <label class="text-sm invisible">_</label> <!-- (untuk perataan) -->
+                            <button type="submit" 
+                                    class="w-full bg-[#44351f] text-white px-6 py-2.5 rounded-md hover:bg-[#a07850] transition text-center flex items-center justify-center space-x-2">
+                                <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                                <span>Tambah ke Keranjang</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Deskripsi -->
+                <div class="mt-6">
+                    <h4 class="text-lg font-semibold text-[#3c2f2f] mb-2">Deskripsi Produk</h4>
+                    <div class="text-[#7a6a5a] space-y-2">
+                        {!! nl2br(e($product->deskripsi)) !!}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!--
+    =================================
+    JAVASCRIPT UNTUK GALERI FOTO
+    =================================
+-->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const mainImage = document.getElementById('main-image');
+        const thumbnails = document.querySelectorAll('.thumbnail-image');
+
+        thumbnails.forEach(thumb => {
+            thumb.addEventListener('click', function () {
+                // 1. Ganti gambar utama
+                mainImage.src = this.src; // 'this' adalah thumbnail yg di-klik
+                
+                // 2. Hapus border aktif dari SEMUA thumbnail
+                thumbnails.forEach(t => t.classList.remove('border-[#a07850]', 'border-2'));
+                thumbnails.forEach(t => t.classList.add('border-transparent'));
+
+                // 3. Tambahkan border aktif HANYA ke thumbnail yg di-klik
+                this.classList.add('border-[#a07850]', 'border-2');
+                this.classList.remove('border-transparent');
+            });
+        });
+        
+        // Panggil lucide
+        lucide.createIcons();
+    });
+</script>
+@endsection
