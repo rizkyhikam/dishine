@@ -1,33 +1,156 @@
 @extends('layouts.admin')
 
-@section('title', 'Kelola Pesanan - Admin')
+@section('title', 'Manajemen Pesanan - DISHINE Admin')
 
 @section('content')
-<div class="container mx-auto px-4 py-10">
-    <h1 class="text-3xl font-bold mb-8">Kelola Pesanan</h1>
-    <table class="w-full bg-white shadow-md rounded">
-        <thead>
-            <tr class="bg-gray-100">
-                <th class="p-4">ID Pesanan</th>
-                <th class="p-4">Pengguna</th>
-                <th class="p-4">Total</th>
-                <th class="p-4">Status</th>
-                <th class="p-4">Aksi</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($orders as $order)
-            <tr>
-                <td class="p-4">{{ $order->id }}</td>
-                <td class="p-4">{{ $order->user->nama }}</td>
-                <td class="p-4">Rp {{ number_format($order->total) }}</td>
-                <td class="p-4">{{ $order->status }}</td>
-                <td class="p-4">
-                    <button class="btn-primary px-4 py-2 rounded">Lihat Detail</button>
-                </td>
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
-</div>
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Manajemen Pesanan</h1>
+
+    <!-- Card Putih untuk Tabel -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        
+        <!-- 
+        =================================
+        HEADER TABEL (DENGAN FORM FILTER)
+        =================================
+        -->
+        <form action="{{ route('admin.orders') }}" method="GET">
+            <div class="p-4 border-b border-gray-200 bg-gray-50 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                
+                <!-- Filter Nama Pelanggan -->
+                <div>
+                    <label for="search_nama" class="block text-xs font-medium text-gray-500 mb-1">Cari Nama Pelanggan</label>
+                    <input type="text" name="search_nama" id="search_nama" 
+                           class="w-full border border-gray-300 rounded px-3 py-2 text-sm" 
+                           placeholder="Ketik nama..."
+                           value="{{ $filters['search_nama'] ?? '' }}">
+                </div>
+
+                <!-- Filter Tanggal Mulai -->
+                <div>
+                    <label for="tanggal_mulai" class="block text-xs font-medium text-gray-500 mb-1">Dari Tanggal</label>
+                    <input type="date" name="tanggal_mulai" id="tanggal_mulai" 
+                           class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                           value="{{ $filters['tanggal_mulai'] ?? '' }}">
+                </div>
+
+                <!-- Filter Tanggal Selesai -->
+                <div>
+                    <label for="tanggal_selesai" class="block text-xs font-medium text-gray-500 mb-1">Sampai Tanggal</label>
+                    <input type="date" name="tanggal_selesai" id="tanggal_selesai" 
+                           class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                           value="{{ $filters['tanggal_selesai'] ?? '' }}">
+                </div>
+                
+                <!-- Tombol Aksi -->
+                <div class="flex space-x-2">
+                    <button type="submit" class="w-full bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm font-medium flex items-center justify-center">
+                        <i data-lucide="search" class="w-4 h-4 mr-2"></i>
+                        Filter
+                    </button>
+                    <a href="{{ route('admin.orders') }}" class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 text-sm font-medium flex items-center justify-center">
+                        Reset
+                    </a>
+                </div>
+            </div>
+        </form>
+        <!-- =============================== -->
+
+
+        <!-- Tabel Pesanan -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            No. Pesanan
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tgl. Pesanan
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Pelanggan
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Jumlah Barang
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Total Harga
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Bukti Pembayaran
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    
+                    @forelse ($orders as $order)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <!-- Link ke Halaman Detail Admin -->
+                                <a href="{{ route('admin.orders.show', $order->id) }}" class="font-medium text-blue-600 hover:text-blue-800">
+                                    ORD-{{ $order->id }}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ \Carbon\Carbon::parse($order->tanggal_pesan)->format('d/m/Y') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                                {{ $order->user->name ?? 'User Dihapus' }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
+                                <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                                    {{ $order->orderItems->sum('jumlah') }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">
+                                Rp{{ number_format($order->total_bayar, 0, ',', '.') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <!-- Status Pill -->
+                                <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full
+                                    @if($order->status == 'selesai') bg-green-200 text-green-800
+                                    @elseif($order->status == 'dibatalkan') bg-red-200 text-red-800
+                                    @elseif($order->status == 'dikirim') bg-blue-200 text-blue-800
+                                    @elseif($order->status == 'diproses') bg-yellow-200 text-yellow-800
+                                    @else bg-gray-200 text-gray-800 @endif
+                                ">
+                                    {{ ucwords(str_replace('_', ' ', $order->status)) }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                @if($order->payment && $order->payment->bukti_transfer)
+                                    <a href="{{ asset('storage/' . $order->payment->bukti_transfer) }}" target="_blank"
+                                       class="text-blue-600 hover:text-blue-800">
+                                        <i data-lucide="external-link" class="w-5 h-5"></i>
+                                    </a>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="text-center py-10 text-gray-500">
+                                @if(request()->has('search_nama') || request()->has('tanggal_mulai'))
+                                    Tidak ada pesanan yang cocok dengan filter Anda.
+                                @else
+                                    Belum ada pesanan yang masuk.
+                                @endif
+                            </td>
+                        </tr>
+                    @endforelse
+                    
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Footer Tabel (Saya hilangkan 'item terpilih' agar lebih simpel) -->
+        <div class="p-4 border-t border-gray-200">
+            <!-- (Pagination bisa ditambahkan di sini nanti) -->
+        </div>
+
+    </div>
 @endsection

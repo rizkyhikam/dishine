@@ -104,6 +104,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // --- MANAJEMEN PESANAN ---
     Route::get('/orders', [AdminController::class, 'manageOrders'])->name('orders');
+    Route::put('/orders/{id}/status', [AdminController::class, 'updateOrderStatus'])->name('orders.update');
+    
+    // --- TAMBAHKAN RUTE BARU INI UNTUK DETAIL PESANAN ADMIN ---
+    Route::get('/orders/{id}', [AdminController::class, 'showOrder'])->name('orders.show');
+    
     
     // --- INI BARIS 108 YANG SAYA PERBAIKI ---
     // Saya kembalikan ke fungsi Anda yang asli 'updateOrderStatus'

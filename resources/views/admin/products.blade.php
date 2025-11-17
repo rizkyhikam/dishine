@@ -1,125 +1,117 @@
 @extends('layouts.admin')
 
 @section('content')
-<h1 class="mb-4">Manajemen Produk</h1>
+<h1 class="text-3xl font-bold text-gray-800 mb-6">Manajemen Produk</h1>
 
 @if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
+    <div class="alert alert-success bg-green-100 text-green-700 p-4 rounded mb-4">{{ session('success') }}</div>
 @endif
 
-<!-- Form Tambah Produk -->
-<!-- Form Tambah Produk (VERSI UPGRADE) -->
-        <div class="card mb-4">
-            <div class="card-header">Tambah Produk Baru</div>
-            <div class="card-body">
-                <form action="{{ route('admin.products') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label>Nama Produk</label>
-                            <input type="text" name="nama" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <!-- DROPDOWN KATEGORI (BARU) -->
-                            <label>Kategori Produk</label>
-                            <select name="category_id" class="form-select" required>
-                                <option value="">-- Pilih Kategori --</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label>Harga Normal</label>
-                            <input type="number" name="harga_normal" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label>Harga Reseller</label>
-                            <input type="number" name="harga_reseller" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label>Stok</label>
-                            <input type="number" name="stok" class="form-control" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label>Deskripsi</label>
-                        <textarea name="deskripsi" class="form-control" rows="3" required></textarea>
-                    </div>
-                    <div class="row mb-3">
-                        <!-- INPUT GAMBAR SAMPUL (Ganti Label) -->
-                        <div class="col-md-6">
-                            <label>Gambar Sampul (Cover)</label>
-                            <input type="file" name="gambar" class="form-control" accept="image/*" required>
-                            <small class="form-text text-muted">Ini adalah foto utama di katalog.</small>
-                        </div>
-                        
-                        <!-- INPUT GALERI FOTO (BARU) -->
-                        <div class="col-md-6">
-                            <label>Galeri Foto (Opsional)</label>
-                            <input type="file" name="gallery[]" class="form-control" accept="image/*" multiple>
-                            <small class="form-text text-muted">Tahan Ctrl/Cmd untuk pilih banyak foto.</small>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Tambah Produk</button>
-                </form>
+<!-- Form Tambah Produk (Di dalam Card) -->
+<div class="bg-white rounded-lg shadow-lg mb-6 overflow-hidden">
+    <div class="card-header bg-gray-50 border-b border-gray-200 px-6 py-4">
+        <h2 class="text-lg font-semibold text-gray-700">Tambah Produk Baru</h2>
+    </div>
+    <div class="card-body p-6">
+        <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Produk</label>
+                    <input type="text" name="nama" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Produk</label>
+                    <select name="category_id" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                        <option value="">-- Pilih Kategori --</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Harga Normal</label>
+                    <input type="number" name="harga_normal" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Harga Reseller</label>
+                    <input type="number" name="harga_reseller" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Stok</label>
+                    <input type="number" name="stok" class="w-full border border-gray-300 rounded px-3 py-2" required>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                <textarea name="deskripsi" class="w-full border border-gray-300 rounded px-3 py-2" rows="3" required></textarea>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Gambar Sampul (Cover)</label>
+                    <input type="file" name="gambar" class="w-full border border-gray-300 rounded px-3 py-2" accept="image/*" required>
+                    <small class="text-xs text-gray-500">Ini adalah foto utama di katalog.</small>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Galeri Foto (Opsional)</label>
+                    <input type="file" name="gallery[]" class="w-full border border-gray-300 rounded px-3 py-2" accept="image/*" multiple>
+                    <small class="text-xs text-gray-500">Tahan Ctrl/Cmd untuk pilih banyak foto.</small>
+                </div>
+            </div>
+            <button type="submit" class="bg-gray-800 text-white px-5 py-2 rounded-md hover:bg-gray-700 text-sm font-medium">Tambah Produk</button>
+        </form>
+    </div>
+</div>
 
-<!-- Daftar Produk -->
-<div class="card">
-    <div class="card-header">Daftar Produk</div>
-    <div class="card-body">
-        <table class="table table-bordered table-striped">
-            
-            <!-- KEPALA TABEL (<thead>) YANG SUDAH BENAR -->
-            <thead>
+<!-- Daftar Produk (Di dalam Card) -->
+<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+    <div class="card-header bg-gray-50 border-b border-gray-200 px-6 py-4">
+        <h2 class="text-lg font-semibold text-gray-700">Daftar Produk</h2>
+    </div>
+    <div class="card-body overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
                 <tr>
-                    <th>No</th>
-                    <th>Nama</th>
-                    <th>Kategori</th> <!-- <-- Kolom baru -->
-                    <th>Harga Normal</th>
-                    <th>Harga Reseller</th>
-                    <th>Stok</th>
-                    <th>Gambar (Sampul)</th>
-                    <th>Aksi</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Harga Normal</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stok</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gambar (Sampul)</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                 </tr>
             </thead>
-
-            <!-- ISI TABEL (<tbody>) YANG SUDAH BENAR -->
-            <tbody>
+            <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($products as $index => $product)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $product->nama }}</td>
-                        <td>{{ $product->category->name ?? 'N/A' }}</td> <!-- <-- Kolom baru -->
-                        <td>Rp{{ number_format($product->harga_normal, 0, ',', '.') }}</td>
-                        <td>Rp{{ number_format($product->harga_reseller, 0, ',', '.') }}</td>
-                        <td>{{ $product->stok }}</td>
-                        <td>
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">{{ $index + 1 }}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">{{ $product->nama }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ $product->category->name ?? 'N/A' }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">Rp{{ number_format($product->harga_normal, 0, ',', '.') }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ $product->stok }}</td>
+                        <td class="px-6 py-4">
                             @if($product->gambar)
-                                <img src="{{ asset('storage/' . $product->gambar) }}" width="60" alt="{{ $product->nama }}">
+                                <img src="{{ asset('storage/' . $product->gambar) }}" width="60" alt="{{ $product->nama }}" class="rounded-md">
                             @else
                                 -
                             @endif
                         </td>
-                        <td>
-                            <a href="{{ route('admin.products.edit', $product->id) }}" class="btn btn-sm btn-warning me-1 mb-1">Edit</a>
-                            <form action="{{ route('admin.products.delete', $product->id) }}" method="POST" class="d-inline">
+                        <td class="px-6 py-4 text-sm">
+                            <a href="{{ route('admin.products.edit', $product->id) }}" class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</a>
+                            <form action="{{ route('admin.products.delete', $product->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus produk ini?')">
                                 @csrf
                                 @method('DELETE')
-                                <button class="btn btn-sm btn-danger mb-1" onclick="return confirm('Hapus produk ini?')">Hapus</button>
+                                <button class="text-red-600 hover:text-red-900 font-medium ml-3">Hapus</button>
                             </form>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="text-center">Belum ada produk.</td>
+                        <td colspan="8" class="text-center py-10 text-gray-500">Belum ada produk.</td>
                     </tr>
                 @endforelse
-                <!-- SAYA SUDAH HAPUS KATA 'Category' YANG NYASAR DARI SINI -->
             </tbody>
         </table>
     </div>

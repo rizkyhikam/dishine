@@ -9,18 +9,15 @@ class Order extends Model
 {
     use HasFactory;
 
-    // --- INI PERBAIKANNYA ---
-    // Mendefinisikan status yang bisa dipakai
+    // --- Definisi Status (Sudah ada dari perbaikan checkout) ---
     public const STATUS_MENUNGGU_VERIFIKASI = 'menunggu_verifikasi';
     public const STATUS_DIPROSES = 'diproses';
     public const STATUS_DIKIRIM = 'dikirim';
     public const STATUS_SELESAI = 'selesai';
     public const STATUS_DIBATALKAN = 'dibatalkan';
-    // -------------------------
 
     /**
-     * Kolom yang boleh diisi (Mass Assignment)
-     * SAYA SUDAH LENGKAPI SEMUA DARI CONTROLLER ANDA
+     * Kolom yang boleh diisi
      */
     protected $fillable = [
         'user_id',
@@ -33,11 +30,14 @@ class Order extends Model
         'alamat_pengiriman',
         'kurir',
         'layanan_kurir',
-        'kota_tujuan', // Pastikan kolom ini ada di database Anda
+        'kota_tujuan',
     ];
 
     /**
-     * Relasi ke User (Pemesan)
+     * -----------------------------------------------------------------
+     * INI ADALAH PERBAIKAN UNTUK MASALAH #3
+     * Relasi: Satu Pesanan dimiliki oleh SATU User
+     * -----------------------------------------------------------------
      */
     public function user()
     {

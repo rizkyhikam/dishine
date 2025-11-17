@@ -95,9 +95,9 @@ class CheckoutController extends Controller
                     return $item->product->harga_normal * $item->quantity;
                 });
 
-                $biayaLayanan = 2000;
+                $biayaLayanan = 2000; // <-- Didefinisikan dengan 'y'
                 $ongkir = $request->ongkir_value;
-                $total = $totalProduk + $ongkir + $biayaLayanan;
+                $total = $totalProduk + $ongkir + $biayaLayanan; // <-- Digunakan dengan 'y' (Benar)
 
                 // --- LANGKAH 3: BUAT ORDER (SAMA SEPERTI LAMA) ---
                 $order = Order::create([
@@ -105,13 +105,16 @@ class CheckoutController extends Controller
                     'tanggal_pesan' => now(),
                     'total' => $totalProduk,
                     'ongkir' => $ongkir,
-                    'biaya_layanan' => $biayaLayanan, // Pastikan kolom ini ada
-                    'total_bayar' => $total, // Pastikan kolom ini ada
+                    
+                    // --- INI DIA PERBAIKANNYA ---
+                    'biaya_layanan' => $biayaLayanan, // <-- SEKARANG SUDAH BENAR (pakai 'y')
+                    
+                    'total_bayar' => $total,
                     'status' => Order::STATUS_MENUNGGU_VERIFIKASI,
                     'alamat_pengiriman' => $user->alamat,
                     'kurir' => $request->kurir,
-                    'layanan_kurir' => $request->layanan_selected_name, // Pastikan kolom ini ada
-                    'kota_tujuan' => $request->destination, // Pastikan kolom ini ada
+                    'layanan_kurir' => $request->layanan_selected_name,
+                    'kota_tujuan' => $request->destination,
                 ]);
 
                 // --- LANGKAH 4: SIMPAN ORDER ITEM & KURANGI STOK (UPGRADE) ---
@@ -121,7 +124,7 @@ class CheckoutController extends Controller
                         'product_id' => $cartItem->product_id,
                         'jumlah' => $cartItem->quantity,
                         'harga_satuan' => $cartItem->product->harga_normal,
-                        'subtotal' => $cartItem->product->harga_normal * $cartItem->quantity, // Pastikan kolom ini ada
+                        'subtotal' => $cartItem->product->harga_normal * $cartItem->quantity,
                     ]);
                     
                     // --- INI LOGIKA BARU UNTUK KURANGI STOK ---
@@ -138,7 +141,7 @@ class CheckoutController extends Controller
                     'order_id' => $order->id,
                     'bukti_transfer' => $buktiPath,
                     'status_verifikasi' => Payment::STATUS_BELUM_DIVERIFIKASI,
-                    'metode_pembayaran' => 'transfer', // Pastikan kolom ini ada
+                    'metode_pembayaran' => 'transfer',
                 ]);
 
                 // --- LANGKAH 6: BERSIHKAN KERANJANG (SAMA) ---

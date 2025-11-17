@@ -199,11 +199,44 @@ class AdminController extends Controller
     // ---------------------------------------------------------
     // CRUD PESANAN
     // ---------------------------------------------------------
-    public function manageOrders()
+    public function manageOrders(Request $request)
     {
-        $orders = Order::with('user', 'orderItems.product')->get();
-        return view('admin.orders', compact('orders'));
-    }
+        // 1. Mulai query dasar (jangan panggil ->get() dulu)
+        $query = Order::with(['user', 'orderItems', 'payment']);
+
+        // 2. Terapkan Filter NAMA PELANGGAN (jika ada)
+        if ($request->filled('search_nama')) {
+            $searchTerm = $request->search_nama;
+            
+            // 'whereHas' mencari di dalam relasi 'user'
+            $query->whereHas('user', function ($q) use ($searchTerm) {
+                
+                // --- INI DIA PERBAIKANNYA ---
+                // Kolom Anda 'nama', bukan 'name'
+                $q->where('users.nama', 'LIKE', "%{$searchTerm}%");
+            
+            });
+        }
+
+        // 3. Terapkan Filter TANGGAL MULAI (jika ada)
+        if ($request->filled('tanggal_mulai')) {
+            $query->whereDate('tanggal_pesan', '>=', $request->tanggal_mulai);
+        }
+
+        // 4. Terapkan Filter TANGGAL SELESAI (jika ada)
+        if ($request->filled('tanggal_selesai')) {
+            $query->whereDate('tanggal_pesan', '<=', $request->tanggal_selesai);
+        }
+
+        // 5. Ambil hasilnya (setelah semua filter diterapkan)
+        $orders = $query->latest()->get();
+        
+        // 6. Kirim data pesanan DAN data filter (agar input tetap terisi)
+        return view('admin.orders', [
+            'orders' => $orders,
+            'filters' => $request->only(['search_nama', 'tanggal_mulai', 'tanggal_selesai'])
+        ]);
+    }        
 
     public function updateOrderStatus(Request $request, $id)
     {
@@ -277,5 +310,14 @@ class AdminController extends Controller
         $category->delete();
 
         return redirect()->route('admin.categories')->with('success', 'Kategori berhasil dihapus.');
+    }
+
+    public function showOrder($id)
+    {
+        // Ambil data order LENGKAP dengan relasinya
+        $order = Order::with(['user', 'orderItems.product', 'payment'])
+                    ->findOrFail($id);
+                    
+        return view('admin.orders_show', compact('order'));
     }
 }

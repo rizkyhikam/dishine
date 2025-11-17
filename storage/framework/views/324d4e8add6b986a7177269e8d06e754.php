@@ -3,29 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - DISHINE</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title><?php echo $__env->yieldContent('title', 'DISHINE Admin'); ?></title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background-color: #F7F8FC; }
+        /* Scrollbar kustom untuk sidebar */
+        .sidebar::-webkit-scrollbar { width: 4px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #b48a60; border-radius: 10px; }
+        .sidebar::-webkit-scrollbar-track { background: #e0d5ce; }
+    </style>
 </head>
-<body class="bg-light">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="<?php echo e(route('admin.dashboard')); ?>">DISHINE Admin</a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="<?php echo e(route('admin.products')); ?>">Manajemen Produk</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?php echo e(route('admin.categories')); ?>">Manajemen Kategori</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?php echo e(route('admin.orders')); ?>">Pesanan</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?php echo e(route('admin.faq')); ?>">FAQ</a></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<body class="bg-gray-100">
 
-    <div class="container">
-        <?php echo $__env->yieldContent('content'); ?>
+    <div class="flex h-screen bg-gray-100">
+        
+        <!-- 
+        =================================
+        SIDEBAR (WARNA BARU)
+        =================================
+        -->
+        <aside class="w-64 bg-[#f8f5f2] text-[#3c2f2f] flex flex-col fixed h-full sidebar overflow-y-auto border-r border-[#d6c3b3]">
+            <!-- Logo -->
+            <div class="flex items-center justify-center h-20 border-b border-[#d6c3b3]">
+                <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-12">
+            </div>
+
+            <!-- Nav Links -->
+            <nav class="flex-1 mt-6">
+                <a href="<?php echo e(route('admin.dashboard')); ?>" 
+                   class="flex items-center px-6 py-3 text-[#3c2f2f] hover:bg-[#e0d5ce] hover:text-black transition
+                          <?php echo e(request()->is('admin/dashboard*') ? 'bg-[#b48a60] text-white' : ''); ?>">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+                
+                <a href="<?php echo e(route('admin.orders')); ?>" 
+                   class="flex items-center px-6 py-3 text-[#3c2f2f] hover:bg-[#e0d5ce] hover:text-black transition
+                          <?php echo e(request()->is('admin/orders*') ? 'bg-[#b48a60] text-white' : ''); ?>">
+                    <i data-lucide="archive" class="w-5 h-5 mr-3"></i>
+                    <span>Manajemen Pesanan</span>
+                </a>
+                
+                <a href="<?php echo e(route('admin.products')); ?>" 
+                   class="flex items-center px-6 py-3 text-[#3c2f2f] hover:bg-[#e0d5ce] hover:text-black transition
+                          <?php echo e(request()->is('admin/products*') ? 'bg-[#b48a60] text-white' : ''); ?>">
+                    <i data-lucide="package" class="w-5 h-5 mr-3"></i>
+                    <span>Manajemen Produk</span>
+                </a>
+                
+                <a href="<?php echo e(route('admin.categories')); ?>" 
+                   class="flex items-center px-6 py-3 text-[#3c2f2f] hover:bg-[#e0d5ce] hover:text-black transition
+                          <?php echo e(request()->is('admin/categories*') ? 'bg-[#b48a60] text-white' : ''); ?>">
+                    <i data-lucide="list" class="w-5 h-5 mr-3"></i>
+                    <span>Manajemen Kategori</span>
+                </a>
+
+                <a href="<?php echo e(route('admin.faq')); ?>" 
+                   class="flex items-center px-6 py-3 text-[#3c2f2f] hover:bg-[#e0d5ce] hover:text-black transition
+                          <?php echo e(request()->is('admin/faq*') ? 'bg-[#b48a60] text-white' : ''); ?>">
+                    <i data-lucide="help-circle" class="w-5 h-5 mr-3"></i>
+                    <span>Manajemen FAQ</span>
+                </a>
+            </nav>
+
+            <!-- User/Keluar -->
+            <div class="py-4 px-6 border-t border-[#d6c3b3]">
+                <!-- Form Logout -->
+                <form method="POST" action="<?php echo e(route('logout')); ?>">
+                    <?php echo csrf_field(); ?>
+                    <button type-="submit" 
+                       class="w-full flex items-center px-6 py-3 text-[#3c2f2f] hover:bg-[#e0d5ce] hover:text-black transition rounded-md">
+                        <i data-lucide="log-out" class="w-5 h-5 mr-3"></i>
+                        <span>Keluar</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- 
+        =================================
+        KONTEN UTAMA (KANAN)
+        =================================
+        -->
+        <div class="flex-1 flex flex-col ml-64">
+            
+            <!-- Navbar Atas (Tetap putih) -->
+            <header class="h-20 bg-white border-b border-gray-200 flex items-center justify-end px-8">
+                <div class="flex items-center space-x-6">
+                    <button class="text-gray-500 hover:text-gray-700 relative">
+                        <i data-lucide="bell" class="w-6 h-6"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">3</span>
+                    </button>
+                    
+                    <div class="relative">
+                        <button class="flex items-center space-x-2">
+                            <div class="h-10 w-10 rounded-full flex items-center justify-center bg-[#b48a60] text-white font-semibold">
+                                <?php echo e(substr(Auth::user()->name, 0, 1)); ?>
+
+                            </div>
+                            <span class="font-medium text-gray-700"><?php echo e(Auth::user()->name); ?></span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 text-gray-500"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Area Konten Halaman -->
+            <main class="flex-1 p-8 overflow-y-auto">
+                <?php echo $__env->yieldContent('content'); ?>
+            </main>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
-</html>
-<?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/layouts/admin.blade.php ENDPATH**/ ?>
+</html><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/layouts/admin.blade.php ENDPATH**/ ?>
