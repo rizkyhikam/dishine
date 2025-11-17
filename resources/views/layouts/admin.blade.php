@@ -12,7 +12,8 @@
             <a class="navbar-brand fw-bold" href="{{ route('admin.dashboard') }}">DISHINE Admin</a>
             <div class="collapse navbar-collapse">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.products') }}">Produk</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.products') }}">Manajemen Produk</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('admin.categories') }}">Manajemen Kategori</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('admin.orders') }}">Pesanan</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{ route('admin.faq') }}">FAQ</a></li>
                 </ul>

@@ -6,9 +6,12 @@ use App\Models\User;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Faq;
+use App\Models\Category;
+use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage; // <<< WAJIB untuk hapus gambar
+
 
 class AdminController extends Controller
 {
@@ -45,33 +48,57 @@ class AdminController extends Controller
     // ---------------------------------------------------------
     public function manageProducts()
     {
-        $products = Product::all();
-        return view('admin.products', compact('products'));
+        $products = Product::with('category')->get(); // 'with' lebih efisien
+        $categories = Category::all(); // <-- KITA AMBIL SEMUA KATEGORI
+        
+        // Kirim 'categories' ke view
+        return view('admin.products', compact('products', 'categories'));
     }
 
     public function storeProduct(Request $request)
     {
+        // 1. Validasi Input (sudah termasuk kategori & galeri)
         $request->validate([
             'nama' => 'required|string|max:255',
+            'harga_normal' => 'required|numeric',
+            'harga_reseller' => 'required|numeric',
+            'stok' => 'required|integer',
             'deskripsi' => 'required|string',
-            'harga_normal' => 'required|numeric|min:0',
-            'harga_reseller' => 'required|numeric|min:0',
-            'stok' => 'required|integer|min:0',
-            'gambar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'category_id' => 'required|exists:categories,id', // <-- Validasi Kategori
+            'gambar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048', // <-- Gambar Sampul
+            'gallery' => 'nullable|array', // <-- Validasi Galeri (boleh kosong)
+            'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048' // Validasi SETIAP file di galeri
         ]);
 
+        // 2. Simpan Gambar Sampul (Cover Image)
         $gambarPath = $request->file('gambar')->store('products', 'public');
 
-        Product::create([
+        // 3. Buat Produk Baru di Database
+        $product = Product::create([
             'nama' => $request->nama,
-            'deskripsi' => $request->deskripsi,
             'harga_normal' => $request->harga_normal,
             'harga_reseller' => $request->harga_reseller,
             'stok' => $request->stok,
-            'gambar' => $gambarPath,
+            'deskripsi' => $request->deskripsi,
+            'category_id' => $request->category_id, // <-- Simpan Kategori
+            'gambar' => $gambarPath, // <-- Simpan Gambar Sampul
         ]);
 
-        return redirect()->route('admin.products')->with('success', 'Produk berhasil ditambahkan.');
+        // 4. Simpan Galeri Foto (Jika ada)
+        if ($request->hasFile('gallery')) {
+            foreach ($request->file('gallery') as $file) {
+                // Simpan setiap file galeri
+                $galleryPath = $file->store('products/gallery', 'public');
+                
+                // Buat record baru di tabel 'product_images'
+                ProductImage::create([
+                    'product_id' => $product->id, // Link ke produk yang baru dibuat
+                    'path' => $galleryPath
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.products')->with('success', 'Produk baru berhasil ditambahkan.');
     }
 
     /**
@@ -81,8 +108,15 @@ class AdminController extends Controller
      */
     public function editProduct($id)
     {
-        $product = Product::findOrFail($id);
-        return view('admin.products_edit', compact('product'));
+        // Temukan produk, ATAU GAGAL
+        // Kita pakai 'with' agar Laravel sekaligus mengambil relasi (efisien)
+        $product = Product::with('images', 'category')->findOrFail($id);
+        
+        // Ambil SEMUA kategori untuk dropdown
+        $categories = Category::all(); 
+        
+        // Kirim produk & kategori ke view
+        return view('admin.products_edit', compact('product', 'categories'));
     }
 
     /**
@@ -94,40 +128,66 @@ class AdminController extends Controller
     {
         $product = Product::findOrFail($id);
 
+        // 1. Validasi (Sama seperti 'store' tapi 'gambar' boleh kosong)
         $request->validate([
             'nama' => 'required|string|max:255',
             'harga_normal' => 'required|numeric',
             'harga_reseller' => 'required|numeric',
             'stok' => 'required|integer',
             'deskripsi' => 'required|string',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048'
+            'category_id' => 'required|exists:categories,id',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Boleh kosong
+            'gallery' => 'nullable|array',
+            'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048'
         ]);
 
-        // Update data dasar
-        $product->nama = $request->nama;
-        $product->harga_normal = $request->harga_normal;
-        $product->harga_reseller = $request->harga_reseller;
-        $product->stok = $request->stok;
-        $product->deskripsi = $request->deskripsi;
+        // 2. Update Data Teks dan Kategori
+        $product->update([
+            'nama' => $request->nama,
+            'harga_normal' => $request->harga_normal,
+            'harga_reseller' => $request->harga_reseller,
+            'stok' => $request->stok,
+            'deskripsi' => $request->deskripsi,
+            'category_id' => $request->category_id,
+        ]);
 
-        // Jika upload gambar baru
+        // 3. Update Gambar Sampul (Cover) JIKA ada file baru
         if ($request->hasFile('gambar')) {
-
             // Hapus gambar lama
             if ($product->gambar) {
                 Storage::disk('public')->delete($product->gambar);
             }
-
             // Upload gambar baru
-            $path = $request->file('gambar')->store('products', 'public');
-            $product->gambar = $path;
+            $gambarPath = $request->file('gambar')->store('products', 'public');
+            $product->gambar = $gambarPath;
+            $product->save(); // Simpan perubahan gambar
         }
 
-        // Simpan perubahan
-        $product->save();
+        // 4. HAPUS Foto Galeri yang dicentang
+        if ($request->has('delete_images')) {
+            foreach ($request->delete_images as $imageId) {
+                $image = ProductImage::find($imageId);
+                
+                // Pastikan gambar ini milik produk yang sedang diedit (keamanan)
+                if ($image && $image->product_id == $product->id) {
+                    Storage::disk('public')->delete($image->path); // Hapus file
+                    $image->delete(); // Hapus data di database
+                }
+            }
+        }
 
-        return redirect()->route('admin.products')
-                         ->with('success', 'Produk berhasil diperbarui.');
+        // 5. TAMBAH Foto Galeri Baru (Jika ada)
+        if ($request->hasFile('gallery')) {
+            foreach ($request->file('gallery') as $file) {
+                $galleryPath = $file->store('products/gallery', 'public');
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'path' => $galleryPath
+                ]);
+            }
+        }
+
+        return redirect()->route('admin.products')->with('success', 'Produk berhasil diperbarui.');
     }
 
     public function destroyProduct($id)
@@ -177,5 +237,45 @@ class AdminController extends Controller
     {
         Faq::findOrFail($id)->delete();
         return redirect()->route('admin.faq')->with('success', 'FAQ berhasil dihapus.');
+    }
+
+    // -----------------------------------------------------------------
+    // FUNGSI BARU (3) UNTUK MANAJEMEN KATEGORI
+    // -----------------------------------------------------------------
+
+    /**
+     * Menampilkan halaman Manajemen Kategori
+     */
+    public function manageCategories()
+    {
+        $categories = Category::all();
+        return view('admin.categories', compact('categories'));
+    }
+
+    /**
+     * Menyimpan Kategori baru
+     */
+    public function storeCategory(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:categories,name'
+        ]);
+
+        Category::create([
+            'name' => $request->name
+        ]);
+
+        return redirect()->route('admin.categories')->with('success', 'Kategori baru berhasil ditambahkan.');
+    }
+
+    /**
+     * Menghapus Kategori
+     */
+    public function destroyCategory($id)
+    {
+        $category = Category::findOrFail($id);
+        $category->delete();
+
+        return redirect()->route('admin.categories')->with('success', 'Kategori berhasil dihapus.');
     }
 }

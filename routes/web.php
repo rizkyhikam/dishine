@@ -132,6 +132,9 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/products/{id}', [AdminController::class, 'destroyProduct'])->name('admin.products.delete');
         Route::get('/admin/products/{id}/edit', [\App\Http\Controllers\AdminController::class, 'editProduct'])->name('admin.products.edit');
         Route::put('/admin/products/{id}', [\App\Http\Controllers\AdminController::class, 'updateProduct'])->name('admin.products.update');
+        Route::get('/categories', [\App\Http\Controllers\AdminController::class, 'manageCategories'])->name('admin.categories');
+        Route::post('/categories', [\App\Http\Controllers\AdminController::class, 'storeCategory'])->name('admin.categories.store');
+        Route::delete('/categories/{id}', [\App\Http\Controllers\AdminController::class, 'destroyCategory'])->name('admin.categories.delete');
 
         // Orders
         Route::get('/orders', [AdminController::class, 'manageOrders'])->name('admin.orders');

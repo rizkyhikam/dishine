@@ -9,18 +9,33 @@ class Product extends Model
 {
     use HasFactory;
 
+    /**
+     * Kolom yang boleh diisi
+     * (Saya sudah tambahkan 'category_id' di sini)
+     */
     protected $fillable = [
         'nama',
-        'deskripsi',
         'harga_normal',
         'harga_reseller',
         'stok',
-        'gambar',
+        'deskripsi',
+        'gambar', // <-- Ini foto sampul (lama)
+        'category_id', // <-- Ini link ke kategori (BARU)
     ];
 
-    // Relasi: Product hasMany OrderItems
-    public function orderItems()
+    /**
+     * Relasi BARU: Satu Produk ini dimiliki oleh SATU Kategori
+     */
+    public function category()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Relasi BARU: Satu Produk ini punya BANYAK Gambar Galeri
+     */
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class);
     }
 }
