@@ -6,11 +6,7 @@
     <!-- Card Putih untuk Tabel -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
         
-        <!-- 
-        =================================
-        HEADER TABEL (DENGAN FORM FILTER)
-        =================================
-        -->
+        <!-- Form Filter -->
         <form action="<?php echo e(route('admin.orders')); ?>" method="GET">
             <div class="p-4 border-b border-gray-200 bg-gray-50 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 
@@ -98,7 +94,10 @@
 
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                <?php echo e($order->user->name ?? 'User Dihapus'); ?>
+                                
+                                
+                                <?php echo e($order->user->nama ?? 'User Dihapus'); ?>
+
 
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
@@ -151,7 +150,7 @@
             </table>
         </div>
 
-        <!-- Footer Tabel (Saya hilangkan 'item terpilih' agar lebih simpel) -->
+        <!-- Footer Tabel -->
         <div class="p-4 border-t border-gray-200">
             <!-- (Pagination bisa ditambahkan di sini nanti) -->
         </div>

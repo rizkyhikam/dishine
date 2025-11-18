@@ -8,11 +8,7 @@
     <!-- Card Putih untuk Tabel -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
         
-        <!-- 
-        =================================
-        HEADER TABEL (DENGAN FORM FILTER)
-        =================================
-        -->
+        <!-- Form Filter -->
         <form action="{{ route('admin.orders') }}" method="GET">
             <div class="p-4 border-b border-gray-200 bg-gray-50 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 
@@ -98,7 +94,13 @@
                                 {{ \Carbon\Carbon::parse($order->tanggal_pesan)->format('d/m/Y') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                {{ $order->user->name ?? 'User Dihapus' }}
+                                
+                                {{-- 
+                                    INI DIA PERBAIKANNYA
+                                    $order->user->name   --->   $order->user->nama
+                                --}}
+                                {{ $order->user->nama ?? 'User Dihapus' }}
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
                                 <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
@@ -147,7 +149,7 @@
             </table>
         </div>
 
-        <!-- Footer Tabel (Saya hilangkan 'item terpilih' agar lebih simpel) -->
+        <!-- Footer Tabel -->
         <div class="p-4 border-t border-gray-200">
             <!-- (Pagination bisa ditambahkan di sini nanti) -->
         </div>

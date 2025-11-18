@@ -35,7 +35,7 @@ class Order extends Model
 
     /**
      * -----------------------------------------------------------------
-     * INI ADALAH PERBAIKAN UNTUK MASALAH #3
+     * INI ADALAH PERBAIKAN UNTUK MASALAH "User Dihapus"
      * Relasi: Satu Pesanan dimiliki oleh SATU User
      * -----------------------------------------------------------------
      */

@@ -107,7 +107,7 @@
             <!-- Detail Pelanggan -->
             <div class="bg-white p-6 rounded-xl shadow-lg">
                 <h3 class="text-lg font-semibold text-gray-700 mb-4">Detail Pelanggan</h3>
-                <p class="text-sm text-gray-600"><strong>Nama:</strong> {{ $order->user->name ?? 'N/A' }}</T(p>
+                <p class="text-sm text-gray-600"><strong>Nama:</strong> {{ $order->user->nama ?? 'N/A' }}</T(p>
                 <p class="text-sm text-gray-600"><strong>Email:</strong> {{ $order->user->email ?? 'N/A' }}</p>
                 <p class="text-sm text-gray-600"><strong>No. HP:</strong> {{ $order->user->no_hp ?? 'N/A' }}</p>
             </div>

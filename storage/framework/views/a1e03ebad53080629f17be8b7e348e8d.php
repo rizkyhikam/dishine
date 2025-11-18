@@ -272,7 +272,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cities.forEach(city => {
                 const option = document.createElement('option');
                 option.value = city.city_id;
-                option.textContent = `${city.type} ${city.city_name}`;
+                option.textContent = `${city.city_name}`;
                 kotaSelect.appendChild(option);
             });
             

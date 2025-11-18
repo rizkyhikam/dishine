@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             kotaSelect.innerHTML = '<option value="">Pilih Kota</option>';
             cities.forEach(city => {
-                kotaSelect.innerHTML += `<option value="${city.city_id}">${city.type} ${city.city_name}</option>`;
+                kotaSelect.innerHTML += `<option value="${city.city_id}">${city.city_name}</option>`;
             });
             kotaSelect.disabled = false;
         } catch (error) { 
