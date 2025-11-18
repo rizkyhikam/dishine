@@ -36,7 +36,11 @@
             </div>
         </div>
 
-        <!-- Daftar Kategori -->
+        <!-- 
+        =================================
+        DAFTAR KATEGORI (SUDAH DIPERBARUI)
+        =================================
+        -->
         <div class="md:col-span-2">
             <div class="bg-white rounded-lg shadow-lg overflow-hidden">
                 <div class="card-header bg-gray-50 border-b border-gray-200 px-6 py-4">
@@ -48,6 +52,10 @@
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">No</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Kategori</th>
+                                
+                                <!-- KOLOM BARU -->
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Produk di Kategori Ini</th>
+                                
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                             </tr>
                         </thead>
@@ -56,6 +64,23 @@
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4">{{ $index + 1 }}</td>
                                     <td class="px-6 py-4 font-medium text-gray-900">{{ $category->name }}</td>
+                                    
+                                    <!-- ISI KOLOM BARU -->
+                                    <td class="px-6 py-4">
+                                        @if($category->products->isEmpty())
+                                            <span class="text-xs text-gray-500">Belum ada produk.</span>
+                                        @else
+                                            <!-- Tampilkan nama produk sebagai 'pills' -->
+                                            <div class="flex flex-wrap gap-1">
+                                                @foreach($category->products as $product)
+                                                    <span class="bg-gray-200 text-gray-700 text-xs font-medium px-2 py-0.5 rounded-full">
+                                                        {{ $product->nama }}
+                                                    </span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </td>
+                                    
                                     <td class="px-6 py-4 text-sm">
                                         <form action="{{ route('admin.categories.delete', $category->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus kategori ini?')">
                                             @csrf
@@ -66,7 +91,8 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="3" class="text-center py-10 text-gray-500">Belum ada kategori.</td>
+                                    <!-- PERBAIKAN: ganti colspan="3" menjadi "4" -->
+                                    <td colspan="4" class="text-center py-10 text-gray-500">Belum ada kategori.</td>
                                 </tr>
                             @endforelse
                         </tbody>

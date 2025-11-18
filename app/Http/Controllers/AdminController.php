@@ -281,7 +281,9 @@ class AdminController extends Controller
      */
     public function manageCategories()
     {
-        $categories = Category::all();
+        // 'with('products')' = Ambil kategori, sekaligus semua produk di dalamnya
+        $categories = Category::with('products')->get();
+        
         return view('admin.categories', compact('categories'));
     }
 
