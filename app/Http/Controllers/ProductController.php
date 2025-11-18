@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -26,22 +27,32 @@ class ProductController extends Controller
 
         public function showKatalog(Request $request)
     {
+        $user = Auth::user();
+        $isReseller = ($user && $user->role == 'reseller');
+
         // Cek apakah ada query pencarian di URL (misal: ?q=dress)
         if ($request->has('q') && $request->q != '') {
             
             // --- MODE PENCARIAN ---
             $q = $request->q;
 
-            // 1. Cari produk yang namanya mirip 'q'
-            // 2. ATAU cari produk yang nama kategorinya mirip 'q'
-            $products = Product::with('category')
-                ->where('nama', 'LIKE', "%$q%")
-                ->orWhereHas('category', function($query) use ($q) {
-                    $query->where('name', 'LIKE', "%$q%");
-                })
-                ->get();
+            $productQuery = Product::with('category')
+                ->where(function ($query) use ($q) {
+                    $query->where('nama', 'LIKE', "%$q%")
+                          ->orWhereHas('category', function($subQuery) use ($q) {
+                              $subQuery->where('name', 'LIKE', "%$q%");
+                          });
+                });
 
-            // 2. Kirim hasil pencarian (datar) ke view
+            // --- FILTER STOK BERDASARKAN ROLE ---
+            if ($isReseller) {
+                $productQuery->where('stok', '>', 5); // Reseller: stok > 5
+            } else {
+                $productQuery->where('stok', '>', 0); // Pelanggan: stok > 0
+            }
+
+            $products = $productQuery->get();
+
             return view('katalog', [
                 'is_search' => true,
                 'search_term' => $q,
@@ -51,13 +62,25 @@ class ProductController extends Controller
         } else {
             
             // --- MODE BROWSE (DEFAULT) ---
+            $categories = Category::query()
+                ->whereHas('products', function($query) use ($isReseller) {
+                    // Hanya ambil kategori yang punya produk SESUAI STOK ROLE
+                    if ($isReseller) {
+                        $query->where('stok', '>', 5);
+                    } else {
+                        $query->where('stok', '>', 0);
+                    }
+                })
+                ->with(['products' => function($query) use ($isReseller) {
+                    // Ambil produk di dalamnya, SESUAI STOK ROLE
+                    if ($isReseller) {
+                        $query->where('stok', '>', 5);
+                    } else {
+                        $query->where('stok', '>', 0);
+                    }
+                }])
+                ->get();
 
-            // 1. Ambil SEMUA kategori
-            // 2. 'with('products')' = Sekaligus ambil SEMUA produk di dalam setiap kategori
-            // 3. 'has('products')' = Hanya ambil kategori yang ADA isinya (tidak kosong)
-            $categories = Category::with('products')->has('products')->get();
-
-            // 2. Kirim data (yang sudah dikelompokkan) ke view
             return view('katalog', [
                 'is_search' => false,
                 'categories' => $categories
@@ -71,13 +94,21 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        // 1. Ambil 1 produk berdasarkan ID-nya.
-        // 2. 'with' adalah perintah EFEKTIF untuk langsung mengambil
-        //    data 'category' (Kategori) dan 'images' (Galeri Foto)
-        //    yang terhubung dengan produk ini.
-        $product = Product::with(['category', 'images'])->findOrFail($id);
+        $user = Auth::user();
+        $isReseller = ($user && $user->role == 'reseller');
 
-        // 3. Kirim data '$product' ke view bernama 'detail_produk'
+        $query = Product::with(['category', 'images']);
+
+        // --- FILTER STOK BERDASARKAN ROLE ---
+        if ($isReseller) {
+            $query->where('stok', '>', 5); // Reseller hanya boleh lihat jika stok > 5
+        } else {
+            $query->where('stok', '>', 0); // Pelanggan hanya boleh lihat jika stok > 0
+        }
+
+        // Ambil produk, atau 404 jika tidak ditemukan (atau stok tidak memadai)
+        $product = $query->findOrFail($id);
+
         return view('detail_produk', compact('product'));
     }
 

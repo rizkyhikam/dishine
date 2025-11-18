@@ -2,6 +2,16 @@
 <div class="bg-white rounded-lg border p-6 mb-6">
     <h3 class="font-bold text-lg mb-4 text-gray-900">Produk Dipesan</h3>
     
+    <!-- 
+    =================================
+    LOGIKA HARGA (BARU)
+    =================================
+    -->
+    @php
+        // Kita cek dulu rolenya di sini agar gampang
+        $isReseller = (Auth::check() && Auth::user()->role == 'reseller');
+    @endphp
+
     <div class="overflow-x-auto">
         <table class="w-full">
             <thead>
@@ -33,14 +43,35 @@
                             </span>
                         </div>
                     </td>
+
+                    <!-- 
+                    =================================
+                    HARGA SATUAN (DIPERBAIKI)
+                    =================================
+                    -->
                     <td class="text-center text-gray-700 py-4">
-                        Rp {{ number_format($item->product->harga_normal, 0, ',', '.') }}
+                        @if($isReseller)
+                            Rp {{ number_format($item->product->harga_reseller, 0, ',', '.') }}
+                        @else
+                            Rp {{ number_format($item->product->harga_normal, 0, ',', '.') }}
+                        @endif
                     </td>
+
                     <td class="text-center text-gray-700 py-4">
                         {{ $item->quantity }}
                     </td>
+
+                    <!-- 
+                    =================================
+                    SUB TOTAL (DIPERBAIKI)
+                    =================================
+                    -->
                     <td class="text-center font-semibold text-gray-900 py-4">
-                        Rp {{ number_format($item->product->harga_normal * $item->quantity, 0, ',', '.') }}
+                        @if($isReseller)
+                            Rp {{ number_format($item->product->harga_reseller * $item->quantity, 0, ',', '.') }}
+                        @else
+                            Rp {{ number_format($item->product->harga_normal * $item->quantity, 0, ',', '.') }}
+                        @endif
                     </td>
                 </tr>
                 @endforeach

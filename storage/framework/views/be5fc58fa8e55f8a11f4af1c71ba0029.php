@@ -21,15 +21,20 @@
 <!-- Script auto-slide -->
 <script>
     const slider = document.getElementById('slider');
-    const totalSlides = slider.children.length;
-    let index = 0;
+    // Periksa apakah slider ada sebelum melanjutkan
+    if (slider) {
+        const totalSlides = slider.children.length;
+        let index = 0;
 
-    function autoSlide() {
-        index = (index + 1) % totalSlides;
-        slider.style.transform = `translateX(-${index * 100}%)`;
+        function autoSlide() {
+            index = (index + 1) % totalSlides;
+            slider.style.transform = `translateX(-${index * 100}%)`;
+        }
+
+        if (totalSlides > 1) { // Hanya jalankan jika ada lebih dari 1 slide
+            setInterval(autoSlide, 4000); // ganti setiap 4 detik
+        }
     }
-
-    setInterval(autoSlide, 4000); // ganti setiap 4 detik
 </script>
 
 
@@ -57,28 +62,44 @@
     </a>
 </div>
 
-<!-- PRODUK UNGGULAN -->
-<div class="container mx-auto px-4 py-10">
-    <h2 class="text-3xl font-bold mb-6 text-center" data-aos="fade-up">Produk Unggulan</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <?php $__currentLoopData = $featuredProducts ?? []; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-        <div class="bg-white rounded-lg shadow-md p-4" data-aos="fade-up" data-aos-delay="100">
-            <img src="<?php echo e(asset('storage/' . $product->gambar)); ?>" 
-                 alt="<?php echo e($product->nama); ?>" 
-                 class="w-full h-48 object-cover rounded">
-            <h3 class="text-xl font-semibold mt-4"><?php echo e($product->nama); ?></h3>
-            <p class="text-[#b48a60] font-bold">Rp <?php echo e(number_format($product->harga_normal)); ?></p>
-            <a href="<?php echo e(route('katalog.show', $product->id)); ?>" 
-               class="btn-primary block text-center mt-4 px-4 py-2 rounded">
-               Lihat Detail
-            </a>
-            <a href="<?php echo e(route('cart.index')); ?>" class="btn btn-primary mt-2 block text-center">
-               Lihat Keranjang
+<!-- 
+=================================
+PRODUK UNGGULAN (VERSI UPGRADE)
+=================================
+Menggunakan desain yang sama dengan 'katalog.blade.php'
+-->
+<div class="bg-[#f3e8e3] py-20"> <!-- Ganti background agar senada -->
+    <div class="max-w-6xl mx-auto px-6">
+        
+        <div class="text-center mb-12" data-aos="fade-up">
+            <h2 class="text-3xl font-bold text-[#3c2f2f]">Produk Terlaris</h2>
+            <p class="text-lg text-[#a07850] mt-1">Pilihan favorit pelanggan kami.</p>
+        </div>
+        
+        <?php if($featuredProducts->isEmpty()): ?>
+            <div class="text-center text-[#a07850] font-medium" data-aos="fade-up">
+                <p>Belum ada produk unggulan untuk ditampilkan.</p>
+                <p class="text-sm">Silakan cek kembali nanti!</p>
+            </div>
+        <?php else: ?>
+            <!-- Kita panggil 'product_card' yang sudah kita buat -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                <?php $__currentLoopData = $featuredProducts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <!-- Ini akan otomatis menampilkan harga reseller/normal -->
+                    <?php echo $__env->make('partials.product_card', ['product' => $product, 'delay' => $loop->index * 100], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </div>
+        <?php endif; ?>
+
+        <div class="text-center mt-12" data-aos="fade-up">
+            <a href="<?php echo e(route('katalog')); ?>" 
+               class="inline-block px-8 py-3 rounded-md shadow-lg text-white font-medium bg-[#44351f] hover:bg-[#a07850] transition">
+                Lihat Semua Koleksi
             </a>
         </div>
-        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
 </div>
-<?php $__env->stopSection(); ?>
+<!-- =============================== -->
 
+<?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/home.blade.php ENDPATH**/ ?>

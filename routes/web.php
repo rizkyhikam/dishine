@@ -64,6 +64,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/cart/update/{id}', [CartController::class, 'updateCart'])->name('cart.update');
     Route::delete('/cart/remove/{id}', [CartController::class, 'removeFromCart'])->name('cart.remove');
 
+    // --- TAMBAHKAN RUTE BARU INI UNTUK "BELI SEKARANG" ---
+    Route::post('/buy-now/{id}', [CartController::class, 'buyNow'])->name('cart.buyNow');
+
     // --- CHECKOUT ---
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout/full', [CheckoutController::class, 'storeFullCheckout'])->name('checkout.store');

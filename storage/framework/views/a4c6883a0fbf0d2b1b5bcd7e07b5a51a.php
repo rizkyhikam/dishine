@@ -2,6 +2,16 @@
 <div class="bg-white rounded-lg border p-6 mb-6">
     <h3 class="font-bold text-lg mb-4 text-gray-900">Produk Dipesan</h3>
     
+    <!-- 
+    =================================
+    LOGIKA HARGA (BARU)
+    =================================
+    -->
+    <?php
+        // Kita cek dulu rolenya di sini agar gampang
+        $isReseller = (Auth::check() && Auth::user()->role == 'reseller');
+    ?>
+
     <div class="overflow-x-auto">
         <table class="w-full">
             <thead>
@@ -35,17 +45,40 @@
                             </span>
                         </div>
                     </td>
-                    <td class="text-center text-gray-700 py-4">
-                        Rp <?php echo e(number_format($item->product->harga_normal, 0, ',', '.')); ?>
 
+                    <!-- 
+                    =================================
+                    HARGA SATUAN (DIPERBAIKI)
+                    =================================
+                    -->
+                    <td class="text-center text-gray-700 py-4">
+                        <?php if($isReseller): ?>
+                            Rp <?php echo e(number_format($item->product->harga_reseller, 0, ',', '.')); ?>
+
+                        <?php else: ?>
+                            Rp <?php echo e(number_format($item->product->harga_normal, 0, ',', '.')); ?>
+
+                        <?php endif; ?>
                     </td>
+
                     <td class="text-center text-gray-700 py-4">
                         <?php echo e($item->quantity); ?>
 
                     </td>
-                    <td class="text-center font-semibold text-gray-900 py-4">
-                        Rp <?php echo e(number_format($item->product->harga_normal * $item->quantity, 0, ',', '.')); ?>
 
+                    <!-- 
+                    =================================
+                    SUB TOTAL (DIPERBAIKI)
+                    =================================
+                    -->
+                    <td class="text-center font-semibold text-gray-900 py-4">
+                        <?php if($isReseller): ?>
+                            Rp <?php echo e(number_format($item->product->harga_reseller * $item->quantity, 0, ',', '.')); ?>
+
+                        <?php else: ?>
+                            Rp <?php echo e(number_format($item->product->harga_normal * $item->quantity, 0, ',', '.')); ?>
+
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
