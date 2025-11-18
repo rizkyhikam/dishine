@@ -120,19 +120,13 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/faqs', [AdminController::class, 'storeFaq'])->name('faq.store');
     Route::put('/faqs/{id}', [AdminController::class, 'updateFaq'])->name('faq.update');
     Route::delete('/faqs/{id}', [AdminController::class, 'destroyFaq'])->name('faq.delete');
+
+    // --- MANAJEMEN PENGGUNA (BARU) ---
+    Route::get('/users', [AdminController::class, 'manageUsers'])->name('users');
+
+    // --- RUTE NOTIFIKASI (BARU) ---
+    Route::get('/notifications/read/{id}', [AdminController::class, 'markNotificationAsRead'])->name('notifications.read');
 });
-
-
-/*
-|--------------------------------------------------------------------------
-| RUTE API (SUDAH DIHAPUS)
-|--------------------------------------------------------------------------
-|
-| Bagian 'api/ongkir' Anda sudah saya hapus dari file ini.
-| Rute-rute itu SUDAH ADA dan SEHARUSNYA HANYA ADA di file 'routes/api.php'.
-|
-*/
-
 
 /*
 |--------------------------------------------------------------------------

@@ -11,6 +11,7 @@ use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage; // <<< WAJIB untuk hapus gambar
+use Illuminate\Support\Facades\Auth;
 
 
 class AdminController extends Controller
@@ -22,37 +23,58 @@ class AdminController extends Controller
 
     public function dashboard()
     {
-        // Statistik
-        $totalUsers = User::where('role', 'pelanggan')->count();
-        $totalResellers = User::where('role', 'reseller')->count();
-        $totalProducts = Product::count();
-        $totalFaqs = Faq::count();
+        // 1. Hitung Total Pendapatan (hanya dari pesanan 'selesai')
+        $totalPendapatan = Order::where('status', 'selesai')->sum('total_bayar');
 
-        $salesData = Order::selectRaw('EXTRACT(MONTH FROM tanggal_pesan) as month, SUM(total) as total')
-            ->where('status', Order::STATUS_SELESAI)
-            ->whereYear('tanggal_pesan', now()->year)
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        // 2. Hitung Pesanan Baru (yang perlu diproses)
+        $pesananBaru = Order::whereIn('status', ['menunggu_verifikasi', 'diproses'])->count();
 
-        $newOrders = Order::where('status', Order::STATUS_BARU)->count();
-        if ($newOrders > 0) {
-            session()->flash('notification', "Ada {$newOrders} pesanan baru yang perlu diperiksa.");
-        }
+        // 3. Hitung Total Produk
+        $totalProduk = Product::count();
 
-        return view('admin.dashboard', compact('totalUsers', 'totalResellers', 'totalProducts', 'totalFaqs', 'salesData'));
+        // 4. Hitung Total Pelanggan (kecuali admin)
+        $totalPelanggan = User::where('role', '!=', 'admin')->count();
+
+        // 5. Ambil 5 Pesanan Terbaru (untuk tabel)
+       $pesananTerbaru = Order::with('user') // Ambil relasi user untuk nama
+                            ->where('status', Order::STATUS_MENUNGGU_VERIFIKASI) // <-- HANYA AMBIL YANG PERLU VERIFIKASI
+                            ->latest()      // Urutkan dari yg terbaru
+                            ->get();       // Ambil SEMUA yang menunggu (bukan cuma 5)
+
+        // 6. Kirim semua data ke view
+        return view('admin.dashboard', compact(
+            'totalPendapatan', 
+            'pesananBaru', 
+            'totalProduk', 
+            'totalPelanggan', 
+            'pesananTerbaru'
+        ));
     }
 
     // ---------------------------------------------------------
     // CRUD PRODUK
     // ---------------------------------------------------------
-    public function manageProducts()
+    public function manageProducts(Request $request) // <-- Tambahkan Request $request
     {
-        $products = Product::with('category')->get(); // 'with' lebih efisien
-        $categories = Category::all(); // <-- KITA AMBIL SEMUA KATEGORI
+        // 1. Mulai query dasar
+        $query = Product::with('category');
+
+        // 2. Terapkan Filter NAMA PRODUK (jika ada)
+        if ($request->filled('search_nama')) {
+            // Gunakan 'products.nama' agar lebih spesifik
+            $query->where('products.nama', 'LIKE', '%' . $request->search_nama . '%');
+        }
+
+        // 3. Ambil data
+        $products = $query->get();
+        $categories = Category::all(); // <-- Tetap ambil kategori untuk form "Tambah"
         
-        // Kirim 'categories' ke view
-        return view('admin.products', compact('products', 'categories'));
+        // 4. Kirim data ke view
+        return view('admin.products', [
+            'products' => $products,
+            'categories' => $categories,
+            'filters' => $request->only(['search_nama']) // Kirim filter untuk mengisi ulang search bar
+        ]);
     }
 
     public function storeProduct(Request $request)
@@ -321,5 +343,56 @@ class AdminController extends Controller
                     ->findOrFail($id);
                     
         return view('admin.orders_show', compact('order'));
+    }
+
+    // -----------------------------------------------------------------
+    // FUNGSI BARU UNTUK MANAJEMEN PENGGUNA
+    // -----------------------------------------------------------------
+    public function manageUsers(Request $request)
+    {
+        $search = $request->input('search');
+
+        // 1. Mulai query User
+        $query = User::query()
+            ->where('role', '!=', 'admin'); // <-- 1. Kecualikan admin
+
+        // 2. Terapkan filter pencarian (jika ada)
+        if ($search) {
+            // <-- 2. Cari berdasarkan nama ATAU no_hp
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'LIKE', "%{$search}%")
+                  ->orWhere('no_hp', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // 3. Ambil data (kita pakai pagination agar rapi)
+        $users = $query->latest()->paginate(15); // Ambil 15 user per halaman
+
+        // 4. Kirim data ke view
+        return view('admin.users', [
+            'users' => $users,
+            'filters' => ['search' => $search] // Kirim balik filter untuk mengisi input
+        ]);
+    }
+    /**
+     * -----------------------------------------------------------------
+     * FUNGSI BARU: Tandai notifikasi sebagai sudah dibaca
+     * -----------------------------------------------------------------
+     */
+    public function markNotificationAsRead($id)
+    {
+        // 1. Cari notifikasi milik user yang sedang login
+        $notification = Auth::user()->notifications()->findOrFail($id);
+
+        // 2. Tandai sudah dibaca
+        if ($notification) {
+            $notification->markAsRead();
+        }
+
+        // 3. Ambil ID pesanan dari data notifikasi
+        $orderId = $notification->data['order_id'];
+
+        // 4. Redirect admin ke halaman detail pesanan
+        return redirect()->route('admin.orders.show', $orderId);
     }
 }

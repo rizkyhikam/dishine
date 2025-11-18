@@ -1,11 +1,9 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Dashboard - DISHINE Admin'); ?>
 
-@section('title', 'Dashboard - DISHINE Admin')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <!-- Header Selamat Datang -->
     <div class="mb-6">
-        <h1 class.="text-3xl font-bold text-gray-800">Selamat Datang, {{ Auth::user()->nama }}!</h1>
+        <h1 class.="text-3xl font-bold text-gray-800">Selamat Datang, <?php echo e(Auth::user()->nama); ?>!</h1>
         <p class="text-gray-600">Berikut adalah ringkasan aktivitas toko Anda hari ini.</p>
     </div>
 
@@ -24,7 +22,8 @@
             <div>
                 <p class="text-sm font-medium text-gray-500">Total Pendapatan (Selesai)</p>
                 <p class="text-2xl font-bold text-gray-800">
-                    Rp{{ number_format($totalPendapatan, 0, ',', '.') }}
+                    Rp<?php echo e(number_format($totalPendapatan, 0, ',', '.')); ?>
+
                 </p>
             </div>
         </div>
@@ -37,7 +36,8 @@
             <div>
                 <p class="text-sm font-medium text-gray-500">Pesanan Baru (Perlu Diproses)</p>
                 <p class="text-2xl font-bold text-gray-800">
-                    {{ $pesananBaru }}
+                    <?php echo e($pesananBaru); ?>
+
                 </p>
             </div>
         </div>
@@ -50,7 +50,8 @@
             <div>
                 <p class="text-sm font-medium text-gray-500">Total Produk</T(p>
                 <p class="text-2xl font-bold text-gray-800">
-                    {{ $totalProduk }}
+                    <?php echo e($totalProduk); ?>
+
                 </p>
             </div>
         </div>
@@ -63,7 +64,8 @@
             <div>
                 <p class="text-sm font-medium text-gray-500">Total Pelanggan</p>
                 <p class="text-2xl font-bold text-gray-800">
-                    {{ $totalPelanggan }}
+                    <?php echo e($totalPelanggan); ?>
+
                 </p>
             </div>
         </div>
@@ -104,41 +106,45 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     
                     <!-- Loop ini sekarang HANYA berisi pesanan yang 'menunggu_verifikasi' -->
-                    @forelse ($pesananTerbaru as $order)
+                    <?php $__empty_1 = true; $__currentLoopData = $pesananTerbaru; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $order): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="font-medium text-gray-900">ORD-{{ $order->id }}</span>
+                                <span class="font-medium text-gray-900">ORD-<?php echo e($order->id); ?></span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                {{ $order->user->nama ?? 'User Dihapus' }}
+                                <?php echo e($order->user->nama ?? 'User Dihapus'); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <!-- Status Pill -->
                                 <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-800">
-                                    {{ ucwords(str_replace('_', ' ', $order->status)) }}
+                                    <?php echo e(ucwords(str_replace('_', ' ', $order->status))); ?>
+
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">
-                                Rp{{ number_format($order->total_bayar, 0, ',', '.') }}
+                                Rp<?php echo e(number_format($order->total_bayar, 0, ',', '.')); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('admin.orders.show', $order->id) }}" 
+                                <a href="<?php echo e(route('admin.orders.show', $order->id)); ?>" 
                                    class="text-blue-600 hover:text-blue-800">
                                     Lihat Detail
                                 </a>
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <!-- INI PESAN YANG DIUBAH -->
                             <td colspan="5" class="text-center py-10 text-gray-500">
                                 Tidak ada pesanan yang menunggu verifikasi. Kerja bagus!
                             </td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                     
                 </tbody>
             </table>
         </div>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/admin/dashboard.blade.php ENDPATH**/ ?>

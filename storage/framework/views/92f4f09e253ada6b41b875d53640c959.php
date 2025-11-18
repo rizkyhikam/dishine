@@ -63,6 +63,38 @@
     </div>
 </div>
 
+<!-- 
+=================================
+Form Filter Produk (BARU)
+=================================
+-->
+<div class="bg-white rounded-lg shadow-lg mb-6 overflow-hidden">
+    <div class="card-body p-6">
+        <form action="<?php echo e(route('admin.products')); ?>" method="GET">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <!-- Input Nama Produk -->
+                <div class="md:col-span-3">
+                    <label for="search_nama" class="block text-sm font-medium text-gray-700 mb-1">Cari Nama Produk</label>
+                    <input type="text" name="search_nama" id="search_nama" 
+                           class="w-full border border-gray-300 rounded px-3 py-2 text-sm" 
+                           placeholder="Ketik nama produk..."
+                           value="<?php echo e($filters['search_nama'] ?? ''); ?>">
+                </div>
+                <!-- Tombol Aksi -->
+                <div class="flex space-x-2">
+                    <button type="submit" class="w-full bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 text-sm font-medium flex items-center justify-center">
+                        <i data-lucide="search" class="w-4 h-4 mr-2"></i>
+                        Cari
+                    </button>
+                    <a href="<?php echo e(route('admin.products')); ?>" class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 text-sm font-medium flex items-center justify-center">
+                        Reset
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Daftar Produk (Di dalam Card) -->
 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
     <div class="card-header bg-gray-50 border-b border-gray-200 px-6 py-4">
@@ -76,6 +108,10 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Harga Normal</th>
+                    
+                    <!-- INI KOLOM BARU YANG HILANG -->
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Harga Reseller</th>
+                    
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stok</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Gambar (Sampul)</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
@@ -84,11 +120,15 @@
             <tbody class="bg-white divide-y divide-gray-200">
                 <?php $__empty_1 = true; $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4"><?php echo e($index + 1); ?></td>
-                        <td class="px-6 py-4 font-medium text-gray-900"><?php echo e($product->nama); ?></td>
-                        <td class="px-6 py-4 text-sm text-gray-500"><?php echo e($product->category->name ?? 'N/A'); ?></td>
-                        <td class="px-6 py-4 text-sm text-gray-500">Rp<?php echo e(number_format($product->harga_normal, 0, ',', '.')); ?></td>
-                        <td class="px-6 py-4 text-sm text-gray-500"><?php echo e($product->stok); ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap"><?php echo e($index + 1); ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900"><?php echo e($product->nama); ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo e($product->category->name ?? 'N/A'); ?></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp<?php echo e(number_format($product->harga_normal, 0, ',', '.')); ?></td>
+                        
+                        <!-- INI ISI KOLOM BARU YANG HILANG -->
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Rp<?php echo e(number_format($product->harga_reseller, 0, ',', '.')); ?></td>
+                        
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><?php echo e($product->stok); ?></td>
                         <td class="px-6 py-4">
                             <?php if($product->gambar): ?>
                                 <img src="<?php echo e(asset('storage/' . $product->gambar)); ?>" width="60" alt="<?php echo e($product->nama); ?>" class="rounded-md">
@@ -96,7 +136,7 @@
                                 -
                             <?php endif; ?>
                         </td>
-                        <td class="px-6 py-4 text-sm">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
                             <a href="<?php echo e(route('admin.products.edit', $product->id)); ?>" class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</a>
                             <form action="<?php echo e(route('admin.products.delete', $product->id)); ?>" method="POST" class="d-inline" onsubmit="return confirm('Hapus produk ini?')">
                                 <?php echo csrf_field(); ?>
@@ -107,7 +147,14 @@
                     </tr>
                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <tr>
-                        <td colspan="8" class="text-center py-10 text-gray-500">Belum ada produk.</td>
+                        <!-- Colspan diperbarui menjadi 9 -->
+                        <td colspan="9" class="text-center py-10 text-gray-500">
+                            <?php if(request()->has('search_nama')): ?>
+                                Tidak ada produk yang cocok dengan pencarian Anda.
+                            <?php else: ?>
+                                Belum ada produk.
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endif; ?>
             </tbody>

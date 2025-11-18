@@ -1,15 +1,13 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Manajemen Pesanan - DISHINE Admin'); ?>
 
-@section('title', 'Manajemen Pesanan - DISHINE Admin')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <h1 class="text-3xl font-bold text-gray-800 mb-6">Manajemen Pesanan</h1>
 
     <!-- Card Putih untuk Tabel -->
     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
         
         <!-- Form Filter -->
-        <form action="{{ route('admin.orders') }}" method="GET">
+        <form action="<?php echo e(route('admin.orders')); ?>" method="GET">
             <div class="p-4 border-b border-gray-200 bg-gray-50 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 
                 <!-- Filter Nama Pelanggan -->
@@ -18,7 +16,7 @@
                     <input type="text" name="search_nama" id="search_nama" 
                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm" 
                            placeholder="Ketik nama..."
-                           value="{{ $filters['search_nama'] ?? '' }}">
+                           value="<?php echo e($filters['search_nama'] ?? ''); ?>">
                 </div>
 
                 <!-- Filter Tanggal Mulai -->
@@ -26,7 +24,7 @@
                     <label for="tanggal_mulai" class="block text-xs font-medium text-gray-500 mb-1">Dari Tanggal</label>
                     <input type="date" name="tanggal_mulai" id="tanggal_mulai" 
                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                           value="{{ $filters['tanggal_mulai'] ?? '' }}">
+                           value="<?php echo e($filters['tanggal_mulai'] ?? ''); ?>">
                 </div>
 
                 <!-- Filter Tanggal Selesai -->
@@ -34,7 +32,7 @@
                     <label for="tanggal_selesai" class="block text-xs font-medium text-gray-500 mb-1">Sampai Tanggal</label>
                     <input type="date" name="tanggal_selesai" id="tanggal_selesai" 
                            class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                           value="{{ $filters['tanggal_selesai'] ?? '' }}">
+                           value="<?php echo e($filters['tanggal_selesai'] ?? ''); ?>">
                 </div>
                 
                 <!-- Tombol Aksi -->
@@ -43,7 +41,7 @@
                         <i data-lucide="search" class="w-4 h-4 mr-2"></i>
                         Filter
                     </button>
-                    <a href="{{ route('admin.orders') }}" class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 text-sm font-medium flex items-center justify-center">
+                    <a href="<?php echo e(route('admin.orders')); ?>" class="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 text-sm font-medium flex items-center justify-center">
                         Reset
                     </a>
                 </div>
@@ -86,36 +84,41 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     
-                    @forelse ($orders as $order)
+                    <?php $__empty_1 = true; $__currentLoopData = $orders; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $order): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <!-- Ini sekarang hanya teks -->
-                                <span class="font-medium text-gray-900">ORD-{{ $order->id }}</span>
+                                <span class="font-medium text-gray-900">ORD-<?php echo e($order->id); ?></span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ \Carbon\Carbon::parse($order->tanggal_pesan)->format('d/m/Y') }}
+                                <?php echo e(\Carbon\Carbon::parse($order->tanggal_pesan)->format('d/m/Y')); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                {{ $order->user->nama ?? 'User Dihapus' }}
+                                <?php echo e($order->user->nama ?? 'User Dihapus'); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-center">
                                 <span class="inline-block bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
-                                    {{ $order->orderItems->sum('jumlah') }}
+                                    <?php echo e($order->orderItems->sum('jumlah')); ?>
+
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">
-                                Rp{{ number_format($order->total_bayar, 0, ',', '.') }}
+                                Rp<?php echo e(number_format($order->total_bayar, 0, ',', '.')); ?>
+
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <!-- Status Pill -->
                                 <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full
-                                    @if($order->status == 'selesai') bg-green-200 text-green-800
-                                    @elseif($order->status == 'dibatalkan') bg-red-200 text-red-800
-                                    @elseif($order->status == 'dikirim') bg-blue-200 text-blue-800
-                                    @elseif($order->status == 'diproses') bg-yellow-200 text-yellow-800
-                                    @else bg-gray-200 text-gray-800 @endif
+                                    <?php if($order->status == 'selesai'): ?> bg-green-200 text-green-800
+                                    <?php elseif($order->status == 'dibatalkan'): ?> bg-red-200 text-red-800
+                                    <?php elseif($order->status == 'dikirim'): ?> bg-blue-200 text-blue-800
+                                    <?php elseif($order->status == 'diproses'): ?> bg-yellow-200 text-yellow-800
+                                    <?php else: ?> bg-gray-200 text-gray-800 <?php endif; ?>
                                 ">
-                                    {{ ucwords(str_replace('_', ' ', $order->status)) }}
+                                    <?php echo e(ucwords(str_replace('_', ' ', $order->status))); ?>
+
                                 </span>
                             </td>
                             <!-- 
@@ -123,24 +126,24 @@
                             Kolom 'Bukti Pembayaran' diganti dengan tombol 'Lihat Detail'
                             -->
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('admin.orders.show', $order->id) }}" 
+                                <a href="<?php echo e(route('admin.orders.show', $order->id)); ?>" 
                                    class="text-blue-600 hover:text-blue-800">
                                     Lihat Detail
                                 </a>
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <!-- Colspan diperbarui menjadi 7 -->
                             <td colspan="7" class="text-center py-10 text-gray-500">
-                                @if(request()->has('search_nama') || request()->has('tanggal_mulai'))
+                                <?php if(request()->has('search_nama') || request()->has('tanggal_mulai')): ?>
                                     Tidak ada pesanan yang cocok dengan filter Anda.
-                                @else
+                                <?php else: ?>
                                     Belum ada pesanan yang masuk.
-                                @endif
+                                <?php endif; ?>
                             </td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                     
                 </tbody>
             </table>
@@ -152,4 +155,5 @@
         </div>
 
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/admin/orders.blade.php ENDPATH**/ ?>

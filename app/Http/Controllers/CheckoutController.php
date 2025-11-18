@@ -9,9 +9,12 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Cart;
+use App\Models\User; // <-- INI DIA PERBAIKANNYA (Baris 1)
 use App\Services\RajaOngkirService;
 use App\Services\WhatsAppService;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\NewOrderNotification; // <-- INI PERBAIKANNYA (Baris 2)
+use Illuminate\Support\Facades\Notification; // <-- INI PERBAIKANNYA (Baris 3)
 
 class CheckoutController extends Controller
 {
@@ -95,9 +98,9 @@ class CheckoutController extends Controller
                     return $item->product->harga_normal * $item->quantity;
                 });
 
-                $biayaLayanan = 2000; // <-- Didefinisikan dengan 'y'
+                $biayaLayanan = 2000;
                 $ongkir = $request->ongkir_value;
-                $total = $totalProduk + $ongkir + $biayaLayanan; // <-- Digunakan dengan 'y' (Benar)
+                $total = $totalProduk + $ongkir + $biayaLayanan;
 
                 // --- LANGKAH 3: BUAT ORDER (SAMA SEPERTI LAMA) ---
                 $order = Order::create([
@@ -105,10 +108,7 @@ class CheckoutController extends Controller
                     'tanggal_pesan' => now(),
                     'total' => $totalProduk,
                     'ongkir' => $ongkir,
-                    
-                    // --- INI DIA PERBAIKANNYA ---
-                    'biaya_layanan' => $biayaLayanan, // <-- SEKARANG SUDAH BENAR (pakai 'y')
-                    
+                    'biaya_layanan' => $biayaLayanan, // <-- Typo sudah diperbaiki
                     'total_bayar' => $total,
                     'status' => Order::STATUS_MENUNGGU_VERIFIKASI,
                     'alamat_pengiriman' => $user->alamat,
@@ -147,7 +147,19 @@ class CheckoutController extends Controller
                 // --- LANGKAH 6: BERSIHKAN KERANJANG (SAMA) ---
                 Cart::where('user_id', $user->id)->delete();
 
-                // --- LANGKAH 7: KIRIM WA (DIPERBAIKI) ---
+                // --------------------------------------------------
+                // --- LANGKAH 7 (BARU): KIRIM NOTIFIKASI KE ADMIN ---
+                // --------------------------------------------------
+                try {
+                    // 'User' sekarang sudah dikenal karena 'use App\Models\User;'
+                    $admins = User::where('role', 'admin')->get(); 
+                    Notification::send($admins, new NewOrderNotification($order));
+                } catch (\Exception $e) {
+                    // Jika notif gagal, jangan batalkan pesanan
+                    \Log::error('Gagal kirim notifikasi database ke admin: ' . $e->getMessage());
+                }
+                
+                // --- LANGKAH 8: KIRIM WA ---
                 try {
                     $buktiUrl = asset('storage/' . $buktiPath);
                     $message = "💸 *Pesanan Baru Masuk!*\n\n"
