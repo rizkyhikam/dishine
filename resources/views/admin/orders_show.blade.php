@@ -75,7 +75,7 @@
                     <hr class="my-2">
                     <div class="flex justify-between text-base font-bold text-gray-800">
                         <span>Total Bayar:</span>
-                        <span>Rp {{ number_format($order->total_bayar, 0, ',', '.') }}</span>
+                        <span>Rp {{ number_format($order->total_harga, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </div>

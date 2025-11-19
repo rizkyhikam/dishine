@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- === INI BARIS YANG SAYA TAMBAHKAN (WAJIB ADA) === -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <!-- ================================================= -->
+
     <title>@yield('title', 'Dishine - E-commerce Terpercaya')</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -39,7 +44,7 @@
                     @endif
                 </a>
 
-                <!-- Search Bar (Sudah Benar) -->
+                <!-- Search Bar -->
                 <form action="{{ url('/katalog') }}" method="GET" 
                       class="flex items-center border border-[#d6c3b3] rounded-md w-full bg-white overflow-hidden">
                     <input type="text" 
@@ -53,11 +58,7 @@
                 </form>
             </div>
 
-            <!-- 
-                =================================
-                Right: Menu (DENGAN HIGHLIGHT AKTIF)
-                =================================
-            -->
+            <!-- Right: Menu -->
             <div class="flex items-center space-x-5">
                 
                 <!-- Home -->
@@ -97,14 +98,13 @@
                     </a>
                 
                 @else
-                    <!-- Link Login (Jika tidak login) -->
+                    <!-- Link Login -->
                     <a href="/login" class="bg-[#b48a60] text-white px-4 py-2 rounded-md hover:bg-[#a07850] flex items-center space-x-1">
                         <i data-lucide="log-in" class="w-5 h-5"></i>
                         <span>Login</span>
                     </a>
                 @endauth
             </div>
-            <!-- =============================== -->
             
         </div>
     </nav>
@@ -134,8 +134,7 @@
         </div>
     </footer>
 
-
-    <!-- Aktifkan ikon -->
+    <!-- Scripts -->
     <script>
         lucide.createIcons();
     </script>

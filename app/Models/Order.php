@@ -9,35 +9,41 @@ class Order extends Model
 {
     use HasFactory;
 
-    // --- Definisi Status (Sudah ada dari perbaikan checkout) ---
-    public const STATUS_MENUNGGU_VERIFIKASI = 'menunggu_verifikasi';
+    // --- KONSTANTA STATUS (Opsional, biar rapi) ---
+    // public const STATUS_PENDING = 'pending';
+    public const STATUS_MENUNGGU_VERIFIKASI = 'menunggu_verifikasi'; // Sesuaikan dengan enum DB
     public const STATUS_DIPROSES = 'diproses';
     public const STATUS_DIKIRIM = 'dikirim';
     public const STATUS_SELESAI = 'selesai';
     public const STATUS_DIBATALKAN = 'dibatalkan';
 
     /**
-     * Kolom yang boleh diisi
+     * Kolom yang boleh diisi (Mass Assignment)
+     * PERBAIKAN: Menambahkan kolom yang hilang dan memperbaiki nama kolom
      */
     protected $fillable = [
         'user_id',
+        'nama_penerima',      // <-- PENTING: Ditambahkan
+        'no_hp',              // <-- PENTING: Ditambahkan
+        'alamat_pengiriman',
+        
         'tanggal_pesan',
-        'total',
+        'total',              // Subtotal Barang
         'ongkir',
         'biaya_layanan',
-        'total_bayar',
+        'total_harga',        // <-- PERBAIKAN: Di DB namanya 'total_harga', bukan 'total_bayar'
+        
         'status',
-        'alamat_pengiriman',
+        'metode_pembayaran',  // <-- PENTING: Ditambahkan
+        'bukti_pembayaran',   // <-- PENTING: Ditambahkan
+        
         'kurir',
         'layanan_kurir',
         'kota_tujuan',
     ];
 
     /**
-     * -----------------------------------------------------------------
-     * INI ADALAH PERBAIKAN UNTUK MASALAH "User Dihapus"
-     * Relasi: Satu Pesanan dimiliki oleh SATU User
-     * -----------------------------------------------------------------
+     * Relasi: User
      */
     public function user()
     {
@@ -45,15 +51,22 @@ class Order extends Model
     }
 
     /**
-     * Relasi ke OrderItems (Barang yang dipesan)
+     * Relasi: Order Items
+     * Saya kembalikan namanya jadi 'items' agar standar dengan Controller/View umumnya
      */
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+    
+    // Alias jika view Anda terlanjur pakai 'orderItems'
     public function orderItems()
     {
         return $this->hasMany(OrderItem::class);
     }
 
     /**
-     * Relasi ke Payment (Pembayaran)
+     * Relasi: Payment
      */
     public function payment()
     {

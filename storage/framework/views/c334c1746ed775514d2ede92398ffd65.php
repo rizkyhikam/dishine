@@ -45,7 +45,7 @@
 
                                     </span>
                                     <p class="text-lg font-bold text-[#4a3b2f] mt-1">
-                                        Rp <?php echo e(number_format($order->total_bayar, 0, ',', '.')); ?>
+                                        Rp <?php echo e(number_format($order->total_harga, 0, ',', '.')); ?>
 
                                     </p>
                                 </div>

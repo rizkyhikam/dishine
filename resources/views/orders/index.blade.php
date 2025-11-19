@@ -42,7 +42,7 @@
                                         {{ ucwords(str_replace('_', ' ', $order->status)) }}
                                     </span>
                                     <p class="text-lg font-bold text-[#4a3b2f] mt-1">
-                                        Rp {{ number_format($order->total_bayar, 0, ',', '.') }}
+                                        Rp {{ number_format($order->total_harga, 0, ',', '.') }}
                                     </p>
                                 </div>
                             </div>
