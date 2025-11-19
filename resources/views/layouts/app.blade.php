@@ -22,23 +22,22 @@
 <body class="bg-[#f8f5f2] text-[#3c2f2f]">
 
     <!-- Navbar -->
-    <nav class="fixed top-0 left-0 w-full bg-[#f8f5f2] border-b border-[#d6c3b3] py-3 pl-6 pr-6 z-50">
-        <div class="flex justify-between items-center">
-
+    <nav class="fixed top-0 left-0 w-full bg-[#f8f5f2] border-b border-[#d6c3b3] py-3 px-8 z-50">
+        <div class="grid grid-cols-3 items-center">
             <!-- Left: Logo -->
-            <div class="flex items-center space-x-2">
+            <div class="flex justify-start">
                 <a href="/" class="inline-block">
-                    <img src="{{ asset('logo.png') }}" alt="Dishine Logo" class="h-12">
+                    <img src="{{ asset('logo.png') }}" alt="Dishine Logo" class="h-10">
                 </a>
             </div>
 
             <!-- Center: Search Bar + Cart -->
-            <div class="flex items-center space-x-3 w-1/2">
+            <div class="flex items-center justify-center space-x-3">
                 <!-- Cart icon -->
-                <a href="/cart" class="p-2 text-[#b48a60] hover:text-[#a07850] relative">
-                    <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                <a href="/cart" class="p-2 text-[#b48a60] hover:text-[#a07850] relative flex-shrink-0">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
                     @if(session('cart_count', 0) > 0)
-                        <span class="absolute top-1 right-1 bg-red-500 text-white text-xs rounded-full px-1.5">
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 min-w-[20px] h-5 flex items-center justify-center">
                             {{ session('cart_count') }}
                         </span>
                     @endif
@@ -46,66 +45,62 @@
 
                 <!-- Search Bar -->
                 <form action="{{ url('/katalog') }}" method="GET" 
-                      class="flex items-center border border-[#d6c3b3] rounded-md w-full bg-white overflow-hidden">
+                    class="flex items-center border border-[#d6c3b3] rounded-md bg-white overflow-hidden shadow-sm w-96">
                     <input type="text" 
-                           name="q"
-                           value="{{ request('q') }}"
-                           placeholder="Cari dress, kerudung..."
-                           class="w-full px-3 py-2 text-sm focus:outline-none">
-                    <button type="submit" class="px-3 text-[#b48a60] hover:text-[#a07850]">
-                        <i data-lucide="search" class="w-5 h-5"></i>
+                        name="q"
+                        value="{{ request('q') }}"
+                        placeholder="Cari dress, kerudung..."
+                        class="w-full px-3 py-1.5 text-sm focus:outline-none">
+                    <button type="submit" class="px-3 text-[#b48a60] hover:text-[#a07850] flex-shrink-0">
+                        <i data-lucide="search" class="w-4 h-4"></i>
                     </button>
                 </form>
             </div>
 
             <!-- Right: Menu -->
-            <div class="flex items-center space-x-5">
-                
+            <div class="flex items-center justify-end space-x-4">
                 <!-- Home -->
-                <a href="/" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1 
-                                  pb-1 border-b-2 
-                                  {{ request()->is('/') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
-                    <i data-lucide="home" class="w-5 h-5"></i>
-                    <span>Beranda</span>
+                <a href="/" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1.5 
+                                pb-1 border-b-2 transition-colors
+                                {{ request()->is('/') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
+                    <i data-lucide="home" class="w-4 h-4"></i>
+                    <span class="text-sm font-medium">Beranda</span>
                 </a>
 
                 <!-- Catalog -->
-                <a href="/katalog" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1 
-                                     pb-1 border-b-2 
-                                     {{ request()->is('katalog*') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
-                    <i data-lucide="tag" class="w-5 h-5"></i>
-                    <span>Katalog</span>
+                <a href="/katalog" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1.5 
+                                    pb-1 border-b-2 transition-colors
+                                    {{ request()->is('katalog*') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
+                    <i data-lucide="tag" class="w-4 h-4"></i>
+                    <span class="text-sm font-medium">Katalog</span>
                 </a>
 
                 <!-- Auth Section -->
                 @auth
                     <!-- Link ke Riwayat Pesanan -->
-                    <a href="{{ route('orders.view') }}" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1 
-                                                        pb-1 border-b-2 
+                    <a href="{{ route('orders.view') }}" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1.5 
+                                                        pb-1 border-b-2 transition-colors
                                                         {{ request()->is('orders*') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
-                        <i data-lucide="archive" class="w-5 h-5"></i>
-                        <span>Pesanan Saya</span>
+                        <i data-lucide="archive" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Pesanan</span>
                     </a>
 
                     <!-- Link Profil -->
-                    <a href="/profil" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1 
-                                            pb-1 border-b-2 
-                                            {{ request()->is('profil*') ? 'border-[#3c2f2f]' : 'border-transparent' }}">
-                        <div class="h-8 w-8 rounded-full border border-[#d6c3b3] flex items-center justify-center bg-white">
+                    <a href="/profil" class="flex items-center text-[#3c2f2f] hover:text-[#a07850] space-x-2">
+                        <div class="h-7 w-7 rounded-full border border-[#d6c3b3] flex items-center justify-center bg-white">
                             <i data-lucide="user" class="w-4 h-4 text-[#6b5a4a]"></i>
                         </div>
-                        <span class="text-[#3c2f2f] font-medium">{{ Auth::user()->nama }}</span>
+                        <span class="text-sm font-medium">{{ Auth::user()->nama }}</span>
                     </a>
                 
                 @else
                     <!-- Link Login -->
-                    <a href="/login" class="bg-[#b48a60] text-white px-4 py-2 rounded-md hover:bg-[#a07850] flex items-center space-x-1">
-                        <i data-lucide="log-in" class="w-5 h-5"></i>
-                        <span>Login</span>
+                    <a href="/login" class="bg-[#b48a60] text-white px-4 py-1.5 rounded-md hover:bg-[#a07850] flex items-center space-x-1.5 transition-colors shadow-sm">
+                        <i data-lucide="log-in" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">Login</span>
                     </a>
                 @endauth
             </div>
-            
         </div>
     </nav>
 
