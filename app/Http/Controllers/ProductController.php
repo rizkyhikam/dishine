@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use App\Models\ProductVariant;
+
 
 class ProductController extends Controller
 {
@@ -114,66 +116,106 @@ class ProductController extends Controller
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'nama' => 'required|string|max:255',
-            'deskripsi' => 'required|string',
-            'harga_normal' => 'required|numeric|min:0',
-            'harga_reseller' => 'required|numeric|min:0',
-            'stok' => 'required|integer|min:0',
-            'gambar' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        ]);
+        // DEBUG dulu biar kamu bisa lihat datanya masuk
+        dd($request->all());
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $gambarPath = $request->file('gambar')->store('products', 'public');
-
+        // 1. Simpan produk utama
         $product = Product::create([
             'nama' => $request->nama,
             'deskripsi' => $request->deskripsi,
             'harga_normal' => $request->harga_normal,
             'harga_reseller' => $request->harga_reseller,
-            'stok' => $request->stok,
-            'gambar' => $gambarPath,
+            'stok' => $request->use_variants ? 0 : ($request->stok ?? 0), 
+            'category_id' => $request->category_id,
+            'gambar' => $request->gambar,
         ]);
 
-        return response()->json(['message' => 'Produk berhasil ditambahkan', 'product' => $product], 201);
+        // 2. Simpan varian jika checkbox dicentang
+        if ($request->use_variants && $request->variant_warna) {
+
+            foreach ($request->variant_warna as $i => $warna) {
+
+                if (!$warna) continue; // skip jika kosong
+
+                ProductVariant::create([
+                    'product_id' => $product->id,
+                    'warna' => $warna,
+                    'stok' => $request->variant_stok[$i] ?? 0,
+                    'harga' => $request->variant_harga[$i] ?? null,
+                ]);
+            }
+
+            // Update stok produk dari total stok varian
+            $product->update([
+                'stok' => $product->variants()->sum('stok')
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Produk berhasil ditambahkan!');
     }
 
-    public function update(Request $request, $id)
-    {
-        $product = Product::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
-            'nama' => 'sometimes|required|string|max:255',
-            'deskripsi' => 'sometimes|required|string',
-            'harga_normal' => 'sometimes|required|numeric|min:0',
-            'harga_reseller' => 'sometimes|required|numeric|min:0',
-            'stok' => 'sometimes|required|integer|min:0',
-            'gambar' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
+    public function update(Request $request, Product $product)
+    {
+        $request->validate([
+            'nama' => 'required',
+            'harga_normal' => 'required|integer',
+            'harga_reseller' => 'required|integer',
+            'stok'  => 'nullable|integer',
+
+            'variant_id.*' => 'nullable|integer',
+            'variant_warna.*' => 'nullable|string',
+            'variant_stok.*'  => 'nullable|integer',
+            'variant_harga.*' => 'nullable|integer',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        // UPDATE PRODUK
+        $product->update([
+            'nama' => $request->nama,
+            'harga_normal' => $request->harga_normal,
+            'harga_reseller' => $request->harga_reseller,
+            'deskripsi' => $request->deskripsi,
+            'stok' => $request->stok ?? $product->stok,
+        ]);
 
-        if ($request->has('nama')) $product->nama = $request->nama;
-        if ($request->has('deskripsi')) $product->deskripsi = $request->deskripsi;
-        if ($request->has('harga_normal')) $product->harga_normal = $request->harga_normal;
-        if ($request->has('harga_reseller')) $product->harga_reseller = $request->harga_reseller;
-        if ($request->has('stok')) $product->stok = $request->stok;
-
-        if ($request->hasFile('gambar')) {
-            if ($product->gambar && Storage::disk('public')->exists($product->gambar)) {
-                Storage::disk('public')->delete($product->gambar);
+        // UPDATE VARIAN YANG SUDAH ADA
+        if ($request->variant_id) {
+            foreach ($request->variant_id as $i => $id) {
+                if ($id) {
+                    $variant = ProductVariant::find($id);
+                    if ($variant) {
+                        $variant->update([
+                            'warna' => $request->variant_warna[$i],
+                            'stok' => $request->variant_stok[$i],
+                            'harga' => $request->variant_harga[$i] ?? null,
+                        ]);
+                    }
+                }
             }
-            $product->gambar = $request->file('gambar')->store('products', 'public');
         }
 
-        $product->save();
+        // TAMBAH VARIAN BARU
+        if ($request->variant_warna) {
+            foreach ($request->variant_warna as $i => $warna) {
+                if (!isset($request->variant_id[$i]) && $warna) {
+                    ProductVariant::create([
+                        'product_id' => $product->id,
+                        'warna' => $warna,
+                        'stok' => $request->variant_stok[$i] ?? 0,
+                        'harga' => $request->variant_harga[$i] ?? null,
+                    ]);
+                }
+            }
+        }
 
-        return response()->json(['message' => 'Produk berhasil diperbarui', 'product' => $product], 200);
+        // SYNC STOK DARI VARIAN
+        if ($product->variants()->count() > 0) {
+            $product->update([
+                'stok' => $product->variants()->sum('stok')
+            ]);
+        }
+
+        return back()->with('success', 'Produk berhasil diperbarui');
     }
 
     public function destroy($id)

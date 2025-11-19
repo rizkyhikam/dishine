@@ -77,69 +77,83 @@ class AdminController extends Controller
         ]);
     }
 
-    public function storeProduct(Request $request)
-    {
-        // 1. Validasi Input (sudah termasuk kategori & galeri)
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'harga_normal' => 'required|numeric',
-            'harga_reseller' => 'required|numeric',
-            'stok' => 'required|integer',
-            'deskripsi' => 'required|string',
-            'category_id' => 'required|exists:categories,id', // <-- Validasi Kategori
-            'gambar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048', // <-- Gambar Sampul
-            'gallery' => 'nullable|array', // <-- Validasi Galeri (boleh kosong)
-            'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048' // Validasi SETIAP file di galeri
-        ]);
+public function storeProduct(Request $request)
+{
+    $request->validate([
+        'nama' => 'required|string|max:255',
+        'harga_normal' => 'required|numeric',
+        'harga_reseller' => 'required|numeric',
+        'stok' => 'nullable|integer',
+        'deskripsi' => 'required|string',
+        'category_id' => 'required|exists:categories,id',
+        'gambar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
 
-        // 2. Simpan Gambar Sampul (Cover Image)
-        $gambarPath = $request->file('gambar')->store('products', 'public');
+        // varian
+        'use_variants' => 'nullable|boolean',
+        'variant_warna.*' => 'nullable|string',
+        'variant_stok.*' => 'nullable|integer',
 
-        // 3. Buat Produk Baru di Database
-        $product = Product::create([
-            'nama' => $request->nama,
-            'harga_normal' => $request->harga_normal,
-            'harga_reseller' => $request->harga_reseller,
-            'stok' => $request->stok,
-            'deskripsi' => $request->deskripsi,
-            'category_id' => $request->category_id, // <-- Simpan Kategori
-            'gambar' => $gambarPath, // <-- Simpan Gambar Sampul
-        ]);
+        // galeri
+        'gallery' => 'nullable|array',
+        'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048'
+    ]);
 
-        // 4. Simpan Galeri Foto (Jika ada)
-        if ($request->hasFile('gallery')) {
-            foreach ($request->file('gallery') as $file) {
-                // Simpan setiap file galeri
-                $galleryPath = $file->store('products/gallery', 'public');
-                
-                // Buat record baru di tabel 'product_images'
-                ProductImage::create([
-                    'product_id' => $product->id, // Link ke produk yang baru dibuat
-                    'path' => $galleryPath
-                ]);
-            }
+    // Upload gambar utama
+    $gambarPath = $request->file('gambar')->store('products', 'public');
+
+    // Buat produk
+    $product = Product::create([
+        'nama' => $request->nama,
+        'harga_normal' => $request->harga_normal,
+        'harga_reseller' => $request->harga_reseller,
+        'deskripsi' => $request->deskripsi,
+        'category_id' => $request->category_id,
+        'gambar' => $gambarPath,
+        'stok' => $request->use_variants ? 0 : ($request->stok ?? 0),
+    ]);
+
+    // ================================
+    // SIMPAN VARIAN (TANPA HARGA)
+    // ================================
+    if ($request->use_variants && $request->variant_warna) {
+
+        foreach ($request->variant_warna as $i => $warna) {
+
+            // Lewati jika warna kosong
+            if (!$warna) continue;
+
+            \App\Models\ProductVariant::create([
+                'product_id' => $product->id,
+                'warna'      => $warna,
+                'stok'       => $request->variant_stok[$i] ?? 0,
+                // Harga DIHAPUS — tidak ikut disimpan sama sekali
+            ]);
         }
 
-        return redirect()->route('admin.products')->with('success', 'Produk baru berhasil ditambahkan.');
+        // Hitung ulang stok produk induk
+        $product->update([
+            'stok' => $product->variants()->sum('stok')
+        ]);
     }
 
-    /**
-     * -----------------------------------------------------------
-     * FUNGSI BARU — Menampilkan Form Edit Produk
-     * -----------------------------------------------------------
-     */
-    public function editProduct($id)
-    {
-        // Temukan produk, ATAU GAGAL
-        // Kita pakai 'with' agar Laravel sekaligus mengambil relasi (efisien)
-        $product = Product::with('images', 'category')->findOrFail($id);
-        
-        // Ambil SEMUA kategori untuk dropdown
-        $categories = Category::all(); 
-        
-        // Kirim produk & kategori ke view
-        return view('admin.products_edit', compact('product', 'categories'));
+    // ================================
+    // SIMPAN GALERI
+    // ================================
+    if ($request->hasFile('gallery')) {
+        foreach ($request->file('gallery') as $file) {
+            $galleryPath = $file->store('products/gallery', 'public');
+
+            \App\Models\ProductImage::create([
+                'product_id' => $product->id,
+                'path' => $galleryPath
+            ]);
+        }
     }
+
+    return redirect()->route('admin.products')
+        ->with('success', 'Produk baru berhasil ditambahkan.');
+}
+
 
     /**
      * -----------------------------------------------------------
@@ -395,4 +409,13 @@ class AdminController extends Controller
         // 4. Redirect admin ke halaman detail pesanan
         return redirect()->route('admin.orders.show', $orderId);
     }
+
+    public function editProduct($id)
+    {
+        $product = Product::with('variants')->findOrFail($id);
+        $categories = Category::all(); // Tambahkan ini
+
+        return view('admin.products_edit', compact('product', 'categories')); // Tambahkan 'categories'
+    }
+
 }

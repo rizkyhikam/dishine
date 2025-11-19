@@ -16,7 +16,8 @@ use App\Http\Controllers\{
     FAQController,
     ProfileController,
     HomeController,
-    CheckoutController
+    CheckoutController,
+    ProductVariantController
 };
 // Import Controller API Ongkir
 use App\Http\Controllers\Api\OngkirController;
@@ -131,6 +132,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/products/{id}', [AdminController::class, 'updateProduct'])->name('products.update');
     Route::delete('/products/{id}', [AdminController::class, 'destroyProduct'])->name('products.delete');
 
+    // PRODUCT VARIANT
+    Route::post('/products/{id}/variants', [ProductVariantController::class, 'store'])->name('variants.store');
+    Route::put('/variants/{variant}', [ProductVariantController::class, 'update'])->name('variants.update');
+    Route::delete('/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('variants.delete');
+
     // Kategori
     Route::get('/categories', [AdminController::class, 'manageCategories'])->name('categories');
     Route::post('/categories', [AdminController::class, 'storeCategory'])->name('categories.store');
@@ -152,6 +158,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Notifikasi
     Route::get('/notifications/read/{id}', [AdminController::class, 'markNotificationAsRead'])->name('notifications.read');
+
 });
 
 /*
