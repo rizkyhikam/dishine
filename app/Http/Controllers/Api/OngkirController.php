@@ -123,37 +123,21 @@ class OngkirController extends Controller
      */
 
     public function getDistricts($cityId)
-
     {
-
         try {
-
             $data = $this->rajaOngkir->getDistricts($cityId);
-
             // Format agar sesuai JS: { district_id: 1, district_name: 'Kuta', zip_code: '80361' }
-
             $formattedData = collect($data)->map(function ($item) {
-
                 return [
-
                     'district_id' => $item['id'],
-
                     'district_name' => $item['name'],
-
                     'zip_code' => $item['zip_code'] // <-- KODE POS ADA DI SINI
-
                 ];
-
             });
-
             return response()->json($formattedData, 200);
-
         } catch (\Exception $e) {
-
             return response()->json(['error' => $e->getMessage()], 500);
-
         }
-
     }
 
    
@@ -224,7 +208,7 @@ class OngkirController extends Controller
 
         try {
 
-            // PENTING: GANTI '1989' DENGAN ID KECAMATAN ASAL TOKO ANDA
+            
 
             $costs = $this->rajaOngkir->cekOngkir(
 

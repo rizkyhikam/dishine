@@ -189,22 +189,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const layananSelect = document.getElementById('layanan_ongkir');
     const form = document.getElementById('checkoutForm');
 
-    // Update total function
+    // ================== UPDATE TOTAL ==================
     function updateTotal(biayaOngkir) {
         ongkir = parseInt(biayaOngkir);
-        
+
         document.getElementById('ongkir_label').textContent = `Rp ${ongkir.toLocaleString('id-ID')}`;
         document.getElementById('ongkir_value').value = ongkir;
-        
+
         let total = subtotal + ongkir + biayaLayanan;
         document.getElementById('total_label').textContent = `Rp ${total.toLocaleString('id-ID')}`;
     }
 
-    // Preview gambar bukti transfer
+    // ================== PREVIEW GAMBAR ==================
     document.getElementById('bukti_transfer').addEventListener('change', function() {
         const file = this.files[0];
         if (!file) return;
-        
+
         const reader = new FileReader();
         reader.onload = function(e) {
             document.getElementById('preview-container').classList.remove('hidden');
@@ -217,31 +217,29 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('toggleAlamatBtn').addEventListener('click', function() {
         const display = document.getElementById('alamatDisplay');
         const formAlamat = document.getElementById('alamatForm');
-        
+
         display.classList.toggle('hidden');
         formAlamat.classList.toggle('hidden');
-        
-        // Load provinsi jika form dibuka
+
         if (!formAlamat.classList.contains('hidden')) {
             loadProvinces();
         }
     });
 
-    // Batal ubah alamat
     document.getElementById('batalAlamatBtn').addEventListener('click', function() {
         document.getElementById('alamatDisplay').classList.remove('hidden');
-        document.getElementById('alamatForm').classnel.add('hidden');
+        document.getElementById('alamatForm').classList.add('hidden');
     });
 
-    // ================== LOAD DATA WILAYAH ==================
+    // ================== LOAD PROVINSI ==================
     async function loadProvinces() {
         try {
-            const response = await fetch('/api/ongkir/provinces'); // ✅
+            const response = await fetch('/api/ongkir/provinces');
             const provinces = await response.json();
-            
+
             const provinsiSelect = document.getElementById('provinsi');
             provinsiSelect.innerHTML = '<option value="">Pilih Provinsi</option>';
-            
+
             provinces.forEach(province => {
                 const option = document.createElement('option');
                 option.value = province.province_id;
@@ -253,11 +251,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Load kota ketika provinsi dipilih
+    // ================== LOAD KOTA ==================
     document.getElementById('provinsi').addEventListener('change', async function() {
         const provinceId = this.value;
         const kotaSelect = document.getElementById('kota');
-        
+
         if (!provinceId) {
             kotaSelect.disabled = true;
             kotaSelect.innerHTML = '<option value="">Pilih Kota</option>';
@@ -265,28 +263,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch(`/api/ongkir/cities/${provinceId}`); // ✅
+            const response = await fetch(`/api/ongkir/cities/${provinceId}`);
             const cities = await response.json();
-            
+
             kotaSelect.innerHTML = '<option value="">Pilih Kota</option>';
+
             cities.forEach(city => {
                 const option = document.createElement('option');
                 option.value = city.city_id;
-                option.textContent = `${city.city_name}`;
+                option.textContent = city.city_name;
                 kotaSelect.appendChild(option);
             });
-            
+
             kotaSelect.disabled = false;
         } catch (error) {
             console.error('Error loading cities:', error);
         }
     });
 
-    // Load kecamatan ketika kota dipilih
+    // ================== LOAD KECAMATAN ==================
     document.getElementById('kota').addEventListener('change', async function() {
         const cityId = this.value;
         const kecamatanSelect = document.getElementById('kecamatan');
-        
+
         if (!cityId) {
             kecamatanSelect.disabled = true;
             kecamatanSelect.innerHTML = '<option value="">Pilih Kecamatan</option>';
@@ -294,33 +293,36 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         try {
-            const response = await fetch(`/api/ongkir/sub-districts/${cityId}`); // ✅
-            const subdistricts = await response.json();
-            
+            const response = await fetch(`/api/ongkir/districts/${cityId}`);
+            const districts = await response.json();
+
             kecamatanSelect.innerHTML = '<option value="">Pilih Kecamatan</option>';
-            subdistricts.forEach(subdistrict => {
+
+            districts.forEach(district => {
                 const option = document.createElement('option');
-                option.value = subdistrict.subdistrict_id;
-                option.textContent = subdistrict.subdistrict_name;
-                option.setAttribute('data-postal', subdistrict.postal_code);
+                option.value = district.district_id;
+                option.textContent = district.district_name;
+                option.setAttribute('data-postal', district.zip_code);
                 kecamatanSelect.appendChild(option);
             });
-            
-            kecamatanSelect.disabled = false;
-        } catch (error) {
-            console.error('Error loading subdistricts:', error);
-        }
-    });
 
-    // Auto-fill kode pos ketika kecamatan dipilih
+            kecamatanSelect.disabled = false;
+
+        } catch (error) {
+            console.error('Error loading districts:', error);
+        }
+    }); 
+    
+    // ================== AUTO KODE POS ==================
     document.getElementById('kecamatan').addEventListener('change', function() {
         const selectedOption = this.options[this.selectedIndex];
         const kodePos = selectedOption.getAttribute('data-postal');
         document.getElementById('kode_pos').value = kodePos || '';
     });
 
-    // Simpan alamat
+    // ================== SIMPAN ALAMAT ==================
     document.getElementById('simpanAlamatBtn').addEventListener('click', async function() {
+
         const provinsiSelect = document.getElementById('provinsi');
         const kotaSelect = document.getElementById('kota');
         const kecamatanSelect = document.getElementById('kecamatan');
@@ -331,16 +333,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const kecamatan = kecamatanSelect.options[kecamatanSelect.selectedIndex]?.textContent;
         const kodePos = document.getElementById('kode_pos').value;
 
-        // Validasi
         if (!provinsi || !kota || !kecamatan || !alamatLengkap) {
             alert('Harap lengkapi semua data alamat');
             return;
         }
 
-        // Format alamat lengkap
         const alamatFinal = `${alamatLengkap}, ${kecamatan}, ${kota}, ${provinsi} ${kodePos}`;
 
-        // Simpan ke database via AJAX
         try {
             const response = await fetch('/api/update-alamat', {
                 method: 'POST',
@@ -348,19 +347,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
                 },
-                body: JSON.stringify({
-                    alamat: alamatFinal
-                })
+                body: JSON.stringify({ alamat: alamatFinal })
             });
 
             const result = await response.json();
 
             if (response.ok) {
-                // Update tampilan
+
                 document.getElementById('alamatDisplay').querySelector('p:last-child').textContent = alamatFinal;
+
                 document.getElementById('alamatDisplay').classList.remove('hidden');
                 document.getElementById('alamatForm').classList.add('hidden');
-                
+
                 alert('Alamat berhasil diperbarui');
             } else {
                 alert('Gagal menyimpan alamat');
@@ -371,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // ================== CEK ONGKIR ==================
+    // ================== LOAD ONGKIR ==================
     kurirSelect.addEventListener('change', async function() {
         const kurir = this.value;
 
@@ -385,16 +383,16 @@ document.addEventListener('DOMContentLoaded', function() {
         layananSelect.innerHTML = '<option value="">Loading...</option>';
 
         try {
-            const response = await fetch('/api/ongkir/cost', { // ✅
+            const response = await fetch('/api/ongkir/cost', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
                 },
                 body: JSON.stringify({
-                    destination: '501', // Default Bogor
+                    destination: '501',
                     kurir: kurir,
-                    weight: 1000 // Berat default 1kg
+                    weight: 1000
                 })
             });
 
@@ -402,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (data.success) {
                 layananSelect.innerHTML = '<option value="">-- Pilih Layanan --</option>';
-                
+
                 data.data.forEach(layanan => {
                     const option = document.createElement('option');
                     option.value = `${layanan.cost}|${layanan.service}`;
@@ -416,8 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Error:', error);
-            layananSelect.innerHTML = '<option value="">Gagal memuat layanan</option>';
-            // Fallback ke harga default
+
             layananSelect.innerHTML = `
                 <option value="">-- Pilih Layanan --</option>
                 <option value="12000|REG">REG - Rp 12.000</option>
@@ -427,11 +424,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Saat layanan ongkir dipilih
     layananSelect.addEventListener('change', function() {
         if (this.value) {
             const [cost, service] = this.value.split('|');
-            updateTotal(parseInt(cost));
+            updateTotal(cost);
             document.getElementById('layanan_selected_name').value = service;
         } else {
             updateTotal(0);
@@ -447,7 +443,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const ongkirValue = document.getElementById('ongkir_value').value;
         const kurir = document.getElementById('kurir').value;
 
-        // Validasi
         if (!layananSelected || ongkirValue === '0' || !kurir) {
             alert('Silakan pilih layanan pengiriman.');
             return;
@@ -458,11 +453,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Prepare form data
         const formData = new FormData(this);
-
-        // Show loading
         const submitBtn = document.getElementById('submitCheckout');
+
         submitBtn.disabled = true;
         submitBtn.textContent = 'Memproses...';
 
@@ -490,5 +483,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/checkout/index.blade.php ENDPATH**/ ?>
