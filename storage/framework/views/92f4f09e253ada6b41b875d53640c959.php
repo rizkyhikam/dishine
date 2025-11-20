@@ -12,54 +12,113 @@
     </div>
     <div class="card-body p-6">
         <form action="<?php echo e(route('admin.products.store')); ?>" method="POST" enctype="multipart/form-data">
-            <?php echo csrf_field(); ?>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Produk</label>
-                    <input type="text" name="nama" class="w-full border border-gray-300 rounded px-3 py-2" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Kategori Produk</label>
-                    <select name="category_id" class="w-full border border-gray-300 rounded px-3 py-2" required>
-                        <option value="">-- Pilih Kategori --</option>
-                        <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                            <option value="<?php echo e($category->id); ?>"><?php echo e($category->name); ?></option>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                    </select>
-                </div>
+        <?php echo csrf_field(); ?>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            <div>
+                <label class="block text-sm font-medium">Nama Produk</label>
+                <input type="text" name="nama" class="w-full border rounded px-3 py-2" required>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Harga Normal</label>
-                    <input type="number" name="harga_normal" class="w-full border border-gray-300 rounded px-3 py-2" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Harga Reseller</label>
-                    <input type="number" name="harga_reseller" class="w-full border border-gray-300 rounded px-3 py-2" required>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Stok</label>
-                    <input type="number" name="stok" class="w-full border border-gray-300 rounded px-3 py-2" required>
-                </div>
+            <div>
+                <label class="block text-sm font-medium">Kategori Produk</label>
+                <select name="category_id" class="w-full border rounded px-3 py-2" required>
+                    <option value="">-- Pilih Kategori --</option>
+                    <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($category->id); ?>"><?php echo e($category->name); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </select>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-                <textarea name="deskripsi" class="w-full border border-gray-300 rounded px-3 py-2" rows="3" required></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+            <div>
+                <label class="block text-sm font-medium">Harga Normal</label>
+                <input type="number" name="harga_normal" class="w-full border rounded px-3 py-2" required>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Gambar Sampul (Cover)</label>
-                    <input type="file" name="gambar" class="w-full border border-gray-300 rounded px-3 py-2" accept="image/*" required>
-                    <small class="text-xs text-gray-500">Ini adalah foto utama di katalog.</small>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Galeri Foto (Opsional)</label>
-                    <input type="file" name="gallery[]" class="w-full border border-gray-300 rounded px-3 py-2" accept="image/*" multiple>
-                    <small class="text-xs text-gray-500">Tahan Ctrl/Cmd untuk pilih banyak foto.</small>
-                </div>
+            <div>
+                <label class="block text-sm font-medium">Harga Reseller</label>
+                <input type="number" name="harga_reseller" class="w-full border rounded px-3 py-2" required>
             </div>
-            <button type="submit" class="bg-gray-800 text-white px-5 py-2 rounded-md hover:bg-gray-700 text-sm font-medium">Tambah Produk</button>
-        </form>
+
+            
+            <div id="normalStock">
+                <label class="block text-sm font-medium">Stok</label>
+                <input type="number" name="stok" class="w-full border rounded px-3 py-2">
+            </div>
+        </div>
+
+        
+        <div class="mb-4">
+            <label class="block text-sm font-medium">Deskripsi</label>
+            <textarea name="deskripsi" class="w-full border rounded px-3 py-2" rows="3" required></textarea>
+        </div>
+
+        
+        <label class="flex items-center gap-2 mb-3">
+            <input type="checkbox" id="useVariants" name="use_variants" value="1">
+            Gunakan varian warna
+        </label>
+
+        
+        <div id="variantTable" style="display:none;">
+            <table class="w-full mt-3">
+                <thead>
+                    <tr class="text-left font-semibold">
+                        <th>Warna</th>
+                        <th>Stok</th>
+                        <th>Harga (opsional)</th>
+                    </tr>
+                </thead>
+                <tbody id="variantRows"></tbody>
+            </table>
+
+            <button type="button" id="addVariantRow"
+                class="mt-3 bg-gray-300 px-3 py-1 rounded">
+                + Tambah Varian
+            </button>
+        </div>
+
+        <br>
+
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+            <div>
+                <label class="block text-sm font-medium">Gambar Sampul</label>
+                <input type="file" name="gambar" class="w-full border rounded px-3 py-2" accept="image/*" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium">Galeri Foto</label>
+                <input type="file" name="gallery[]" multiple class="w-full border rounded px-3 py-2" accept="image/*">
+            </div>
+        </div>
+
+        
+        <button type="submit"
+            class="bg-gray-800 text-white px-5 py-2 rounded hover:bg-gray-700">
+            Tambah Produk
+        </button>
+    </form>
+
+    
+    <script>
+    document.getElementById('useVariants').addEventListener('change', function () {
+        const use = this.checked;
+        document.getElementById('variantTable').style.display = use ? 'block' : 'none';
+        document.getElementById('normalStock').style.display = use ? 'none' : 'block';
+    });
+
+    document.getElementById('addVariantRow').addEventListener('click', function () {
+        const row = `
+            <tr>
+                <td><input type="text" name="variant_warna[]" class="border px-2 py-1 rounded"></td>
+                <td><input type="number" name="variant_stok[]" class="border px-2 py-1 rounded"></td>
+                <td><input type="number" name="variant_harga[]" class="border px-2 py-1 rounded"></td>
+            </tr>`;
+        document.getElementById('variantRows').insertAdjacentHTML('beforeend', row);
+    });
+    </script>
+
     </div>
 </div>
 

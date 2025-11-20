@@ -21,6 +21,11 @@
                 class="w-full p-2 border rounded focus:ring-0 focus:border-opacity-100" 
                 style="border-color: #CC8550; color: #AE8B56;" required>
             </div>
+            <div class="flex justify-end mb-4">
+                <a href="{{ route('password.request') }}" class="text-sm text-[#b48a60] hover:text-[#a07850] hover:underline">
+                    Lupa Password?
+                </a>
+            </div>
             <button type="submit" class="btn-primary w-full py-2 rounded">Login</button>
         </form>
         <p class="text-center mt-4">Belum punya akun? <a href="/register" class="text-[#b48a60] hover:underline">Daftar di sini</a></p>

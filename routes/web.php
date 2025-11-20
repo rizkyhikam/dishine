@@ -3,7 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Models\User;
+use App\Http\Controllers\Admin\SliderController;
 
 // Import Controller
 use App\Http\Controllers\{
@@ -39,6 +41,23 @@ Route::view('/register', 'auth.register')->name('register.form')->middleware('gu
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
+
+// LUPA PASSWORD
+Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])
+    ->middleware('guest')
+    ->name('password.request');
+
+Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])
+    ->middleware('guest')
+    ->name('password.email');
+
+Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])
+    ->middleware('guest')
+    ->name('password.reset');
+
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+    ->middleware('guest')
+    ->name('password.update');
 
 
 /*
@@ -159,6 +178,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // Notifikasi
     Route::get('/notifications/read/{id}', [AdminController::class, 'markNotificationAsRead'])->name('notifications.read');
 
+    // --- MANAJEMEN SLIDER ---
+    Route::get('/sliders', [SliderController::class, 'index'])->name('sliders.index');
+    Route::get('/sliders/create', [SliderController::class, 'create'])->name('sliders.create');
+    Route::post('/sliders', [SliderController::class, 'store'])->name('sliders.store');
+    Route::get('/sliders/{id}/edit', [SliderController::class, 'edit'])->name('sliders.edit');
+    Route::put('/sliders/{id}', [SliderController::class, 'update'])->name('sliders.update');
+    Route::delete('/sliders/{id}', [SliderController::class, 'destroy'])->name('sliders.destroy');
+
 });
 
 /*
@@ -181,5 +208,5 @@ if (env('DEV_MODE', false)) {
         return redirect()->route(
             $role === 'admin' ? 'admin.dashboard' : 'user.dashboard'
         )->with('success', "Sekarang kamu login sebagai {$role}");
-    });
+    }); 
 }

@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await res.json();
             select.innerHTML = '<option value="">Pilih Provinsi</option>';
             data.forEach(item => {
-                select.innerHTML += `<option value="${item.province_id}">${item.province}</option>`;
+                select.innerHTML += `<option value="${item.id}">${item.name}</option>`;
             });
         } catch (err) { console.error(err); }
     }

@@ -7,6 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -41,7 +44,6 @@ class AuthController extends Controller
         return redirect('/login')->with('success', 'Registrasi berhasil! Silakan login.');
     }
 
-    // === INI BAGIAN YANG DIUBAH ===
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -57,17 +59,9 @@ class AuthController extends Controller
 
             // Cek Role
             if ($user->role === 'admin') {
-                // Jika admin, arahkan ke dashboard admin
-                // Pastikan Anda sudah punya route '/admin/dashboard' atau sesuaikan url-nya
                 return redirect()->intended('/admin/dashboard'); 
             }
 
-            // Jika Reseller (Opsional, jika ingin dibedakan juga)
-            //if ($user->role === 'reseller') {
-                 //return redirect()->intended('/reseller/dashboard');
-            //}
-
-            // Jika user biasa (pelanggan), arahkan ke home
             return redirect()->intended(route('home'));
         }
 
@@ -75,17 +69,99 @@ class AuthController extends Controller
             'email' => 'Email atau password salah.',
         ])->onlyInput('email');
     }
-    // === AKHIR PERUBAHAN ===
 
     public function logout(Request $request)
     {
         Auth::logout();
         
-        // Perbaikan sedikit: Logout biasanya redirect, bukan response JSON 
-        // kecuali ini API. Jika web biasa, gunakan redirect.
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return redirect('/login');
+    }
+
+    /**
+     * 1. Tampilkan form lupa password
+     */
+    public function showForgotPasswordForm()
+    {
+        return view('auth.forgot-password');
+    }
+
+    /**
+     * 2. Kirim link reset password ke email
+     */
+    public function sendResetLink(Request $request)
+{
+    // Validasi awal
+    $request->validate([
+        'email' => 'required|email',
+    ]);
+
+    // 1️⃣ Cek apakah email ada di database
+    $user = User::where('email', $request->email)->first();
+
+    if (! $user) {
+        // Kalau email tidak ditemukan
+        return back()->withErrors([
+            'email' => 'Email ini tidak terdaftar di sistem kami.'
+        ]);
+    }
+
+    // 2️⃣ Jika email ada, lanjut kirim link reset password
+    $status = Password::sendResetLink(
+        $request->only('email')
+    );
+
+    if ($status === Password::RESET_LINK_SENT) {
+        return back()->with(['status' => __($status)]);
+    }
+
+    return back()->withErrors(['email' => __($status)]);
+}
+
+
+    /**
+     * 3. Tampilkan form reset password (setelah klik link di email)
+     */
+    public function showResetForm(Request $request, $token = null)
+    {
+        return view('auth.reset-password')->with(
+            ['token' => $token, 'email' => $request->email]
+        );
+    }
+
+    /**
+     * 4. Proses reset password yang sebenarnya
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        // Reset password
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect()->route('login')->with('success', __($status));
+        }
+
+        return back()
+            ->withInput($request->only('email'))
+            ->withErrors(['email' => __($status)]);
     }
 }

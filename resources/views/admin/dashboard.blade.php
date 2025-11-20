@@ -119,7 +119,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">
-                                Rp{{ number_format($order->total_bayar, 0, ',', '.') }}
+                                Rp{{ number_format($order->total_harga, 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <a href="{{ route('admin.orders.show', $order->id) }}" 

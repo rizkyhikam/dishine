@@ -24,7 +24,7 @@ class AdminController extends Controller
     public function dashboard()
     {
         // 1. Hitung Total Pendapatan (hanya dari pesanan 'selesai')
-        $totalPendapatan = Order::where('status', 'selesai')->sum('total_bayar');
+        $totalPendapatan = Order::where('status', 'selesai')->sum('total_harga');
 
         // 2. Hitung Pesanan Baru (yang perlu diproses)
         $pesananBaru = Order::whereIn('status', ['menunggu_verifikasi', 'diproses'])->count();

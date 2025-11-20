@@ -68,12 +68,25 @@
                     <span>Manajemen Pengguna</span>
                 </a>
 
-                <a href="<?php echo e(route('admin.faq')); ?>" 
-                   class="flex items-center px-6 py-3 text-[#3c2f2f] hover:bg-[#e0d5ce] hover:text-black transition
-                          <?php echo e(request()->is('admin/faq*') ? 'bg-[#b48a60] text-white' : ''); ?>">
-                    <i data-lucide="help-circle" class="w-5 h-5 mr-3"></i>
-                    <span>Manajemen FAQ</span>
-                </a>
+                <!-- Manajemen Web (Dropdown) -->
+<div class="group">
+    <button class="flex items-center w-full px-6 py-3 text-[#3c2f2f] hover:bg-[#e0d5ce] hover:text-black transition">
+        <i data-lucide="settings" class="w-5 h-5 mr-3"></i>
+        <span>Manajemen Web</span>
+        <i data-lucide="chevron-down" class="w-4 h-4 ml-auto"></i>
+    </button>
+
+    <div class="hidden group-hover:block ml-12 mt-1">
+        <!-- Submenu Slider -->
+        <a href="<?php echo e(route('admin.sliders.index')); ?>"
+            class="flex items-center px-4 py-2 text-[#3c2f2f] hover:bg-[#e0d5ce] hover:text-black rounded-md transition
+            <?php echo e(request()->is('admin/sliders*') ? 'bg-[#b48a60] text-white' : ''); ?>">
+            <i data-lucide="image" class="w-4 h-4 mr-2"></i>
+            <span>Slider</span>
+        </a>
+    </div>
+</div>
+
             </nav>
 
             <div class="py-4 px-6 border-t border-[#d6c3b3]">
