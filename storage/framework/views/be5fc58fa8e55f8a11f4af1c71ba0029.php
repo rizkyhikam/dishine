@@ -4,19 +4,21 @@
 <!-- HERO / SLIDER -->
 <div class="relative overflow-hidden">
     <div id="slider" class="flex transition-transform duration-700 ease-in-out">
-        <img src="<?php echo e(asset('modelhome.png')); ?>" 
-             alt="Dishine 1" 
-             class="w-full h-auto object-cover max-h-[550px] flex-shrink-0"
-             data-aos="fade-in"
-             data-aos-duration="1000">
-        <img src="<?php echo e(asset('modelhome2.jpg')); ?>" 
-             alt="Dishine 2" 
-             class="w-full h-auto object-cover max-h-[550px] flex-shrink-0">
-        <img src="<?php echo e(asset('modelhome3.jpg')); ?>" 
-             alt="Dishine 3" 
-             class="w-full h-auto object-cover max-h-[550px] flex-shrink-0">
+
+        <?php $__currentLoopData = $sliders; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $slide): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <img src="<?php echo e(asset('storage/' . $slide->image)); ?>"
+                 alt="Slider"
+                 class="w-full h-auto object-cover max-h-[550px] flex-shrink-0">
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     </div>
 </div>
+
+<?php if($sliders->isEmpty()): ?>
+    <div class="w-full text-center py-10 bg-gray-100 text-gray-600">
+        <p>Belum ada slider ditambahkan.</p>
+    </div>
+<?php endif; ?>
+
 
 <!-- Script auto-slide -->
 <script>

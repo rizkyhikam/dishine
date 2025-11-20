@@ -7,6 +7,8 @@ use App\Models\Product;
 use App\Models\OrderItem;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\Slider;
+
 
 class HomeController extends Controller
 {
@@ -22,6 +24,12 @@ class HomeController extends Controller
         $user = Auth::user();
         $isReseller = ($user && $user->role == 'reseller');
         $minStock = $isReseller ? 6 : 1; // Reseller > 5, Pelanggan > 0
+        
+
+        $sliders = Slider::where('is_active', 1)
+        ->orderBy('position', 'asc')
+        ->get();
+
 
         // 2. Ambil 4 ID produk terlaris dari 'order_items'
         $topProductIds = OrderItem::select('product_id', DB::raw('SUM(jumlah) as total_terjual'))
@@ -40,6 +48,6 @@ class HomeController extends Controller
             });
 
         // 4. Kirim data ke view
-        return view('home', compact('featuredProducts'));
+        return view('home', compact('sliders','featuredProducts'));
     }
 }

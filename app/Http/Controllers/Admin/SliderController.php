@@ -32,7 +32,7 @@ class SliderController extends Controller
 
         // Simpan gambar ke folder 'public/sliders'
         // Hasilnya: 'sliders/namafile.jpg'
-        $path = $request->file('image')->store('sliders', 'public');
+        $path = $request->file('image')->store('uploads/sliders', 'public');
 
         Slider::create([
             'image' => $path, // Simpan path-nya saja
@@ -74,7 +74,7 @@ class SliderController extends Controller
             }
 
             // Upload gambar baru
-            $path = $request->file('image')->store('sliders', 'public');
+            $path = $request->file('image')->store('uploads/sliders', 'public');
             $data['image'] = $path;
         }
 
