@@ -17,7 +17,6 @@ class VariantSize extends Model
      */
     public function size()
     {
-        // Harus eksplisit FK-nya untuk menghindari konflik dan N+1
         return $this->belongsTo(Size::class, 'size_id');
     }
 
