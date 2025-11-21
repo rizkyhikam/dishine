@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Models\User;
 use App\Http\Controllers\Admin\SliderController;
+use App\Http\Controllers\ShippingController;
 
 // Import Controller
 use App\Http\Controllers\{
@@ -211,3 +212,9 @@ if (env('DEV_MODE', false)) {
         )->with('success', "Sekarang kamu login sebagai {$role}");
     }); 
 }
+
+Route::prefix('shipping')->middleware('auth')->group(function () {
+    Route::get('/provinces', [ShippingController::class, 'getProvinces']);
+    Route::get('/city/{provinceId}', [ShippingController::class, 'getCities']);
+    Route::post('/cost', [ShippingController::class, 'calculateShipping']);
+});

@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'rajaongkir' => [
+        'api_key' => env('RAJAONGKIR_API_KEY'),
+        'base_url' => env('RAJAONGKIR_BASE_URL', 'https://api.rajaongkir.com/starter'),
+        'origin_city' => env('RAJAONGKIR_ORIGIN', 153), // Default 153 (Jakarta Selatan), ganti sesuai kota toko Anda
+    ],
+
 ];

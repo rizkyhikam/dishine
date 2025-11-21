@@ -6,30 +6,30 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Notification;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Cart;
 use App\Models\User;
-use App\Models\Product;
-use App\Services\RajaOngkirService;
+use App\Services\RajaOngkirService; // Pastikan namespace ini sesuai dengan file Service teman Anda
 use App\Services\WhatsAppService;
 use App\Notifications\NewOrderNotification;
-use Illuminate\Support\Facades\Notification;
 
 class CheckoutController extends Controller
 {
     /**
      * Menampilkan halaman checkout
      */
-    public function index()
+    public function index(RajaOngkirService $rajaOngkir)
     {
         $user = Auth::user();
 
-        // 1. Validasi Profil
-        if (empty($user->alamat) || empty($user->no_hp)) {
+        // 1. Validasi Profil Dasar (Hanya No HP)
+        // Alamat dihapus dari sini karena akan diisi di form checkout jika kosong
+        if (empty($user->no_hp)) {
             return redirect()->route('profil')
-                ->with('error', 'Silakan lengkapi alamat dan nomor HP Anda terlebih dahulu sebelum checkout.');
+                ->with('error', 'Silakan lengkapi nomor HP Anda terlebih dahulu di menu Profil sebelum checkout.');
         }
 
         $isReseller = ($user->role == 'reseller');
@@ -54,22 +54,35 @@ class CheckoutController extends Controller
             
             $total += $price * $item->quantity;
             
-            // Asumsi berat 200g per item
-            $totalWeight += $item->quantity * 200;
+            // Asumsi berat 200g per item jika tidak ada data berat
+            // Jika ada kolom berat di database product, ganti jadi $item->product->berat
+            $itemWeight = $item->product->berat ?? 200; 
+            $totalWeight += $item->quantity * $itemWeight;
         }
 
-        // Minimal berat 200g
-        if ($totalWeight < 200) $totalWeight = 200;
+        // Minimal berat 1kg (1000g) aturan ekspedisi biasanya, atau biarkan sesuai real
+        // Kita set minimal 1 gram agar tidak error di API
+        if ($totalWeight < 1) $totalWeight = 1;
 
-        // --- PERBAIKAN: DEFINISIKAN ADMIN FEE ---
+        // Admin Fee
         $adminFee = 2000;
 
-        // Kirim ke View (tambahkan 'adminFee')
-        return view('checkout.index', compact('cartItems', 'total', 'totalWeight', 'isReseller', 'adminFee'));
+        // 4. Ambil Data Provinsi (Integrasi dengan Service Teman Anda)
+        $provinces = [];
+        try {
+            // Service teman Anda mengembalikan array langsung
+            $provinces = $rajaOngkir->getProvinces();
+        } catch (\Exception $e) {
+            \Log::error("Checkout - Gagal ambil provinsi: " . $e->getMessage());
+            // Tetap lanjut agar halaman tidak error, meski dropdown kosong
+        }
+
+        // Kirim ke View
+        return view('checkout.index', compact('cartItems', 'total', 'totalWeight', 'isReseller', 'adminFee', 'provinces', 'user'));
     }
 
     /**
-     * Memproses Checkout
+     * Memproses Checkout (Simpan Order)
      */
     public function storeFullCheckout(Request $request, RajaOngkirService $rajaOngkir, WhatsAppService $whatsapp)
     {
@@ -79,26 +92,56 @@ class CheckoutController extends Controller
         // 1. Validasi Input
         $request->validate([
             'kurir' => 'required|string|in:jne,pos,tiki',
-            'destination' => 'required',
+            'destination' => 'required', // Ini adalah ID Kota tujuan
             'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'ongkir_value' => 'required|numeric|min:0',
             'layanan_selected_name' => 'required|string',
+            
+            // Field optional untuk alamat baru
+            'detail_alamat' => 'nullable|string',
+            'provinsi_name' => 'nullable|string', 
+            'kota_name'     => 'nullable|string',
         ]);
 
-        if (empty($user->alamat) || empty($user->no_hp)) {
-            return response()->json(['message' => 'Lengkapi profil alamat & HP dahulu.'], 400);
+        // --- LOGIKA PENYIMPANAN ALAMAT ---
+        // Jika user belum punya alamat, atau user ingin mengubah alamat lewat form ini
+        // Kita prioritaskan alamat yang ada di database, KECUALI database kosong.
+        
+        $alamatFinal = $user->alamat; // Default ambil dari DB
+
+        if (empty($alamatFinal)) {
+            // Jika di DB kosong, wajib ambil dari input form
+            if ($request->detail_alamat && $request->provinsi_name && $request->kota_name) {
+                
+                // Format Alamat: "Jl. Mawar No 5, Kota Bandung, Jawa Barat"
+                $alamatBaru = $request->detail_alamat . ", " . $request->kota_name . ", " . $request->provinsi_name;
+                
+                // Update variabel lokal untuk disimpan di Order
+                $alamatFinal = $alamatBaru;
+
+                // Update ke Database User (Permanent) agar user tidak perlu isi lagi next time
+                // Juga simpan city_id agar next time ongkir otomatis terhitung
+                $user->update([
+                    'alamat' => $alamatBaru,
+                    'city_id' => $request->destination // Simpan ID kota untuk RajaOngkir
+                ]);
+            } else {
+                // Jika DB kosong DAN form tidak lengkap
+                return response()->json(['message' => 'Mohon lengkapi detail alamat (Jalan, Provinsi, Kota).'], 400);
+            }
         }
+        // --- END LOGIKA ALAMAT ---
 
         try {
-            $result = DB::transaction(function () use ($request, $user, $isReseller, $whatsapp) {
+            $result = DB::transaction(function () use ($request, $user, $isReseller, $whatsapp, $alamatFinal) {
                 
-                // 2. Cek Keranjang
+                // 2. Cek Keranjang (Validasi Ulang)
                 $cartItems = Cart::with('product')
                     ->where('user_id', $user->id)
                     ->get();
 
                 if ($cartItems->isEmpty()) {
-                    throw new \Exception('Keranjang belanja kosong saat diproses.');
+                    throw new \Exception('Keranjang belanja kosong.');
                 }
 
                 // 3. Hitung Ulang Total & Cek Stok
@@ -107,25 +150,25 @@ class CheckoutController extends Controller
                 foreach ($cartItems as $cartItem) {
                     $product = $cartItem->product;
                     
-                    if (!$product) {
-                        throw new \Exception('Salah satu produk tidak ditemukan.');
-                    }
+                    if (!$product) throw new \Exception('Salah satu produk tidak ditemukan.');
 
+                    // Cek Stok
                     if ($product->stok < $cartItem->quantity) {
-                        throw new \Exception("Stok '{$product->nama_produk}' tidak mencukupi (Sisa: {$product->stok}).");
+                        throw new \Exception("Stok '{$product->nama_produk}' habis / tidak cukup.");
                     }
 
                     $hargaSatuan = $isReseller ? $product->harga_reseller : $product->harga_normal;
 
+                    // Cek Syarat Reseller
                     if ($isReseller && $cartItem->quantity < 5) {
-                        throw new \Exception("Reseller wajib beli minimal 5 item untuk '{$product->nama_produk}'.");
+                        throw new \Exception("Reseller wajib beli minimal 5 item per produk.");
                     }
 
                     $totalProduk += ($hargaSatuan * $cartItem->quantity);
                 }
 
                 // 4. Kalkulasi Akhir
-                $biayaLayanan = 2000; // Pastikan ini sama dengan di index()
+                $biayaLayanan = 2000; 
                 $ongkir = $request->ongkir_value;
                 $totalBayar = $totalProduk + $ongkir + $biayaLayanan;
 
@@ -140,12 +183,12 @@ class CheckoutController extends Controller
                     'user_id' => $user->id,
                     'nama_penerima' => $user->nama,
                     'no_hp' => $user->no_hp,
-                    'alamat_pengiriman' => $user->alamat,
+                    'alamat_pengiriman' => $alamatFinal, // Gunakan alamat yang sudah dipastikan ada
                     'tanggal_pesan' => now(),
-                    'total' => $totalProduk,
+                    'total' => $totalProduk, // Subtotal barang
                     'ongkir' => $ongkir,
                     'biaya_layanan' => $biayaLayanan,
-                    'total_harga' => $totalBayar,
+                    'total_harga' => $totalBayar, // Grand Total
                     'status' => 'menunggu_verifikasi',
                     'kurir' => $request->kurir,
                     'layanan_kurir' => $request->layanan_selected_name,
@@ -167,10 +210,11 @@ class CheckoutController extends Controller
                         'subtotal' => $hargaSatuan * $cartItem->quantity,
                     ]);
 
+                    // Kurangi Stok
                     $product->decrement('stok', $cartItem->quantity);
                 }
 
-                // 8. Simpan Payment
+                // 8. Simpan Payment (Opsional, jika tabel payment dipisah)
                 if ($buktiPath) {
                     Payment::create([
                         'order_id' => $order->id,
@@ -188,9 +232,10 @@ class CheckoutController extends Controller
                 return $order;
             });
 
-            // --- NOTIFIKASI ---
+            // --- NOTIFIKASI (Diluar Transaksi DB) ---
             $order = $result;
 
+            // Notif ke Admin (Database)
             try {
                 $admins = User::where('role', 'admin')->get();
                 Notification::send($admins, new NewOrderNotification($order));
@@ -198,6 +243,7 @@ class CheckoutController extends Controller
                 \Log::error('Notif DB Gagal: ' . $e->getMessage());
             }
 
+            // Notif ke Admin (WhatsApp)
             try {
                 if ($whatsapp && isset($order->bukti_pembayaran)) {
                     $buktiUrl = asset('storage/' . $order->bukti_pembayaran);

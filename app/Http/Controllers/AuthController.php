@@ -13,16 +13,14 @@ use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    // ... method register biarkan saja seperti sebelumnya ...
     public function register(Request $request)
     {
-        // Kode register Anda tetap sama, tidak perlu diubah
+        // VALIDASI: Bagian 'alamat' sudah dihapus
         $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|in:admin,reseller,pelanggan',
-            'alamat' => 'required|string',
             'no_hp' => 'required|string|max:15',
         ]);
 
@@ -32,12 +30,13 @@ class AuthController extends Controller
                 ->withInput();
         }
 
+        // CREATE USER: Bagian 'alamat' sudah dihapus
         $user = User::create([
             'nama' => $request->nama,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
-            'alamat' => $request->alamat,
+            // 'alamat' dihapus agar tidak error karena inputnya tidak ada
             'no_hp' => $request->no_hp,
         ]);
         
@@ -92,33 +91,33 @@ class AuthController extends Controller
      * 2. Kirim link reset password ke email
      */
     public function sendResetLink(Request $request)
-{
-    // Validasi awal
-    $request->validate([
-        'email' => 'required|email',
-    ]);
-
-    // 1️⃣ Cek apakah email ada di database
-    $user = User::where('email', $request->email)->first();
-
-    if (! $user) {
-        // Kalau email tidak ditemukan
-        return back()->withErrors([
-            'email' => 'Email ini tidak terdaftar di sistem kami.'
+    {
+        // Validasi awal
+        $request->validate([
+            'email' => 'required|email',
         ]);
+
+        // 1️⃣ Cek apakah email ada di database
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user) {
+            // Kalau email tidak ditemukan
+            return back()->withErrors([
+                'email' => 'Email ini tidak terdaftar di sistem kami.'
+            ]);
+        }
+
+        // 2️⃣ Jika email ada, lanjut kirim link reset password
+        $status = Password::sendResetLink(
+            $request->only('email')
+        );
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with(['status' => __($status)]);
+        }
+
+        return back()->withErrors(['email' => __($status)]);
     }
-
-    // 2️⃣ Jika email ada, lanjut kirim link reset password
-    $status = Password::sendResetLink(
-        $request->only('email')
-    );
-
-    if ($status === Password::RESET_LINK_SENT) {
-        return back()->with(['status' => __($status)]);
-    }
-
-    return back()->withErrors(['email' => __($status)]);
-}
 
 
     /**

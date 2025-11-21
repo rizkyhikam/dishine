@@ -1,51 +1,51 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'Checkout - Dishine'); ?>
 
-@section('title', 'Checkout - Dishine')
+<?php $__env->startSection('content'); ?>
 
-@section('content')
 
-{{-- 1. PASS DATA PHP KE JAVASCRIPT --}}
 <script>
     window.checkoutData = {
-        subtotal: {{ $total }},
-        totalWeight: {{ $totalWeight }},
-        adminFee: {{ $adminFee }},
-        userAddress: "{{ Auth::user()->alamat ?? '' }}" 
+        subtotal: <?php echo e($total); ?>,
+        totalWeight: <?php echo e($totalWeight); ?>,
+        adminFee: <?php echo e($adminFee); ?>,
+        userAddress: "<?php echo e(Auth::user()->alamat ?? ''); ?>" 
     };
 </script>
 
 <div class="container mx-auto px-4 py-8 max-w-4xl">
     <h1 class="text-3xl font-bold mb-8 text-[#3c2f2f]">Checkout</h1>
 
-    @if($cartItems->isEmpty())
+    <?php if($cartItems->isEmpty()): ?>
         <div class="text-center py-10 bg-white rounded border">
             <p class="text-gray-500">Keranjang belanja kosong.</p>
-            <a href="{{ route('katalog') }}" class="text-blue-600 hover:underline">Belanja Dulu</a>
+            <a href="<?php echo e(route('katalog')); ?>" class="text-blue-600 hover:underline">Belanja Dulu</a>
         </div>
-    @else
+    <?php else: ?>
 
     <form id="checkoutForm" enctype="multipart/form-data">
-        @csrf
+        <?php echo csrf_field(); ?>
         <div class="flex flex-col gap-8">
 
             <div class="bg-white rounded-lg border p-6 shadow-sm">
                 <div class="flex justify-between items-start mb-4">
                     <h3 class="font-bold text-lg text-gray-900">Alamat Pengiriman</h3>
                     <button type="button" id="toggleAlamatBtn" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                        {{ Auth::user()->alamat ? 'Ubah Alamat' : 'Isi Alamat Baru' }}
+                        <?php echo e(Auth::user()->alamat ? 'Ubah Alamat' : 'Isi Alamat Baru'); ?>
+
                     </button>
                 </div>
                 
-                <div id="alamatDisplay" class="{{ Auth::user()->alamat ? '' : 'hidden' }} space-y-2">
+                <div id="alamatDisplay" class="<?php echo e(Auth::user()->alamat ? '' : 'hidden'); ?> space-y-2">
                     <p class="font-semibold text-gray-900">
-                        {{ Auth::user()->nama }} ({{ Auth::user()->no_hp }})
+                        <?php echo e(Auth::user()->nama); ?> (<?php echo e(Auth::user()->no_hp); ?>)
                     </p>
                     <p class="text-gray-600 text-sm leading-relaxed">
-                        {{ Auth::user()->alamat ?? 'Belum ada alamat tersimpan.' }}
+                        <?php echo e(Auth::user()->alamat ?? 'Belum ada alamat tersimpan.'); ?>
+
                     </p>
                 </div>
 
-                <div id="alamatForm" class="{{ Auth::user()->alamat ? 'hidden' : '' }} mt-4 space-y-4 border-t pt-4">
+                <div id="alamatForm" class="<?php echo e(Auth::user()->alamat ? 'hidden' : ''); ?> mt-4 space-y-4 border-t pt-4">
                     <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm p-3 rounded mb-3">
                         <i class="fas fa-info-circle"></i> Silakan lengkapi alamat pengiriman Anda.
                     </div>
@@ -55,18 +55,19 @@
                             <label class="block font-semibold mb-2 text-gray-700 text-sm">Provinsi</label>
                             <select name="province_id" id="province_id" class="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white">
                                 <option value="">-- Pilih Provinsi --</option>
-                                @foreach($provinces as $prov)
-                                    @php
+                                <?php $__currentLoopData = $provinces; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prov): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <?php
                                         // Antisipasi perbedaan key (province_id vs id)
                                         $pId = $prov['province_id'] ?? $prov['id'] ?? null;
                                         $pName = $prov['province'] ?? $prov['name'] ?? '';
-                                    @endphp
-                                    @if($pId)
-                                        <option value="{{ $pId }}" data-name="{{ $pName }}">
-                                            {{ $pName }}
+                                    ?>
+                                    <?php if($pId): ?>
+                                        <option value="<?php echo e($pId); ?>" data-name="<?php echo e($pName); ?>">
+                                            <?php echo e($pName); ?>
+
                                         </option>
-                                    @endif
-                                @endforeach
+                                    <?php endif; ?>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                             <input type="hidden" name="provinsi_name" id="provinsi_name">
                         </div>
@@ -89,36 +90,38 @@
             <div class="bg-white rounded-lg border p-6 shadow-sm">
                 <h3 class="font-bold text-lg mb-4 text-gray-900">Produk Dipesan</h3>
                 <div class="space-y-4">
-                    @foreach($cartItems as $item)
-                        @if($item->product)
-                            @php
+                    <?php $__currentLoopData = $cartItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php if($item->product): ?>
+                            <?php
                                 $price = $isReseller ? $item->product->harga_reseller : $item->product->harga_normal;
                                 $pName = $item->product->nama ?? $item->product->nama_produk ?? 'Produk';
                                 $img = $item->product->gambar ?? null;
-                            @endphp
+                            ?>
                             <div class="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                                 <div class="flex items-center space-x-4">
-                                    @if($img)
-                                        <img src="{{ asset('storage/' . $img) }}" class="w-16 h-16 object-cover rounded border" alt="{{ $pName }}">
-                                    @else
+                                    <?php if($img): ?>
+                                        <img src="<?php echo e(asset('storage/' . $img)); ?>" class="w-16 h-16 object-cover rounded border" alt="<?php echo e($pName); ?>">
+                                    <?php else: ?>
                                         <div class="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500">No Img</div>
-                                    @endif
+                                    <?php endif; ?>
                                     <div>
-                                        <h4 class="font-semibold text-gray-800">{{ $pName }}</h4>
+                                        <h4 class="font-semibold text-gray-800"><?php echo e($pName); ?></h4>
                                         <p class="text-sm text-gray-500">
-                                            {{ $item->quantity }} x Rp {{ number_format($price, 0, ',', '.') }}
+                                            <?php echo e($item->quantity); ?> x Rp <?php echo e(number_format($price, 0, ',', '.')); ?>
+
                                         </p>
                                     </div>
                                 </div>
                                 <div class="font-semibold text-gray-900">
-                                    Rp {{ number_format($price * $item->quantity, 0, ',', '.') }}
+                                    Rp <?php echo e(number_format($price * $item->quantity, 0, ',', '.')); ?>
+
                                 </div>
                             </div>
-                        @endif
-                    @endforeach
+                        <?php endif; ?>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
                 <div class="text-right text-sm text-gray-500 mt-4 border-t pt-2">
-                    Total Berat: <strong>{{ number_format($totalWeight) }} gram</strong>
+                    Total Berat: <strong><?php echo e(number_format($totalWeight)); ?> gram</strong>
                 </div>
             </div>
 
@@ -163,7 +166,7 @@
                 <div class="space-y-2 text-sm mb-4">
                     <div class="flex justify-between">
                         <span>Subtotal Produk</span>
-                        <span class="font-medium">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                        <span class="font-medium">Rp <?php echo e(number_format($total, 0, ',', '.')); ?></span>
                     </div>
                     <div class="flex justify-between">
                         <span>Ongkos Kirim</span>
@@ -171,17 +174,17 @@
                     </div>
                     <div class="flex justify-between">
                         <span>Biaya Admin</span>
-                        <span>Rp {{ number_format($adminFee, 0, ',', '.') }}</span>
+                        <span>Rp <?php echo e(number_format($adminFee, 0, ',', '.')); ?></span>
                     </div>
                 </div>
                 <div class="flex justify-between items-center border-t pt-4 mb-6">
                     <span class="font-bold text-lg">Total Bayar</span>
-                    <span id="total_display" class="font-bold text-xl">Rp {{ number_format($total + $adminFee, 0, ',', '.') }}</span>
+                    <span id="total_display" class="font-bold text-xl">Rp <?php echo e(number_format($total + $adminFee, 0, ',', '.')); ?></span>
                 </div>
 
                 <input type="hidden" id="ongkir_value" name="ongkir_value" value="0">
                 <input type="hidden" id="layanan_name" name="layanan_selected_name" value="">
-                <input type="hidden" id="destination_id" name="destination" value="{{ Auth::user()->city_id ?? '' }}">
+                <input type="hidden" id="destination_id" name="destination" value="<?php echo e(Auth::user()->city_id ?? ''); ?>">
                 
                 <button type="submit" id="submitBtn" class="w-full bg-[#AE8B56] hover:bg-[#8f7246] text-white font-bold py-3 px-4 rounded">
                     Buat Pesanan
@@ -189,10 +192,10 @@
             </div>
         </div>
     </form>
-    @endif
+    <?php endif; ?>
 </div>
 
-{{-- 2. SCRIPT JAVASCRIPT LOGIC --}}
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Init Data
@@ -417,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(this);
             
             try {
-                const res = await fetch('{{ route("checkout.store") }}', {
+                const res = await fetch('<?php echo e(route("checkout.store")); ?>', {
                     method: 'POST',
                     headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')},
                     body: formData
@@ -457,4 +460,5 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/checkout/index.blade.php ENDPATH**/ ?>
