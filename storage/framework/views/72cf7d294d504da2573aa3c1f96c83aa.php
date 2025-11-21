@@ -1,13 +1,13 @@
-@extends('layouts.app')
 
-@section('title', 'Detail Pesanan #' . $order->id . ' - Dishine')
 
-@section('content')
+<?php $__env->startSection('title', 'Detail Pesanan #' . $order->id . ' - Dishine'); ?>
+
+<?php $__env->startSection('content'); ?>
 <div class="bg-[#f3e8e3] py-12">
     <div class="max-w-4xl mx-auto px-6">
 
         <!-- Tombol Kembali -->
-        <a href="{{ route('orders.view') }}" class="flex items-center text-[#6b5a4a] hover:text-[#3c2f2f] font-medium mb-4">
+        <a href="<?php echo e(route('orders.view')); ?>" class="flex items-center text-[#6b5a4a] hover:text-[#3c2f2f] font-medium mb-4">
             <i data-lucide="arrow-left" class="w-5 h-5 mr-2"></i>
             Kembali ke Riwayat Pesanan
         </a>
@@ -16,20 +16,22 @@
         <div class="bg-white p-6 rounded-xl shadow-md mb-6">
             <div class="flex flex-wrap justify-between items-start gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-[#3c2f2f]">Detail Pesanan #{{ $order->id }}</h1>
+                    <h1 class="text-2xl font-bold text-[#3c2f2f]">Detail Pesanan #<?php echo e($order->id); ?></h1>
                     <p class="text-sm text-gray-500">
-                        Tanggal: {{ \Carbon\Carbon::parse($order->tanggal_pesan)->format('d F Y, H:i') }}
+                        Tanggal: <?php echo e(\Carbon\Carbon::parse($order->tanggal_pesan)->format('d F Y, H:i')); ?>
+
                     </p>
                 </div>
                 <!-- Status -->
                 <span class="inline-block px-4 py-2 text-sm font-semibold rounded-full
-                    @if($order->status == 'selesai') bg-green-100 text-green-800
-                    @elseif($order->status == 'dibatalkan') bg-red-100 text-red-800
-                    @elseif($order->status == 'dikirim') bg-blue-100 text-blue-800
-                    @elseif($order->status == 'diproses') bg-yellow-100 text-yellow-800
-                    @else bg-gray-100 text-gray-800 @endif
+                    <?php if($order->status == 'selesai'): ?> bg-green-100 text-green-800
+                    <?php elseif($order->status == 'dibatalkan'): ?> bg-red-100 text-red-800
+                    <?php elseif($order->status == 'dikirim'): ?> bg-blue-100 text-blue-800
+                    <?php elseif($order->status == 'diproses'): ?> bg-yellow-100 text-yellow-800
+                    <?php else: ?> bg-gray-100 text-gray-800 <?php endif; ?>
                 ">
-                    Status: {{ ucwords(str_replace('_', ' ', $order->status)) }}
+                    Status: <?php echo e(ucwords(str_replace('_', ' ', $order->status))); ?>
+
                 </span>
             </div>
         </div>
@@ -43,32 +45,35 @@
                 <div class="bg-white p-6 rounded-xl shadow-md">
                     <h3 class="text-lg font-semibold text-[#3c2f2f] mb-4">Produk yang Dipesan</h3>
                     <div class="space-y-4">
-                        @foreach($order->orderItems as $item)
+                        <?php $__currentLoopData = $order->orderItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <div class="flex justify-between items-start border-b pb-4 last:border-0 last:pb-0">
                             <div class="flex items-start space-x-4">
-                                <img src="{{ asset('storage/' . $item->product->gambar) }}" alt="{{ $item->product->nama }}"
+                                <img src="<?php echo e(asset('storage/' . $item->product->gambar)); ?>" alt="<?php echo e($item->product->nama); ?>"
                                      class="w-16 h-16 object-cover rounded-md border">
                                 <div>
-                                    <p class="font-semibold text-gray-800">{{ $item->product->nama }}</p>
+                                    <p class="font-semibold text-gray-800"><?php echo e($item->product->nama); ?></p>
                                     
-                                    {{-- >>> MENAMPILKAN DETAIL VARIAN (WARNA/SIZE) <<< --}}
-                                    @if($item->deskripsi_varian)
+                                    
+                                    <?php if($item->deskripsi_varian): ?>
                                         <p class="text-xs text-gray-500 bg-gray-100 inline-block px-2 py-0.5 rounded mb-1">
-                                            {{ $item->deskripsi_varian }}
+                                            <?php echo e($item->deskripsi_varian); ?>
+
                                         </p>
-                                    @endif
-                                    {{-- >>> SELESAI <<< --}}
+                                    <?php endif; ?>
+                                    
 
                                     <p class="text-sm text-gray-500 mt-1">
-                                        {{ $item->jumlah }} x Rp {{ number_format($item->harga_satuan, 0, ',', '.') }}
+                                        <?php echo e($item->jumlah); ?> x Rp <?php echo e(number_format($item->harga_satuan, 0, ',', '.')); ?>
+
                                     </p>
                                 </div>
                             </div>
                             <p class="font-semibold text-gray-800 whitespace-nowrap">
-                                Rp {{ number_format($item->subtotal, 0, ',', '.') }}
+                                Rp <?php echo e(number_format($item->subtotal, 0, ',', '.')); ?>
+
                             </p>
                         </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                 </div>
 
@@ -78,20 +83,20 @@
                     <div class="space-y-2 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Subtotal Produk:</span>
-                            <span class="font-medium text-gray-800">Rp {{ number_format($order->total, 0, ',', '.') }}</span>
+                            <span class="font-medium text-gray-800">Rp <?php echo e(number_format($order->total, 0, ',', '.')); ?></span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-gray-600">Pengiriman ({{ strtoupper($order->kurir) }} - {{ $order->layanan_kurir }}):</span>
-                            <span class="font-medium text-gray-800">Rp {{ number_format($order->ongkir, 0, ',', '.') }}</span>
+                            <span class="text-gray-600">Pengiriman (<?php echo e(strtoupper($order->kurir)); ?> - <?php echo e($order->layanan_kurir); ?>):</span>
+                            <span class="font-medium text-gray-800">Rp <?php echo e(number_format($order->ongkir, 0, ',', '.')); ?></span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Biaya Layanan:</span>
-                            <span class="font-medium text-gray-800">Rp {{ number_format($order->biaya_layanan, 0, ',', '.') }}</span>
+                            <span class="font-medium text-gray-800">Rp <?php echo e(number_format($order->biaya_layanan, 0, ',', '.')); ?></span>
                         </div>
                         <hr class="my-2 border-gray-200">
                         <div class="flex justify-between text-base font-bold text-[#3c2f2f]">
                             <span>Total Bayar:</span>
-                            <span>Rp {{ number_format($order->total_harga, 0, ',', '.') }}</span>
+                            <span>Rp <?php echo e(number_format($order->total_harga, 0, ',', '.')); ?></span>
                         </div>
                     </div>
                 </div>
@@ -103,31 +108,31 @@
                 <div class="bg-white p-6 rounded-xl shadow-md">
                     <h3 class="text-lg font-semibold text-[#3c2f2f] mb-4">Alamat Pengiriman</h3>
                     <div class="text-sm text-gray-600 leading-relaxed">
-                        <p class="font-bold text-gray-800 mb-1">{{ $order->nama_penerima }}</p>
-                        <p class="mb-1">{{ $order->no_hp }}</p>
-                        <p>{{ $order->alamat_pengiriman }}</p>
+                        <p class="font-bold text-gray-800 mb-1"><?php echo e($order->nama_penerima); ?></p>
+                        <p class="mb-1"><?php echo e($order->no_hp); ?></p>
+                        <p><?php echo e($order->alamat_pengiriman); ?></p>
                     </div>
                 </div>
 
                 <!-- Bukti Pembayaran -->
                 <div class="bg-white p-6 rounded-xl shadow-md">
                     <h3 class="text-lg font-semibold text-[#3c2f2f] mb-4">Bukti Pembayaran</h3>
-                    @if($order->payment)
-                        <a href="{{ asset('storage/' . $order->payment->bukti_transfer) }}" target="_blank" rel="noopener noreferrer" class="block group relative overflow-hidden rounded-md">
-                            <img src="{{ asset('storage/' . $order->payment->bukti_transfer) }}" 
+                    <?php if($order->payment): ?>
+                        <a href="<?php echo e(asset('storage/' . $order->payment->bukti_transfer)); ?>" target="_blank" rel="noopener noreferrer" class="block group relative overflow-hidden rounded-md">
+                            <img src="<?php echo e(asset('storage/' . $order->payment->bukti_transfer)); ?>" 
                                  alt="Bukti Transfer" class="w-full rounded-md shadow-sm transition-transform duration-300 group-hover:scale-105">
                             <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-opacity duration-300 flex items-center justify-center">
                                 <span class="text-white opacity-0 group-hover:opacity-100 font-medium text-sm bg-black bg-opacity-50 px-3 py-1 rounded">Lihat Full</span>
                             </div>
                         </a>
                         <p class="text-xs text-gray-500 mt-3 text-center border-t pt-2">
-                            Status Verifikasi: <span class="font-medium text-[#3c2f2f]">{{ ucwords(str_replace('_', ' ', $order->payment->status_verifikasi)) }}</span>
+                            Status Verifikasi: <span class="font-medium text-[#3c2f2f]"><?php echo e(ucwords(str_replace('_', ' ', $order->payment->status_verifikasi))); ?></span>
                         </p>
-                    @else
+                    <?php else: ?>
                         <div class="text-center py-8 bg-gray-50 rounded border border-dashed border-gray-300">
                             <p class="text-sm text-gray-500">Bukti pembayaran tidak ditemukan.</p>
                         </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -139,4 +144,5 @@
         lucide.createIcons();
     }
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/orders/show.blade.php ENDPATH**/ ?>

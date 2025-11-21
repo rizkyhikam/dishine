@@ -18,9 +18,6 @@ class Cart extends Model
 
     public function variantSize() 
     {
-        // ASUMSI: Kolom FK di tabel carts adalah variant_size_id
-        // ASUMSI: Kita hanya menunjuk ke VariantSize untuk memuaskan Eager Loader, 
-        // meskipun logic pencarian stok sebenarnya ada di CartController::findStokRow()
         return $this->belongsTo(VariantSize::class, 'variant_size_id');
     }
 

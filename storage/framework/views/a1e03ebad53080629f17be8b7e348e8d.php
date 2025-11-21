@@ -8,7 +8,10 @@
         subtotal: <?php echo e($total); ?>,
         totalWeight: <?php echo e($totalWeight); ?>,
         adminFee: <?php echo e($adminFee); ?>,
-        userAddress: "<?php echo e(Auth::user()->alamat ?? ''); ?>" 
+        // Data User untuk Logika Otomatis
+        userAddress: `<?php echo e(Auth::user()->alamat ?? ''); ?>`,
+        userCityId: "<?php echo e(Auth::user()->city_id ?? ''); ?>",
+        userProvinceId: "<?php echo e(Auth::user()->province_id ?? ''); ?>" 
     };
 </script>
 
@@ -47,7 +50,7 @@
 
                 <div id="alamatForm" class="<?php echo e(Auth::user()->alamat ? 'hidden' : ''); ?> mt-4 space-y-4 border-t pt-4">
                     <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm p-3 rounded mb-3">
-                        <i class="fas fa-info-circle"></i> Silakan lengkapi alamat pengiriman Anda.
+                        <i class="fas fa-info-circle"></i> Silakan lengkapi/update alamat pengiriman Anda.
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -57,12 +60,13 @@
                                 <option value="">-- Pilih Provinsi --</option>
                                 <?php $__currentLoopData = $provinces; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prov): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <?php
-                                        // Antisipasi perbedaan key (province_id vs id)
                                         $pId = $prov['province_id'] ?? $prov['id'] ?? null;
                                         $pName = $prov['province'] ?? $prov['name'] ?? '';
+                                        // Pre-select Provinsi User
+                                        $isSelected = (Auth::user()->province_id == $pId) ? 'selected' : '';
                                     ?>
                                     <?php if($pId): ?>
-                                        <option value="<?php echo e($pId); ?>" data-name="<?php echo e($pName); ?>">
+                                        <option value="<?php echo e($pId); ?>" data-name="<?php echo e($pName); ?>" <?php echo e($isSelected); ?>>
                                             <?php echo e($pName); ?>
 
                                         </option>
@@ -81,8 +85,8 @@
                     </div>
                     
                     <div>
-                        <label class="block font-semibold mb-2 text-gray-700 text-sm">Detail Jalan (Kecamatan, Kelurahan, Jalan, No Rumah)</label>
-                        <textarea name="detail_alamat" id="detail_alamat" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" rows="3" placeholder="Contoh: Jl. Mawar No. 5A, Kec. Cibinong"></textarea>
+                        <label class="block font-semibold mb-2 text-gray-700 text-sm">Detail Jalan</label>
+                        <textarea name="detail_alamat" id="detail_alamat" class="w-full border border-gray-300 rounded px-3 py-2 text-sm" rows="3" placeholder="Contoh: Jl. Mawar No. 5A, Kec. Cibinong"><?php echo e(Auth::user()->alamat); ?></textarea>
                     </div>
                 </div>
             </div>
@@ -106,6 +110,27 @@
                                     <?php endif; ?>
                                     <div>
                                         <h4 class="font-semibold text-gray-800"><?php echo e($pName); ?></h4>
+                                        
+                                        
+                                        <?php
+                                            $detailInfo = [];
+                                            if ($item->variantSize) {
+                                                if ($item->variantSize->productVariant && $item->variantSize->productVariant->warna) {
+                                                    $detailInfo[] = "Warna: " . $item->variantSize->productVariant->warna;
+                                                }
+                                                if ($item->variantSize->size && $item->variantSize->size->name) {
+                                                    $detailInfo[] = "Size: " . $item->variantSize->size->name;
+                                                }
+                                            }
+                                        ?>
+                                        <?php if(count($detailInfo) > 0): ?>
+                                            <p class="text-xs text-gray-500 mb-1">
+                                                <?php echo e(implode(' | ', $detailInfo)); ?>
+
+                                            </p>
+                                        <?php endif; ?>
+                                        
+
                                         <p class="text-sm text-gray-500">
                                             <?php echo e($item->quantity); ?> x Rp <?php echo e(number_format($price, 0, ',', '.')); ?>
 
@@ -200,7 +225,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Init Data
     if (typeof window.checkoutData === 'undefined') return;
-    const { subtotal, totalWeight, adminFee, userAddress } = window.checkoutData;
+    const { subtotal, totalWeight, adminFee, userAddress, userCityId, userProvinceId } = window.checkoutData;
     
     // DOM Elements
     const provinceSelect = document.getElementById('province_id');
@@ -215,19 +240,111 @@ document.addEventListener('DOMContentLoaded', function() {
     const provinsiNameInput = document.getElementById('provinsi_name');
     const kotaNameInput = document.getElementById('kota_name');
 
-    // --- 1. Logic Toggle Alamat ---
+    // =================================================================
+    // 1. LOGIKA INIT (Saat halaman pertama kali dibuka)
+    // =================================================================
+    
+    if (userCityId && userAddress) {
+        // Jika user sudah punya data, set hidden input
+        if(destinationInput) destinationInput.value = userCityId;
+        
+        // Tampilkan alamat teks, sembunyikan form
+        if(displayAlamat) displayAlamat.classList.remove('hidden');
+        if(formAlamat) formAlamat.classList.add('hidden');
+        
+        // Ubah teks tombol toggle
+        if(toggleBtn) toggleBtn.innerText = "Ubah Alamat";
+    } else {
+        // Jika user baru, form terbuka otomatis
+        if(displayAlamat) displayAlamat.classList.add('hidden');
+        if(formAlamat) formAlamat.classList.remove('hidden');
+        if(toggleBtn) toggleBtn.innerText = "Batal";
+    }
+
+    // =================================================================
+    // 2. FUNGSI HELPER: Load Cities
+    // =================================================================
+    async function loadCities(provId, preselectCityId = null) {
+        if(!provId) return;
+
+        // Update hidden nama provinsi
+        const provOption = provinceSelect.querySelector(`option[value="${provId}"]`);
+        if(provOption && provinsiNameInput) provinsiNameInput.value = provOption.getAttribute('data-name');
+
+        // Reset Kota Dropdown
+        citySelect.innerHTML = '<option value="">Loading...</option>';
+        citySelect.disabled = true;
+        citySelect.style.backgroundColor = "#f9fafb"; 
+
+        try {
+            const res = await fetch(`/shipping/city/${provId}`);
+            const json = await res.json();
+            
+            if(json.success && json.data) {
+                citySelect.innerHTML = '<option value="">Pilih Kota/Kab</option>';
+                citySelect.disabled = false; // <--- INI MEMBUAT TOMBOL KOTA BISA DIPENCET
+                citySelect.style.backgroundColor = "#ffffff";
+                
+                json.data.forEach(item => {
+                    const cId = item.city_id || item.id;
+                    const cName = item.city_name || item.name;
+                    const cType = item.type || '';
+                    
+                    // Cek apakah ini kota user saat ini?
+                    const isSelected = (preselectCityId && cId == preselectCityId) ? 'selected' : '';
+                    
+                    citySelect.innerHTML += `<option value="${cId}" data-name="${cType} ${cName}" ${isSelected}>
+                        ${cType} ${cName}
+                    </option>`;
+                });
+
+                // Jika ada preselect, update destination dan nama kota langsung
+                if(preselectCityId) {
+                    citySelect.dispatchEvent(new Event('change'));
+                }
+
+            } else {
+                alert("Gagal memuat kota.");
+            }
+        } catch (err) { 
+            console.error(err);
+            citySelect.innerHTML = '<option value="">Error</option>';
+        }
+    }
+
+    // =================================================================
+    // 3. EVENT LISTENER
+    // =================================================================
+
+    // A. Toggle Alamat (Klik Ubah Alamat)
     if(toggleBtn) {
         toggleBtn.addEventListener('click', function() {
-            const isHidden = formAlamat.classList.contains('hidden');
-            if(isHidden) {
+            const isFormHidden = formAlamat.classList.contains('hidden');
+            
+            if(isFormHidden) {
+                // -> MASUK MODE EDIT
                 formAlamat.classList.remove('hidden');
                 displayAlamat.classList.add('hidden');
                 this.innerText = "Batal Ubah";
+
+                // 🔥 FITUR PENTING: Auto-load kota jika provinsi sudah terpilih
+                if(provinceSelect.value) {
+                    loadCities(provinceSelect.value, userCityId);
+                }
+
             } else {
+                // -> BATAL EDIT (Kembali ke tampilan teks)
                 if(userAddress) {
                     formAlamat.classList.add('hidden');
                     displayAlamat.classList.remove('hidden');
                     this.innerText = "Ubah Alamat";
+                    
+                    // Kembalikan destination ke data lama di DB
+                    destinationInput.value = userCityId;
+                    // Reset ongkir ke nol karena user batal ubah
+                    kurirSelect.value = "";
+                    layananSelect.innerHTML = '<option value="">-- Pilih Kurir Dulu --</option>';
+                    updateTotal(0);
                 } else {
                     alert("Anda belum memiliki alamat, silakan isi form.");
                 }
@@ -235,66 +352,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 2. Fetch Cities (AJAX) ---
+    // B. Ganti Provinsi
     if (provinceSelect) {
-        provinceSelect.addEventListener('change', async function() {
-            const id = this.value;
-            
-            // Simpan Nama Provinsi ke hidden input
-            const selectedOption = this.options[this.selectedIndex];
-            if(selectedOption && provinsiNameInput) {
-                provinsiNameInput.value = selectedOption.getAttribute('data-name');
-            }
-
-            citySelect.innerHTML = '<option value="">Loading...</option>';
-            citySelect.disabled = true;
-            citySelect.style.backgroundColor = "#f9fafb"; 
-
-            if(!id) return;
-
-            try {
-                // URL Route: /shipping/city/{id}
-                const res = await fetch(`/shipping/city/${id}`);
-                const json = await res.json();
-                
-                if(json.success && json.data) {
-                    citySelect.innerHTML = '<option value="">Pilih Kota/Kab</option>';
-                    citySelect.disabled = false;
-                    citySelect.style.backgroundColor = "#ffffff";
-                    
-                    json.data.forEach(item => {
-                        // RajaOngkir fields: city_id, type (Kab/Kota), city_name
-                        const cId = item.city_id || item.id;
-                        const cName = item.city_name || item.name;
-                        const cType = item.type || '';
-                        
-                        citySelect.innerHTML += `<option value="${cId}" data-name="${cType} ${cName}">
-                            ${cType} ${cName}
-                        </option>`;
-                    });
-                } else {
-                    alert("Gagal memuat kota.");
-                }
-            } catch (err) { 
-                console.error(err);
-                citySelect.innerHTML = '<option value="">Error</option>';
-            }
+        provinceSelect.addEventListener('change', function() {
+            loadCities(this.value);
         });
     }
 
-    // --- 3. Update Destination & Reset Ongkir ---
+    // C. Ganti Kota -> Update Destination
     if (citySelect) {
         citySelect.addEventListener('change', function() {
             const cityId = this.value;
-            destinationInput.value = cityId; // Update ID Kota Tujuan untuk Ongkir
+            destinationInput.value = cityId; 
 
-            // Simpan Nama Kota ke hidden input
             const selectedOption = this.options[this.selectedIndex];
             if(selectedOption && kotaNameInput) {
                 kotaNameInput.value = selectedOption.getAttribute('data-name');
             }
 
-            // Reset Pilihan Ongkir
+            // Reset Ongkir karena lokasi berubah
             kurirSelect.value = "";
             layananSelect.innerHTML = '<option value="">-- Pilih Kurir Dulu --</option>';
             layananSelect.disabled = true;
@@ -302,7 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 4. Fetch Ongkir (AJAX POST) ---
+    // D. Ganti Kurir -> Cek Ongkir
     if (kurirSelect) {
         kurirSelect.addEventListener('change', async function() {
             const kurir = this.value;
@@ -319,7 +395,6 @@ document.addEventListener('DOMContentLoaded', function() {
             layananSelect.disabled = true;
 
             try {
-                // URL Route: /shipping/cost
                 const res = await fetch('/shipping/cost', {
                     method: 'POST',
                     headers: {
@@ -335,12 +410,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const json = await res.json();
                 
-                // Logika Parsing Data Baru (Sesuai Controller & Service baru)
-                // Structure: { success: true, data: [ { code: 'JNE', costs: [...] } ] }
                 if(json.success && json.data) {
                     layananSelect.innerHTML = '<option value="">-- Pilih Layanan --</option>';
                     
-                    // Ambil array costs dari index pertama data
                     let costs = [];
                     if(json.data[0] && json.data[0].costs) {
                         costs = json.data[0].costs;
@@ -348,7 +420,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if(costs.length > 0) {
                         costs.forEach(item => {
-                            // Data item sudah rapi: { service, description, cost, etd }
                             const serviceName = item.service; 
                             const costVal = item.cost;
                             const etd = item.etd;
@@ -363,7 +434,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 } else {
                     layananSelect.innerHTML = '<option>Gagal Cek Ongkir</option>';
-                    console.error("Ongkir Error:", json);
                 }
             } catch (err) {
                 console.error(err);
@@ -372,13 +442,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- 5. Update Total Bayar ---
+    // E. Pilih Layanan -> Update Total
     if (layananSelect) {
         layananSelect.addEventListener('change', function() {
             if(this.value) {
                 const [harga, nama] = this.value.split('|');
                 updateTotal(parseInt(harga));
-                // Simpan nama layanan ke hidden input
                 document.getElementById('layanan_name').value = nama;
             } else {
                 updateTotal(0);
@@ -392,19 +461,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('total_display').innerText = 'Rp ' + new Intl.NumberFormat('id-ID').format(subtotal + adminFee + ongkir);
     }
 
-    // --- 6. Submit Form ---
+    // F. Submit Form
     const checkoutForm = document.getElementById('checkoutForm');
     if(checkoutForm) {
         checkoutForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Validasi Ongkir Wajib
             if(document.getElementById('ongkir_value').value == 0) {
                 alert("Silakan pilih layanan pengiriman terlebih dahulu.");
                 return;
             }
 
-            // Validasi Detail Alamat (Jika sedang edit/baru)
             if(!formAlamat.classList.contains('hidden')) {
                 const detail = document.getElementById('detail_alamat').value;
                 if(!detail) {
@@ -428,8 +495,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const json = await res.json();
                 
                 if(res.ok) {
-                    alert("Pesanan Berhasil Dibuat! Mohon tunggu verifikasi admin.");
-                    window.location.href = '/orders'; // Redirect ke halaman list order/history
+                    alert("Pesanan Berhasil Dibuat!");
+                    window.location.href = '/orders'; 
                 } else {
                     alert(json.message || "Gagal memproses pesanan.");
                 }
@@ -443,7 +510,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // --- 7. Preview Image Bukti Transfer ---
+    // G. Preview Bukti Transfer
     const buktiInput = document.getElementById('bukti_transfer');
     if(buktiInput) {
         buktiInput.addEventListener('change', function(e) {
