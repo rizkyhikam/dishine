@@ -7,15 +7,66 @@
         <img src="<?php echo e(asset('storage/' . $item->product->gambar)); ?>" 
              class="w-20 h-20 object-cover rounded">
 
-        <span class="font-semibold text-[#3c2f2f]">
-            <?php echo e($item->product->nama); ?>
+        <div>
+            <span class="font-semibold text-[#3c2f2f] block">
+                <?php echo e($item->product->nama); ?>
 
-        </span>
+            </span>
+            
+            
+            <?php if($item->variant_size_id): ?>
+                <?php
+                    $stokRow = App\Http\Controllers\CartController::findStokRow($item->variant_size_id);
+                    $detailText = null;
+
+                    if ($stokRow) {
+                        // Cek apakah ini VariantSize (Varian Penuh: Warna + Ukuran)
+                        if ($stokRow instanceof App\Models\VariantSize) {
+                            // Relasi sudah dimuat di controller!
+                            $warna = $stokRow->productVariant->warna ?? 'N/A';
+                            $ukuran = $stokRow->size->name ?? 'N/A';
+                            
+                            $detailText = "Varian: {$warna}, Ukuran: {$ukuran}";
+                        } 
+                        // Cek apakah ini DefaultProductSize (Non-Varian/Hanya Ukuran)
+                        elseif ($stokRow instanceof App\Models\DefaultProductSize) {
+                            // Relasi sudah dimuat di controller!
+                            $ukuran = $stokRow->size->name ?? 'N/A';
+                            
+                            // HANYA tampilkan ukuran tanpa label "Varian:"
+                            $detailText = "Ukuran: {$ukuran}"; 
+                        }
+                    }
+                ?>
+                
+                <?php if($detailText): ?>
+                    <p class="text-sm text-gray-500 mt-1">
+                        <?php echo $detailText; ?>
+
+                    </p>
+                <?php else: ?>
+                    <p class="text-sm text-red-500 mt-1">
+                        Detail Varian Hilang.
+                    </p>
+                <?php endif; ?>
+                
+            <?php else: ?>
+                <p class="text-sm text-gray-500 mt-1">
+                    Produk Tanpa Opsi Ukuran.
+                </p>
+            <?php endif; ?>
+            
+
+        </div>
     </div>
 
     
     <div class="text-center text-[#3c2f2f]">
-        Rp <?php echo e(number_format($item->product->harga_normal, 0, ',', '.')); ?>
+        
+        <?php
+            $currentPrice = (Auth::check() && Auth::user()->role == 'reseller') ? $item->product->harga_reseller : $item->product->harga_normal;
+        ?>
+        Rp <?php echo e(number_format($currentPrice, 0, ',', '.')); ?>
 
     </div>
 
@@ -49,8 +100,9 @@
 
     
     <div class="text-center">
+        
         <strong>
-            Rp <?php echo e(number_format($item->product->harga_normal * $item->quantity, 0, ',', '.')); ?>
+            Rp <?php echo e(number_format($currentPrice * $item->quantity, 0, ',', '.')); ?>
 
         </strong>
     </div>
@@ -64,5 +116,4 @@
         </button>
         </form>
     </div>
-</div>
-<?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/cart/partials/item.blade.php ENDPATH**/ ?>
+</div><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/cart/partials/item.blade.php ENDPATH**/ ?>

@@ -17,7 +17,7 @@
         @endif
 
         @php
-            // Safety guard kalau suatu saat controller lupa ngirim variabel
+            // Safety guard
             $variantData      = $variantData      ?? collect();
             $defaultSizesData = $defaultSizesData ?? collect();
 
@@ -104,8 +104,11 @@
                 <form method="POST">
                     @csrf
 
-                    {{-- Hidden input untuk varian & ukuran terpilih --}}
-                    <input type="hidden" name="variant_id" id="variant_id">
+                    {{-- KRITIS: input untuk menyimpan ID BARIS STOK --}}
+                    <input type="hidden" name="variant_size_id" id="variant_size_id">
+                    
+                    {{-- Input lama dipertahankan --}}
+                    <input type="hidden" name="variant_id" id="variant_id"> 
                     <input type="hidden" name="size_id" id="size_id">
 
                     {{-- ================== --}}
@@ -140,7 +143,7 @@
                         </div>
 
                     @elseif($hasDefaultSize)
-                        {{-- TANPA VARIAN WARNA -> LANGSUNG UKURAN --}}
+                        {{-- TANPA VARIAN WARNA -> LANGSUNG UKURAN (KASUS GAMIS MUSLIMAH) --}}
                         <div class="mb-4">
                             <p class="text-sm font-semibold text-[#3c2f2f] mb-2">Ukuran:</p>
                             <div id="sizeContainer" class="flex flex-wrap gap-2">
@@ -152,6 +155,7 @@
                                             data-size-id="{{ $row['id'] }}"
                                             data-size-name="{{ $row['name'] }}"
                                             data-stock="{{ $row['stok'] }}"
+                                            data-row-id="{{ $row['row_id'] }}" {{-- <--- PENTING: ID BARIS STOK --}}
                                         >
                                             {{ $row['name'] }}
                                         </button>
@@ -219,10 +223,11 @@
 </div>
 
 {{-- ========================= --}}
-{{--  SCRIPT GALERI & VARIAN   --}}
+{{-- SCRIPT GALERI & VARIAN  --}}
 {{-- ========================= --}}
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        
         // ==================== GALERI FOTO ====================
         const mainImage = document.getElementById('main-image');
         const thumbnails = document.querySelectorAll('.thumbnail-image');
@@ -240,21 +245,20 @@
         });
 
         // ==================== DATA VARIAN / SIZE ====================
-        const variants     = @json($variantData ?? []);
-        const defaultSizes = @json($defaultSizesData ?? []);
-        const hasVariants  = variants.length > 0;
-        const minQty       = {{ (int) $minQuantity }};
+        const variants     = @json($variantData ?? []);
+        const defaultSizes = @json($defaultSizesData ?? []); 
+        const hasVariants  = variants.length > 0;
+        const minQty       = {{ (int) $minQuantity }};
 
-        const warnaButtonsContainer = document.getElementById('warnaContainer');
-        const sizeContainer         = document.getElementById('sizeContainer');
-        const sizeStockInfo         = document.getElementById('sizeStockInfo');
-        const inputVariantId        = document.getElementById('variant_id');
-        const inputSizeId           = document.getElementById('size_id');
-        const qtyInput              = document.getElementById('quantity');
-
-        let selectedVariantId = null;
-        let selectedSizeId    = null;
-
+        const sizeContainer         = document.getElementById('sizeContainer');
+        const sizeStockInfo         = document.getElementById('sizeStockInfo');
+        
+        // KRITIS: input untuk menyimpan ID BARIS STOK
+        const inputVariantSizeId    = document.getElementById('variant_size_id');
+        const inputSizeId           = document.getElementById('size_id');
+        const inputVariantId        = document.getElementById('variant_id'); 
+        const qtyInput              = document.getElementById('quantity');
+        
         function setQuantityLimit(stockTotal) {
             if (!qtyInput) return;
 
@@ -268,20 +272,54 @@
             qtyInput.min = stockTotal >= minQty ? minQty : 1;
         }
 
-        // ========== MODE DENGAN VARIAN WARNA ==========
-        if (hasVariants && warnaButtonsContainer && sizeContainer) {
-            const warnaButtons = warnaButtonsContainer.querySelectorAll('.warna-btn');
+
+        // --- FUNGSI UTAMA UNTUK MENGISI INPUT DARI KLIK ---
+        function attachSizeListeners(buttons) {
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function () {
+                    // 1. Highlight tombol
+                    buttons.forEach(b => {
+                        b.classList.remove('bg-[#b48a60]', 'text-white');
+                        b.classList.add('bg-white', 'text-[#3c2f2f]');
+                    });
+                    this.classList.add('bg-[#b48a60]', 'text-white');
+
+                    // 2. KRITIS: Simpan ID BARIS STOK
+                    const rowId = this.dataset.rowId; 
+                    inputVariantSizeId.value = rowId; // <-- MENGISI INPUT FINAL
+
+                    // Simpan size_id lama (opsional)
+                    inputSizeId.value = this.dataset.sizeId;
+
+                    // 3. Logika Stok
+                    const stok = parseInt(this.dataset.stock || 0);
+                    sizeStockInfo.textContent = 'Stok untuk ukuran ini: ' + stok;
+                    setQuantityLimit(stok);
+                });
+            });
+            
+            // Auto pilih tombol pertama
+            if (buttons.length > 0) {
+                 buttons[0].click();
+            }
+        }
+        
+        
+        // ========== KASUS 1: MODE DENGAN VARIAN WARNA ==========
+        if (hasVariants) {
+            const warnaButtons = document.querySelectorAll('.warna-btn');
 
             function renderSizesForVariant(variantId) {
                 sizeContainer.innerHTML = '';
                 sizeStockInfo.textContent = '';
+                inputVariantSizeId.value = ''; // Reset ID stok saat ganti warna
 
                 const variant = variants.find(v => v.id == variantId);
                 if (!variant) return;
 
-                selectedVariantId    = variantId;
-                inputVariantId.value = variantId;
-
+                // inputVariantId digunakan di kode Anda untuk menyimpan ID varian utama
+                inputVariantId.value = variantId; 
+                
                 // highlight warna
                 warnaButtons.forEach(btn => {
                     if (btn.dataset.variantId == variantId) {
@@ -294,6 +332,7 @@
                 });
 
                 // tombol ukuran per variant
+                const sizeButtonsArray = [];
                 (variant.sizes || []).forEach(function (s) {
                     if (s.stok <= 0) return;
 
@@ -301,31 +340,17 @@
                     btn.type = 'button';
                     btn.textContent = s.name;
                     btn.className = 'size-btn px-3 py-1 rounded-md border border-[#b48a60] text-sm text-[#3c2f2f] bg-white hover:bg-[#f3e8e3]';
-                    btn.dataset.sizeId   = s.id;
-                    btn.dataset.stock    = s.stok;
+                    btn.dataset.sizeId   = s.id;
+                    btn.dataset.stock    = s.stok;
                     btn.dataset.sizeName = s.name;
-
-                    btn.addEventListener('click', function () {
-                        sizeContainer.querySelectorAll('.size-btn').forEach(b => {
-                            b.classList.remove('bg-[#b48a60]', 'text-white');
-                            b.classList.add('bg-white', 'text-[#3c2f2f]');
-                        });
-                        this.classList.add('bg-[#b48a60]', 'text-white');
-
-                        selectedSizeId       = this.dataset.sizeId;
-                        inputSizeId.value    = selectedSizeId;
-
-                        const stok = parseInt(this.dataset.stock || 0);
-                        sizeStockInfo.textContent = 'Stok untuk ukuran ini: ' + stok;
-                        setQuantityLimit(stok);
-                    });
+                    btn.dataset.rowId    = s.row_id; // <-- ID Baris Stok (variant_sizes.id)
 
                     sizeContainer.appendChild(btn);
+                    sizeButtonsArray.push(btn);
                 });
-
-                // auto pilih size pertama bila ada
-                const firstSizeBtn = sizeContainer.querySelector('.size-btn');
-                if (firstSizeBtn) firstSizeBtn.click();
+                
+                // Pasang listener dan klik tombol pertama
+                attachSizeListeners(sizeButtonsArray);
             }
 
             // auto pilih warna pertama
@@ -339,35 +364,16 @@
                 });
             });
 
-        // ========== TANPA VARIAN, ADA DEFAULT SIZE ==========
+        // ========== KASUS 2: TANPA VARIAN, ADA DEFAULT SIZE (KASUS GAMIS MUSLIMAH) ==========
         } else if (!hasVariants && defaultSizes.length > 0 && sizeContainer) {
+            
+            // Tombol size-btn sudah di-render di HTML (Blade), kita ambil dari DOM
             const sizeButtons = sizeContainer.querySelectorAll('.size-btn');
 
-            sizeButtons.forEach(btn => {
-                btn.addEventListener('click', function () {
-                    sizeButtons.forEach(b => {
-                        b.classList.remove('bg-[#b48a60]', 'text-white');
-                        b.classList.add('bg-white', 'text-[#3c2f2f]');
-                    });
-                    this.classList.add('bg-[#b48a60]', 'text-white');
+            // Pasang listener dan panggil click() pada tombol pertama
+            attachSizeListeners(sizeButtons);
 
-                    selectedSizeId       = this.dataset.sizeId;
-                    inputSizeId.value    = selectedSizeId;
-
-                    const stok = parseInt(this.dataset.stock || 0);
-                    sizeStockInfo.textContent = 'Stok untuk ukuran ini: ' + stok;
-                    setQuantityLimit(stok);
-                });
-            });
-
-            // auto pilih size pertama
-            if (sizeButtons.length > 0) {
-                sizeButtons[0].click();
-            } else {
-                setQuantityLimit({{ (int) $product->stok }});
-            }
-
-        // ========== BENAR-BENAR TANPA VARIAN & SIZE ==========
+        // ========== KASUS 3: BENAR-BENAR TANPA VARIAN & SIZE ==========
         } else {
             setQuantityLimit({{ (int) $product->stok }});
         }

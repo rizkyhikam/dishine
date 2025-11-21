@@ -117,7 +117,7 @@ class ProductController extends Controller
         // MINIMAL QTY
         $minQuantity = $isReseller ? 5 : 1;
 
-        // VARIAN DATA
+        // VARIAN DATA (Untuk produk bervarian warna + ukuran)
         $variantData = $product->variants->map(function ($variant) {
             return [
                 'id'    => $variant->id,
@@ -125,20 +125,22 @@ class ProductController extends Controller
                 'stok'  => (int) $variant->stok,
                 'sizes' => $variant->sizes->map(function ($vs) {
                     return [
-                        'id'   => $vs->size->id ?? null, // Handle null safely
-                        'name' => $vs->size->name ?? 'N/A', // Handle null safely
-                        'stok' => (int) $vs->stok,
+                        'row_id' => $vs->id, // <--- ID BARIS STOK VARIANT_SIZES
+                        'id'    => $vs->size->id ?? null, // size_id
+                        'name'  => $vs->size->name ?? 'N/A', 
+                        'stok'  => (int) $vs->stok,
                     ];
                 })->values(),
             ];
         })->values();
 
-        // DEFAULT SIZE
+        // DEFAULT SIZE (Untuk produk non-varian, hanya ukuran)
         $defaultSizesData = $product->defaultSizes->map(function ($row) {
             return [
-                'id'   => $row->size->id ?? null, // Handle null safely
-                'name' => $row->size->name ?? 'N/A', // Handle null safely
-                'stok' => (int) $row->stok,
+                'row_id' => $row->id, // <--- ID BARIS STOK DEFAULT_PRODUCT_SIZES
+                'id'     => $row->size->id ?? null, // size_id (ID S/M/L)
+                'name'   => $row->size->name ?? 'N/A',
+                'stok'   => (int) $row->stok,
             ];
         })->values();
 
@@ -197,16 +199,11 @@ class ProductController extends Controller
         // 4️⃣ PRODUK PAKAI VARIAN WARNA
         if ($request->boolean('use_variants')) { // Gunakan boolean helper
             
-            // Debugging: Cek isi variants jika masih error
-            // dd($variants); 
-
             foreach ($variants as $index => $v) {
                 $warna = trim($v['warna'] ?? '');
 
                 // Validasi Manual: Warna Wajib Diisi
                 if (empty($warna)) {
-                    // Kita bisa return error atau skip. Untuk UX lebih baik return error.
-                    // Tapi karena ini di tengah proses, kita skip saja yang kosong.
                     continue; 
                 }
 
@@ -300,8 +297,6 @@ class ProductController extends Controller
         $defaultSizes  = json_decode($request->default_sizes, true) ?? [];
 
         // Bersihkan data lama (Hati-hati: ini menghapus semua varian lama & buat baru)
-        // Pastikan relasi di Model Product sudah benar: ->hasMany(ProductVariant::class)
-        // Dan ProductVariant -> hasMany(VariantSize::class) dengan onDelete('cascade')
         
         // Hapus Varian Lama
         foreach ($product->variants as $oldVariant) {

@@ -14,6 +14,7 @@ class DefaultProductSize extends Model
 
     public function size()
     {
-        return $this->belongsTo(Size::class);
+        // Relasi ke Size (untuk mendapatkan nama ukuran: S, M, L, All Size)
+        return $this->belongsTo(Size::class, 'size_id');
     }
 }

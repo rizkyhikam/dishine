@@ -12,8 +12,17 @@ class VariantSize extends Model
         'stok',
     ];
 
+    /**
+     * Relasi ke Size (untuk mendapatkan nama ukuran: S, M, L)
+     */
     public function size()
     {
-        return $this->belongsTo(Size::class);
+        // Harus eksplisit FK-nya untuk menghindari konflik dan N+1
+        return $this->belongsTo(Size::class, 'size_id');
+    }
+
+    public function productVariant()
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 }
