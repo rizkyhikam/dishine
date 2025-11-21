@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
         ]);
 
+        $this->call(SizeSeeder::class);
+
         $this->call(UsersTableSeeder::class);
 
         // (Opsional) Tambah akun admin / user kalau mau
