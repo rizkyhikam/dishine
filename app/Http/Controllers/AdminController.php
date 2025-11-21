@@ -10,8 +10,12 @@ use App\Models\Category;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage; // <<< WAJIB untuk hapus gambar
+use Illuminate\Support\Facades\Storage; 
 use Illuminate\Support\Facades\Auth;
+use App\Models\ProductVariant;
+use App\Models\VariantSize;
+use App\Models\DefaultProductSize;
+
 
 
 class AdminController extends Controller
@@ -77,82 +81,151 @@ class AdminController extends Controller
         ]);
     }
 
-public function storeProduct(Request $request)
-{
-    $request->validate([
-        'nama' => 'required|string|max:255',
-        'harga_normal' => 'required|numeric',
-        'harga_reseller' => 'required|numeric',
-        'stok' => 'nullable|integer',
-        'deskripsi' => 'required|string',
-        'category_id' => 'required|exists:categories,id',
-        'gambar' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
-
-        // varian
-        'use_variants' => 'nullable|boolean',
-        'variant_warna.*' => 'nullable|string',
-        'variant_stok.*' => 'nullable|integer',
-
-        // galeri
-        'gallery' => 'nullable|array',
-        'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048'
-    ]);
-
-    // Upload gambar utama
-    $gambarPath = $request->file('gambar')->store('products', 'public');
-
-    // Buat produk
-    $product = Product::create([
-        'nama' => $request->nama,
-        'harga_normal' => $request->harga_normal,
-        'harga_reseller' => $request->harga_reseller,
-        'deskripsi' => $request->deskripsi,
-        'category_id' => $request->category_id,
-        'gambar' => $gambarPath,
-        'stok' => $request->use_variants ? 0 : ($request->stok ?? 0),
-    ]);
-
-    // ================================
-    // SIMPAN VARIAN (TANPA HARGA)
-    // ================================
-    if ($request->use_variants && $request->variant_warna) {
-
-        foreach ($request->variant_warna as $i => $warna) {
-
-            // Lewati jika warna kosong
-            if (!$warna) continue;
-
-            \App\Models\ProductVariant::create([
-                'product_id' => $product->id,
-                'warna'      => $warna,
-                'stok'       => $request->variant_stok[$i] ?? 0,
-                // Harga DIHAPUS — tidak ikut disimpan sama sekali
-            ]);
-        }
-
-        // Hitung ulang stok produk induk
-        $product->update([
-            'stok' => $product->variants()->sum('stok')
+    public function storeProduct(Request $request)
+    {
+        // 1. VALIDASI REQUEST
+        $request->validate([
+            'nama'           => 'required|string|max:255',
+            'harga_normal'   => 'required|numeric',
+            'harga_reseller' => 'required|numeric',
+            'deskripsi'      => 'required|string',
+            'category_id'    => 'required|exists:categories,id',
+            'gambar'         => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            // Kita validasi string JSON-nya saja dulu
+            'variants'       => 'nullable|string',
+            'default_sizes'  => 'nullable|string',
         ]);
-    }
-
-    // ================================
-    // SIMPAN GALERI
-    // ================================
-    if ($request->hasFile('gallery')) {
-        foreach ($request->file('gallery') as $file) {
-            $galleryPath = $file->store('products/gallery', 'public');
-
-            \App\Models\ProductImage::create([
-                'product_id' => $product->id,
-                'path' => $galleryPath
+    
+        // 2. DEBUGGING (PENTING!)
+        // Hapus komentar di bawah ini untuk melihat data mentah yang dikirim browser.
+        // Jika layar Anda menampilkan array data, berarti data sampai ke controller.
+        // Periksa apakah ada key "warna" di dalamnya.
+        
+        // $variantsData = json_decode($request->variants, true);
+        // dd($variantsData); 
+    
+    
+        DB::beginTransaction(); // Pakai transaksi agar aman
+        try {
+            // 3. UPLOAD GAMBAR
+            $gambarPath = $request->file('gambar')->store('products', 'public');
+    
+            // 4. BUAT PRODUK (Stok 0 dulu)
+            $product = Product::create([
+                'nama'           => $request->nama,
+                'harga_normal'   => $request->harga_normal,
+                'harga_reseller' => $request->harga_reseller,
+                'deskripsi'      => $request->deskripsi,
+                'category_id'    => $request->category_id,
+                'gambar'         => $gambarPath,
+                'stok'           => 0,
             ]);
+    
+            $totalStokProduk = 0;
+            $variants = json_decode($request->variants, true) ?? [];
+            $defaultSizes = json_decode($request->default_sizes, true) ?? [];
+    
+            // 5. LOGIKA VARIAN
+            if ($request->boolean('use_variants')) {
+                
+                // Cek apakah varian kosong
+                if (empty($variants)) {
+                    // Jika user centang "Pakai Varian" tapi tidak isi varian, kita bisa throw error
+                    // atau biarkan produk tersimpan tanpa stok.
+                    // return back()->withErrors(['msg' => 'Data varian kosong!']);
+                }
+    
+                foreach ($variants as $index => $v) {
+                    $warna = trim($v['warna'] ?? '');
+    
+                    // Validasi Warna Manual
+                    if ($warna === '') {
+                        // Jika warna kosong, kita skip atau lempar error spesifik
+                        // throw new \Exception("Warna pada varian ke-" . ($index+1) . " wajib diisi.");
+                        continue; 
+                    }
+    
+                    $sizes = $v['sizes'] ?? [];
+                    $totalVarian = 0;
+    
+                    // Buat Varian di DB
+                    $variant = ProductVariant::create([
+                        'product_id' => $product->id,
+                        'warna'      => $warna,
+                        'stok'       => 0, // Nanti diupdate
+                    ]);
+    
+                    // Loop Sizes
+                    foreach ($sizes as $s) {
+                        $sizeId   = $s['id'] ?? null;
+                        $stokSize = (int)($s['stok'] ?? 0);
+    
+                        if ($sizeId && $stokSize > 0) {
+                            VariantSize::create([
+                                'product_variant_id' => $variant->id,
+                                'size_id'            => $sizeId,
+                                'stok'               => $stokSize,
+                            ]);
+                            $totalVarian += $stokSize;
+                        }
+                    }
+                    
+                    // Update Stok Varian
+                    $variant->update(['stok' => $totalVarian]);
+                    $totalStokProduk += $totalVarian;
+                }
+    
+            } 
+            // 6. LOGIKA DEFAULT SIZE (TANPA VARIAN)
+            else {
+                foreach ($defaultSizes as $s) {
+                    $sizeId   = $s['id'] ?? null;
+                    $stokSize = (int)($s['stok'] ?? 0);
+    
+                    if ($sizeId && $stokSize > 0) {
+                        DefaultProductSize::create([
+                            'product_id' => $product->id,
+                            'size_id'    => $sizeId,
+                            'stok'       => $stokSize,
+                        ]);
+                        $totalStokProduk += $stokSize;
+                    }
+                }
+            }
+    
+            // 7. UPDATE TOTAL STOK
+            $product->update(['stok' => $totalStokProduk]);
+    
+            // 8. SIMPAN GALERI
+            if ($request->hasFile('gallery')) {
+                foreach ($request->file('gallery') as $file) {
+                    $path = $file->store('products/gallery', 'public');
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'path'       => $path,
+                    ]);
+                }
+            }
+    
+            DB::commit(); // Simpan semua perubahan ke DB
+    
+            return redirect()
+                ->route('admin.products')
+                ->with('success', 'Produk berhasil ditambahkan.');
+    
+        } catch (\Exception $e) {
+            DB::rollBack(); // Batalkan jika ada error
+            
+            // Hapus gambar yang terlanjur diupload
+            if (isset($gambarPath) && Storage::disk('public')->exists($gambarPath)) {
+                Storage::disk('public')->delete($gambarPath);
+            }
+    
+            return back()
+                ->withInput()
+                ->withErrors(['msg' => 'Gagal menyimpan produk: ' . $e->getMessage()]);
         }
     }
-
-    return redirect()->route('admin.products')
-        ->with('success', 'Produk baru berhasil ditambahkan.');
-}
 
 
     /**
@@ -160,71 +233,149 @@ public function storeProduct(Request $request)
      * FUNGSI BARU — Update Produk + Hapus Gambar Lama
      * -----------------------------------------------------------
      */
-    public function updateProduct(Request $request, $id)
-    {
-        $product = Product::findOrFail($id);
+    public function editProduct($id)
+{
+    // ambil produk + varian (sizes diambil di Blade pakai VariantSize)
+    $product    = Product::with('variants')->findOrFail($id);
+    $categories = Category::all();
 
-        // 1. Validasi (Sama seperti 'store' tapi 'gambar' boleh kosong)
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'harga_normal' => 'required|numeric',
-            'harga_reseller' => 'required|numeric',
-            'stok' => 'required|integer',
-            'deskripsi' => 'required|string',
-            'category_id' => 'required|exists:categories,id',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048', // Boleh kosong
-            'gallery' => 'nullable|array',
-            'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:2048'
-        ]);
+    return view('admin.products_edit', compact('product', 'categories'));
+}
 
-        // 2. Update Data Teks dan Kategori
-        $product->update([
-            'nama' => $request->nama,
-            'harga_normal' => $request->harga_normal,
-            'harga_reseller' => $request->harga_reseller,
-            'stok' => $request->stok,
-            'deskripsi' => $request->deskripsi,
-            'category_id' => $request->category_id,
-        ]);
+public function updateProduct(Request $request, $id)
+{
+    $product = Product::with('variants')->findOrFail($id);
 
-        // 3. Update Gambar Sampul (Cover) JIKA ada file baru
-        if ($request->hasFile('gambar')) {
-            // Hapus gambar lama
-            if ($product->gambar) {
-                Storage::disk('public')->delete($product->gambar);
-            }
-            // Upload gambar baru
-            $gambarPath = $request->file('gambar')->store('products', 'public');
-            $product->gambar = $gambarPath;
-            $product->save(); // Simpan perubahan gambar
+    $request->validate([
+        'nama'           => 'required|string|max:255',
+        'harga_normal'   => 'required|numeric',
+        'harga_reseller' => 'required|numeric',
+        'deskripsi'      => 'required|string',
+        'category_id'    => 'required|exists:categories,id',
+
+        // varian (JSON)
+        'use_variants'   => 'nullable|boolean',
+        'variants'       => 'nullable|string',
+
+        // gambar
+        'gambar'         => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+        'gallery'        => 'nullable|array',
+        'gallery.*'      => 'image|mimes:jpeg,png,jpg,webp|max:2048',
+    ]);
+
+    // 1. update field dasar (tanpa stok dulu)
+    $product->update([
+        'nama'           => $request->nama,
+        'harga_normal'   => $request->harga_normal,
+        'harga_reseller' => $request->harga_reseller,
+        'deskripsi'      => $request->deskripsi,
+        'category_id'    => $request->category_id,
+    ]);
+
+    // 2. VARIAN + SIZE (stok otomatis)
+    $totalStokProduk = 0;
+
+    if ($request->boolean('use_variants')) {
+        // hapus semua varian & size lama
+        $oldVariantIds = $product->variants->pluck('id');
+
+        if ($oldVariantIds->count()) {
+            VariantSize::whereIn('product_variant_id', $oldVariantIds)->delete();
+            ProductVariant::whereIn('id', $oldVariantIds)->delete();
         }
 
-        // 4. HAPUS Foto Galeri yang dicentang
-        if ($request->has('delete_images')) {
-            foreach ($request->delete_images as $imageId) {
-                $image = ProductImage::find($imageId);
-                
-                // Pastikan gambar ini milik produk yang sedang diedit (keamanan)
-                if ($image && $image->product_id == $product->id) {
-                    Storage::disk('public')->delete($image->path); // Hapus file
-                    $image->delete(); // Hapus data di database
+        // parse JSON varian dari form
+        $variantsJson = $request->input('variants', '[]');
+        $variantsData = json_decode($variantsJson, true) ?? [];
+
+        foreach ($variantsData as $v) {
+            $warna = trim($v['warna'] ?? '');
+
+            if ($warna === '') {
+                continue;
+            }
+
+            $sizesData      = $v['sizes'] ?? [];
+            $totalStokVarian = 0;
+
+            // hitung stok varian dari semua size
+            foreach ($sizesData as $s) {
+                $stokSize = (int)($s['stok'] ?? 0);
+                if ($stokSize > 0) {
+                    $totalStokVarian += $stokSize;
                 }
             }
+
+            // buat varian baru
+            $variant = ProductVariant::create([
+                'product_id' => $product->id,
+                'warna'      => $warna,
+                'stok'       => $totalStokVarian,
+            ]);
+
+            // simpan size untuk varian ini
+            foreach ($sizesData as $s) {
+                $sizeId   = $s['id']   ?? null;
+                $stokSize = (int)($s['stok'] ?? 0);
+
+                if ($sizeId && $stokSize > 0) {
+                    VariantSize::create([
+                        'product_variant_id' => $variant->id,
+                        'size_id'            => $sizeId,
+                        'stok'               => $stokSize,
+                    ]);
+                }
+            }
+
+            $totalStokProduk += $totalStokVarian;
         }
 
-        // 5. TAMBAH Foto Galeri Baru (Jika ada)
-        if ($request->hasFile('gallery')) {
-            foreach ($request->file('gallery') as $file) {
-                $galleryPath = $file->store('products/gallery', 'public');
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'path' => $galleryPath
-                ]);
+        // update stok produk dari total semua varian
+        $product->update([
+            'stok' => $totalStokProduk,
+        ]);
+    }
+
+    // 3. Gambar Sampul (jika diganti)
+    if ($request->hasFile('gambar')) {
+        if ($product->gambar) {
+            Storage::disk('public')->delete($product->gambar);
+        }
+
+        $gambarPath       = $request->file('gambar')->store('products', 'public');
+        $product->gambar  = $gambarPath;
+        $product->save();
+    }
+
+    // 4. Hapus foto galeri yang dicentang
+    if ($request->has('delete_images')) {
+        foreach ($request->delete_images as $imageId) {
+            $image = ProductImage::find($imageId);
+
+            if ($image && $image->product_id == $product->id) {
+                Storage::disk('public')->delete($image->path);
+                $image->delete();
             }
         }
-
-        return redirect()->route('admin.products')->with('success', 'Produk berhasil diperbarui.');
     }
+
+    // 5. Tambah foto galeri baru
+    if ($request->hasFile('gallery')) {
+        foreach ($request->file('gallery') as $file) {
+            $galleryPath = $file->store('products/gallery', 'public');
+
+            ProductImage::create([
+                'product_id' => $product->id,
+                'path'       => $galleryPath,
+            ]);
+        }
+    }
+
+    return redirect()
+        ->route('admin.products')
+        ->with('success', 'Produk berhasil diperbarui.');
+}
+
 
     public function destroyProduct($id)
     {
@@ -410,12 +561,6 @@ public function storeProduct(Request $request)
         return redirect()->route('admin.orders.show', $orderId);
     }
 
-    public function editProduct($id)
-    {
-        $product = Product::with('variants')->findOrFail($id);
-        $categories = Category::all(); // Tambahkan ini
-
-        return view('admin.products_edit', compact('product', 'categories')); // Tambahkan 'categories'
-    }
+    
 
 }
