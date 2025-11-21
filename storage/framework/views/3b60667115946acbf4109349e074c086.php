@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Edit Produk - DISHINE Admin'); ?>
 
-@section('title', 'Edit Produk - DISHINE Admin')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <!-- Header Section -->
     <div class="mb-8">
         <div class="flex items-center space-x-4">
@@ -11,37 +9,37 @@
             </div>
             <div>
                 <h1 class="text-4xl font-bold text-gray-800">Edit Produk</h1>
-                <p class="text-gray-600 mt-1">Perbarui data produk: {{ $product->nama }}</p>
+                <p class="text-gray-600 mt-1">Perbarui data produk: <?php echo e($product->nama); ?></p>
             </div>
         </div>
     </div>
 
-    {{-- ALERT SUCCESS --}}
-    @if(session('success'))
+    
+    <?php if(session('success')): ?>
         <div class="mb-6 bg-gradient-to-r from-green-100 to-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg shadow-sm">
             <div class="flex items-center">
                 <i data-lucide="check-circle" class="w-5 h-5 mr-2 text-green-600"></i>
-                <span class="font-medium">{{ session('success') }}</span>
+                <span class="font-medium"><?php echo e(session('success')); ?></span>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- ALERT ERROR DARI LARAVEL --}}
-    @if ($errors->any())
+    
+    <?php if($errors->any()): ?>
         <div class="mb-6 bg-gradient-to-r from-red-100 to-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-sm">
             <div class="flex items-center mb-2">
                 <i data-lucide="alert-circle" class="w-5 h-5 mr-2 text-red-600"></i>
                 <span class="font-medium">Ada kesalahan pada input:</span>
             </div>
             <ul class="list-disc list-inside text-sm ml-6">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($error); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- ALERT ERROR DARI JAVASCRIPT --}}
+    
     <div id="clientErrorBox" class="hidden mb-6 bg-gradient-to-r from-red-100 to-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-sm">
         <div class="flex items-center mb-2">
             <i data-lucide="alert-circle" class="w-5 h-5 mr-2 text-red-600"></i>
@@ -50,9 +48,9 @@
         <ul id="clientErrorList" class="list-disc list-inside text-sm ml-6"></ul>
     </div>
 
-    {{-- ============================= --}}
-    {{-- FORM EDIT PRODUK             --}}
-    {{-- ============================= --}}
+    
+    
+    
     <div class="bg-white rounded-2xl shadow-md overflow-hidden mb-8">
         <!-- Header Form dengan Gradient -->
         <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-8 py-6">
@@ -62,13 +60,13 @@
 
         <div class="p-8">
             <form id="productEditForm"
-                  action="{{ route('admin.products.update', $product->id) }}"
+                  action="<?php echo e(route('admin.products.update', $product->id)); ?>"
                   method="POST"
                   enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
+                <?php echo csrf_field(); ?>
+                <?php echo method_field('PUT'); ?>
 
-                {{-- 1. INFORMASI PRODUK --}}
+                
                 <div class="mb-8">
                     <div class="flex items-center mb-6">
                         <div class="w-1 h-8 bg-gradient-to-b from-[#CC8650] to-[#D4BA98] rounded-full mr-4"></div>
@@ -76,70 +74,116 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        {{-- Nama produk --}}
+                        
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i data-lucide="tag" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
                                 Nama Produk <span class="text-red-500">*</span>
                             </label>
                             <input type="text" name="nama"
-                                   value="{{ old('nama', $product->nama) }}"
-                                   class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('nama') border-red-500 @enderror"
+                                   value="<?php echo e(old('nama', $product->nama)); ?>"
+                                   class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all <?php $__errorArgs = ['nama'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                                    required>
-                            @error('nama')
+                            <?php $__errorArgs = ['nama'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                                 <p class="text-xs text-red-600 mt-2 flex items-center">
                                     <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                                    {{ $message }}
+                                    <?php echo e($message); ?>
+
                                 </p>
-                            @enderror
+                            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                         </div>
 
-                        {{-- Kategori --}}
+                        
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i data-lucide="layers" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
                                 Kategori Produk <span class="text-red-500">*</span>
                             </label>
                             <select name="category_id"
-                                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('category_id') border-red-500 @enderror"
+                                    class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 bg-white focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all <?php $__errorArgs = ['category_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                                     required>
                                 <option value="">-- Pilih Kategori --</option>
-                                @foreach($categories as $category)
-                                    <option value="{{ $category->id }}"
-                                            {{ old('category_id', $product->category_id) == $category->id ? 'selected' : '' }}>
-                                        {{ $category->name }}
+                                <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($category->id); ?>"
+                                            <?php echo e(old('category_id', $product->category_id) == $category->id ? 'selected' : ''); ?>>
+                                        <?php echo e($category->name); ?>
+
                                     </option>
-                                @endforeach
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
-                            @error('category_id')
+                            <?php $__errorArgs = ['category_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                                 <p class="text-xs text-red-600 mt-2 flex items-center">
                                     <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                                    {{ $message }}
+                                    <?php echo e($message); ?>
+
                                 </p>
-                            @enderror
+                            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                         </div>
                     </div>
 
-                    {{-- Deskripsi --}}
+                    
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             <i data-lucide="file-text" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
                             Deskripsi Produk <span class="text-red-500">*</span>
                         </label>
                         <textarea name="deskripsi"
-                                  class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('deskripsi') border-red-500 @enderror"
+                                  class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all <?php $__errorArgs = ['deskripsi'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                                   rows="4"
-                                  required>{{ old('deskripsi', $product->deskripsi) }}</textarea>
-                        @error('deskripsi')
+                                  required><?php echo e(old('deskripsi', $product->deskripsi)); ?></textarea>
+                        <?php $__errorArgs = ['deskripsi'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                             <p class="text-xs text-red-600 mt-2 flex items-center">
                                 <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                                {{ $message }}
+                                <?php echo e($message); ?>
+
                             </p>
-                        @enderror
+                        <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                     </div>
                 </div>
 
-                {{-- 2. HARGA PRODUK --}}
+                
                 <div class="mb-8">
                     <div class="flex items-center mb-6">
                         <div class="w-1 h-8 bg-gradient-to-b from-[#CC8650] to-[#D4BA98] rounded-full mr-4"></div>
@@ -147,7 +191,7 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {{-- Harga normal --}}
+                        
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i data-lucide="dollar-sign" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
@@ -156,19 +200,34 @@
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">Rp</span>
                                 <input type="number" name="harga_normal"
-                                       value="{{ old('harga_normal', $product->harga_normal) }}"
-                                       class="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('harga_normal') border-red-500 @enderror"
+                                       value="<?php echo e(old('harga_normal', $product->harga_normal)); ?>"
+                                       class="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all <?php $__errorArgs = ['harga_normal'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                                        required>
                             </div>
-                            @error('harga_normal')
+                            <?php $__errorArgs = ['harga_normal'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                                 <p class="text-xs text-red-600 mt-2 flex items-center">
                                     <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                                    {{ $message }}
+                                    <?php echo e($message); ?>
+
                                 </p>
-                            @enderror
+                            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                         </div>
 
-                        {{-- Harga reseller --}}
+                        
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i data-lucide="dollar-sign" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
@@ -177,28 +236,43 @@
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">Rp</span>
                                 <input type="number" name="harga_reseller"
-                                       value="{{ old('harga_reseller', $product->harga_reseller) }}"
-                                       class="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('harga_reseller') border-red-500 @enderror"
+                                       value="<?php echo e(old('harga_reseller', $product->harga_reseller)); ?>"
+                                       class="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all <?php $__errorArgs = ['harga_reseller'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                                        required>
                             </div>
-                            @error('harga_reseller')
+                            <?php $__errorArgs = ['harga_reseller'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                                 <p class="text-xs text-red-600 mt-2 flex items-center">
                                     <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                                    {{ $message }}
+                                    <?php echo e($message); ?>
+
                                 </p>
-                            @enderror
+                            <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                         </div>
                     </div>
                 </div>
 
-                {{-- 3. VARIAN & UKURAN --}}
+                
                 <div class="mb-8">
                     <div class="flex items-center mb-6">
                         <div class="w-1 h-8 bg-gradient-to-b from-[#CC8650] to-[#D4BA98] rounded-full mr-4"></div>
                         <h3 class="text-xl font-bold text-gray-800">Varian & Ukuran Produk</h3>
                     </div>
 
-                    @php
+                    <?php
                         $hasVariants = $product->variants && $product->variants->count() > 0;
                         // siapkan data varian + size untuk JS
                         $initialVariants = $product->variants->map(function($variant) {
@@ -212,7 +286,7 @@
                                 })->values()->toArray(),
                             ];
                         })->values()->toArray();
-                    @endphp
+                    ?>
 
                     <div class="bg-gradient-to-r from-[#F0E7DB] to-[#EBE6E6] rounded-xl p-4 mb-6">
                         <label class="flex items-center gap-3">
@@ -221,12 +295,12 @@
                                    name="use_variants"
                                    value="1"
                                    class="w-5 h-5 text-[#CC8650] focus:ring-[#CC8650] rounded"
-                                   {{ old('use_variants', $hasVariants) ? 'checked' : '' }}>
+                                   <?php echo e(old('use_variants', $hasVariants) ? 'checked' : ''); ?>>
                             <span class="text-gray-700 font-medium">Produk ini memiliki varian warna</span>
                         </label>
                     </div>
 
-                    {{-- Section varian (warna) --}}
+                    
                     <div id="variantSection" class="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 mb-6 hidden">
                         <div class="flex items-center mb-4">
                             <i data-lucide="palette" class="w-5 h-5 mr-2 text-[#AE8B56]"></i>
@@ -255,7 +329,7 @@
                         </button>
                     </div>
 
-                    {{-- Section ukuran default (tanpa varian warna) --}}
+                    
                     <div id="defaultSizeSection" class="bg-gray-50 border-2 border-gray-200 rounded-xl p-6 mb-6 hidden">
                         <div class="flex items-center mb-4">
                             <i data-lucide="ruler" class="w-5 h-5 mr-2 text-[#AE8B56]"></i>
@@ -268,14 +342,14 @@
                     </div>
                 </div>
 
-                {{-- 4. GAMBAR PRODUK --}}
+                
                 <div class="mb-8">
                     <div class="flex items-center mb-6">
                         <div class="w-1 h-8 bg-gradient-to-b from-[#CC8650] to-[#D4BA98] rounded-full mr-4"></div>
                         <h3 class="text-xl font-bold text-gray-800">Gambar Produk</h3>
                     </div>
 
-                    {{-- Gambar sampul --}}
+                    
                     <div class="mb-8">
                         <label class="block text-sm font-semibold text-gray-700 mb-3">
                             <i data-lucide="image" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
@@ -283,34 +357,49 @@
                         </label>
                         <div class="flex items-start gap-6">
                             <div class="flex-shrink-0">
-                                @if($product->gambar)
-                                    <img src="{{ asset('storage/' . $product->gambar) }}"
+                                <?php if($product->gambar): ?>
+                                    <img src="<?php echo e(asset('storage/' . $product->gambar)); ?>"
                                          width="120"
                                          class="rounded-xl border-2 border-gray-200 shadow-sm"
                                          alt="Cover">
-                                @else
+                                <?php else: ?>
                                     <div class="w-32 h-32 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
                                         <i data-lucide="image" class="w-8 h-8 text-gray-400"></i>
                                     </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
                             <div class="flex-1">
                                 <input type="file" name="gambar"
-                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('gambar') border-red-500 @enderror">
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all <?php $__errorArgs = ['gambar'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>">
                                 <small class="text-xs text-gray-500 mt-2 block">
                                     Kosongkan jika tidak ingin mengubah gambar sampul.
                                 </small>
-                                @error('gambar')
+                                <?php $__errorArgs = ['gambar'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                                     <p class="text-xs text-red-600 mt-2 flex items-center">
                                         <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                                        {{ $message }}
+                                        <?php echo e($message); ?>
+
                                     </p>
-                                @enderror
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                         </div>
                     </div>
 
-                    {{-- GALERI FOTO --}}
+                    
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-3">
                             <i data-lucide="images" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
@@ -319,31 +408,31 @@
 
                         <div class="mb-6">
                             <div class="flex flex-wrap gap-4 mb-4">
-                                @forelse($product->images as $image)
+                                <?php $__empty_1 = true; $__currentLoopData = $product->images; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $image): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                     <div class="relative group">
-                                        <img src="{{ asset('storage/' . $image->path) }}"
+                                        <img src="<?php echo e(asset('storage/' . $image->path)); ?>"
                                              class="w-24 h-24 object-cover rounded-xl border-2 border-gray-200 shadow-sm group-hover:border-red-300 transition-all"
                                              alt="Gallery Image">
                                         <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-xl transition-all flex items-center justify-center">
                                             <div class="opacity-0 group-hover:opacity-100 transition-all">
                                                 <input type="checkbox"
                                                        name="delete_images[]"
-                                                       value="{{ $image->id }}"
-                                                       id="delete_img_{{ $image->id }}"
+                                                       value="<?php echo e($image->id); ?>"
+                                                       id="delete_img_<?php echo e($image->id); ?>"
                                                        class="hidden">
-                                                <label for="delete_img_{{ $image->id }}"
+                                                <label for="delete_img_<?php echo e($image->id); ?>"
                                                        class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs cursor-pointer hover:bg-red-600 transition-all">
                                                     Hapus
                                                 </label>
                                             </div>
                                         </div>
                                     </div>
-                                @empty
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <div class="text-center w-full py-8 text-gray-500">
                                         <i data-lucide="images" class="w-12 h-12 mx-auto mb-2 opacity-50"></i>
                                         <p>Belum ada foto galeri.</p>
                                     </div>
-                                @endforelse
+                                <?php endif; ?>
                             </div>
 
                             <div>
@@ -352,30 +441,45 @@
                                 </label>
                                 <input type="file"
                                        name="gallery[]"
-                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('gallery.*') border-red-500 @enderror"
+                                       class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all <?php $__errorArgs = ['gallery.*'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                                        accept="image/*"
                                        multiple>
                                 <small class="text-xs text-gray-500 mt-2 block">
                                     Tahan Ctrl/Cmd untuk pilih banyak foto. Format: JPG, PNG, JPEG. Maksimal 5MB per gambar.
                                 </small>
-                                @error('gallery.*')
+                                <?php $__errorArgs = ['gallery.*'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                                     <p class="text-xs text-red-600 mt-2 flex items-center">
                                         <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                                        {{ $message }}
+                                        <?php echo e($message); ?>
+
                                     </p>
-                                @enderror
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- HIDDEN JSON --}}
+                
                 <input type="hidden" name="variants" id="variantsData">
                 <input type="hidden" name="default_sizes" id="defaultSizesData">
 
-                {{-- TOMBOL AKSI --}}
+                
                 <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
-                    <a href="{{ route('admin.products') }}"
+                    <a href="<?php echo e(route('admin.products')); ?>"
                        class="inline-flex items-center px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-all">
                         <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
                         Kembali
@@ -390,7 +494,7 @@
         </div>
     </div>
 
-    {{-- MODAL ATUR UKURAN --}}
+    
     <div id="sizeModal"
          class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50 p-4">
         <div class="bg-white p-6 rounded-2xl w-full max-w-md shadow-xl">
@@ -416,13 +520,13 @@
         </div>
     </div>
 
-    {{-- ========================================= --}}
-    {{-- SCRIPT VARIAN + VALIDASI CLIENT-SIDE     --}}
-    {{-- ========================================= --}}
+    
+    
+    
     <script>
         // Data dari server
-        let sizes = @json(\App\Models\Size::all());
-        let variants      = @json($initialVariants); // dari PHP
+        let sizes = <?php echo json_encode(\App\Models\Size::all(), 15, 512) ?>;
+        let variants      = <?php echo json_encode($initialVariants, 15, 512) ?>; // dari PHP
         let defaultSizes  = []; // default: kosong (kalau nanti punya tabel default sizes, bisa diisi dari backend)
         let editingVariant = -1;
 
@@ -700,4 +804,5 @@
             lucide.createIcons();
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/admin/products_edit.blade.php ENDPATH**/ ?>

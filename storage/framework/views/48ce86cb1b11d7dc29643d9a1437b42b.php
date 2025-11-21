@@ -1,6 +1,4 @@
-@extends('layouts.admin')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <!-- Header Section -->
     <div class="mb-8">
         <div class="flex items-center space-x-4">
@@ -15,19 +13,19 @@
     </div>
 
     <!-- Alert Messages -->
-    @if(session('success'))
+    <?php if(session('success')): ?>
         <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg mb-6 flex items-center shadow-sm">
             <div class="bg-green-100 p-2 rounded-lg mr-3">
                 <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
             </div>
             <div>
                 <p class="font-semibold">Berhasil!</p>
-                <p class="text-sm">{{ session('success') }}</p>
+                <p class="text-sm"><?php echo e(session('success')); ?></p>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
-    @if ($errors->any())
+    <?php if($errors->any()): ?>
         <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 shadow-sm">
             <div class="flex items-start">
                 <div class="bg-red-100 p-2 rounded-lg mr-3">
@@ -36,14 +34,14 @@
                 <div class="flex-1">
                     <p class="font-semibold mb-2">Terjadi Kesalahan:</p>
                     <ul class="list-disc list-inside space-y-1 text-sm">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
+                        <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <li><?php echo e($error); ?></li>
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </ul>
                 </div>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Form Tambah Kategori -->
@@ -58,8 +56,8 @@
                     </div>
                 </div>
                 <div class="p-6">
-                    <form action="{{ route('admin.categories.store') }}" method="POST">
-                        @csrf
+                    <form action="<?php echo e(route('admin.categories.store')); ?>" method="POST">
+                        <?php echo csrf_field(); ?>
                         <div class="mb-6">
                             <label class="block text-sm font-bold text-gray-700 mb-2">
                                 Nama Kategori
@@ -101,7 +99,7 @@
                             <h2 class="text-2xl font-bold text-white">Daftar Kategori</h2>
                         </div>
                         <span class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                            {{ $categories->count() }} Kategori
+                            <?php echo e($categories->count()); ?> Kategori
                         </span>
                     </div>
                 </div>
@@ -117,11 +115,12 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
-                            @forelse($categories as $index => $category)
+                            <?php $__empty_1 = true; $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                 <tr class="hover:bg-gray-50 transition-colors duration-150">
                                     <td class="px-8 py-5 whitespace-nowrap">
                                         <div class="flex items-center justify-center w-10 h-10 rounded-full bg-[#b48a60] bg-opacity-10 text-[#b48a60] font-bold">
-                                            {{ $index + 1 }}
+                                            <?php echo e($index + 1); ?>
+
                                         </div>
                                     </td>
                                     <td class="px-8 py-5">
@@ -130,40 +129,41 @@
                                                 <i data-lucide="tag" class="w-5 h-5 text-[#b48a60]"></i>
                                             </div>
                                             <div>
-                                                <p class="text-base font-bold text-gray-900">{{ $category->name }}</p>
+                                                <p class="text-base font-bold text-gray-900"><?php echo e($category->name); ?></p>
                                                 <p class="text-xs text-gray-500">Kategori Produk</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td class="px-8 py-5">
-                                        @if($category->products->isEmpty())
+                                        <?php if($category->products->isEmpty()): ?>
                                             <div class="flex items-center text-gray-400">
                                                 <i data-lucide="inbox" class="w-4 h-4 mr-2"></i>
                                                 <span class="text-sm italic">Belum ada produk</span>
                                             </div>
-                                        @else
+                                        <?php else: ?>
                                             <div class="flex flex-wrap gap-2">
-                                                @foreach($category->products->take(5) as $product)
+                                                <?php $__currentLoopData = $category->products->take(5); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                                     <span class="inline-flex items-center bg-[#c9a36d] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
                                                         <i data-lucide="package" class="w-3 h-3 mr-1"></i>
-                                                        {{ Str::limit($product->nama, 15) }}
+                                                        <?php echo e(Str::limit($product->nama, 15)); ?>
+
                                                     </span>
-                                                @endforeach
-                                                @if($category->products->count() > 5)
+                                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                <?php if($category->products->count() > 5): ?>
                                                     <span class="inline-flex items-center bg-[#8b6f47] text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-                                                        +{{ $category->products->count() - 5 }} lainnya
+                                                        +<?php echo e($category->products->count() - 5); ?> lainnya
                                                     </span>
-                                                @endif
+                                                <?php endif; ?>
                                             </div>
                                             <p class="text-xs text-gray-700 font-semibold mt-2">
-                                                Total: {{ $category->products->count() }} produk
+                                                Total: <?php echo e($category->products->count()); ?> produk
                                             </p>
-                                        @endif
+                                        <?php endif; ?>
                                     </td>
                                     <td class="px-8 py-5 whitespace-nowrap">
-                                        <form action="{{ route('admin.categories.delete', $category->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus kategori ini? Produk yang terkait tidak akan terhapus.')">
-                                            @csrf
-                                            @method('DELETE')
+                                        <form action="<?php echo e(route('admin.categories.delete', $category->id)); ?>" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus kategori ini? Produk yang terkait tidak akan terhapus.')">
+                                            <?php echo csrf_field(); ?>
+                                            <?php echo method_field('DELETE'); ?>
                                             <button 
                                                 type="submit"
                                                 class="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-100 transition-all duration-200 border border-red-200">
@@ -173,7 +173,7 @@
                                         </form>
                                     </td>
                                 </tr>
-                            @empty
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                 <tr>
                                     <td colspan="4" class="text-center py-16">
                                         <div class="flex flex-col items-center">
@@ -185,7 +185,7 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @endforelse
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -199,4 +199,5 @@
             lucide.createIcons();
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/admin/categories.blade.php ENDPATH**/ ?>

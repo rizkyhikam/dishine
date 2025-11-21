@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Tambah Slider - DISHINE Admin'); ?>
 
-@section('title', 'Tambah Slider - DISHINE Admin')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <!-- Header Section -->
     <div class="mb-8">
         <div class="flex items-center space-x-4">
@@ -16,42 +14,42 @@
         </div>
     </div>
 
-    {{-- Alert Error --}}
-    @if ($errors->any())
+    
+    <?php if($errors->any()): ?>
         <div class="mb-6 bg-gradient-to-r from-red-100 to-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg shadow-sm">
             <div class="flex items-center mb-2">
                 <i data-lucide="alert-circle" class="w-5 h-5 mr-2 text-red-600"></i>
                 <span class="font-medium">Ada kesalahan pada input:</span>
             </div>
             <ul class="list-disc list-inside text-sm ml-6">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($error); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </ul>
         </div>
-    @endif
+    <?php endif; ?>
 
-    {{-- Form Container --}}
+    
     <div class="bg-white rounded-2xl shadow-md overflow-hidden mb-8">
-        {{-- Header Form --}}
+        
         <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-8 py-6">
             <h2 class="text-2xl font-bold text-white">Form Tambah Slider</h2>
             <p class="text-white text-opacity-90 mt-1">Isi form di bawah untuk menambah slider baru</p>
         </div>
 
-        {{-- Form Content --}}
+        
         <div class="p-8">
-            <form action="{{ route('admin.sliders.store') }}" method="POST" enctype="multipart/form-data">
-                @csrf
+            <form action="<?php echo e(route('admin.sliders.store')); ?>" method="POST" enctype="multipart/form-data">
+                <?php echo csrf_field(); ?>
                 
-                {{-- Upload Gambar --}}
+                
                 <div class="mb-8">
                     <label class="block text-sm font-semibold text-gray-700 mb-3">
                         <i data-lucide="image" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
                         Gambar Slider <span class="text-red-500">*</span>
                     </label>
                     
-                    {{-- Upload Area --}}
+                    
                     <div class="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center hover:border-[#D4BA98] transition-all bg-gray-50">
                         <div class="max-w-md mx-auto">
                             <i data-lucide="upload" class="w-12 h-12 text-gray-400 mx-auto mb-3"></i>
@@ -70,7 +68,7 @@
                         </div>
                     </div>
                     
-                    {{-- Image Preview --}}
+                    
                     <div id="imagePreview" class="hidden mt-4">
                         <p class="text-sm font-medium text-gray-700 mb-2">Preview:</p>
                         <div class="relative inline-block">
@@ -88,7 +86,7 @@
                     </p>
                 </div>
 
-                {{-- Alt Text --}}
+                
                 <div class="mb-8">
                     <label class="block text-sm font-semibold text-gray-700 mb-3">
                         <i data-lucide="message-square" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
@@ -105,9 +103,9 @@
                     </p>
                 </div>
 
-                {{-- Posisi dan Status --}}
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    {{-- Posisi Urutan --}}
+                    
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-3">
                             <i data-lucide="navigation" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
@@ -121,7 +119,7 @@
                         <p class="text-xs text-gray-500 mt-2">Angka lebih kecil akan tampil lebih awal</p>
                     </div>
 
-                    {{-- Status Aktif --}}
+                    
                     <div>
                         <label class="block text-sm font-semibold text-gray-700 mb-3">
                             <i data-lucide="power" class="w-4 h-4 inline mr-1 text-[#AE8B56]"></i>
@@ -142,9 +140,9 @@
                     </div>
                 </div>
 
-                {{-- Tombol Aksi --}}
+                
                 <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
-                    <a href="{{ route('admin.sliders.index') }}" 
+                    <a href="<?php echo e(route('admin.sliders.index')); ?>" 
                        class="inline-flex items-center px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-semibold transition-all">
                         <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
                         Kembali
@@ -189,4 +187,5 @@
             lucide.createIcons();
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/admin/sliders/create.blade.php ENDPATH**/ ?>

@@ -163,6 +163,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // Pesanan
     Route::get('/orders', [AdminController::class, 'manageOrders'])->name('orders');
+    Route::get('/orders', [AdminController::class, 'manageOrders'])->name('orders');
     Route::get('/orders/{id}', [AdminController::class, 'showOrder'])->name('orders.show');
     Route::put('/orders/{id}/status', [AdminController::class, 'updateOrderStatus'])->name('orders.update');
 

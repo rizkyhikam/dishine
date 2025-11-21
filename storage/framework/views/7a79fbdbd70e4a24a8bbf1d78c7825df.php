@@ -1,37 +1,35 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Manajemen Produk - DISHINE Admin'); ?>
 
-@section('title', 'Manajemen Produk - DISHINE Admin')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="mb-6">
     <h1 class="text-2xl font-semibold text-[#3c2f2f]">Manajemen Produk</h1>
     <p class="text-sm text-gray-500 mt-1">Kelola semua produk toko Anda di sini.</p>
 </div>
 
-{{-- ALERT SUCCESS --}}
-@if(session('success'))
+
+<?php if(session('success')): ?>
     <div class="flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg mb-6">
         <i data-lucide="check-circle" class="w-5 h-5"></i>
-        <span>{{ session('success') }}</span>
+        <span><?php echo e(session('success')); ?></span>
     </div>
-@endif
+<?php endif; ?>
 
-{{-- ALERT ERROR DARI LARAVEL --}}
-@if ($errors->any())
+
+<?php if($errors->any()): ?>
     <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6">
         <div class="flex items-center gap-2 mb-2">
             <i data-lucide="alert-circle" class="w-5 h-5"></i>
             <p class="font-semibold">Ada kesalahan pada input:</p>
         </div>
         <ul class="list-disc list-inside text-sm ml-7">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
+            <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <li><?php echo e($error); ?></li>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </ul>
     </div>
-@endif
+<?php endif; ?>
 
-{{-- ALERT ERROR DARI JAVASCRIPT --}}
+
 <div id="clientErrorBox" class="hidden bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6">
     <div class="flex items-center gap-2 mb-2">
         <i data-lucide="alert-circle" class="w-5 h-5"></i>
@@ -40,9 +38,9 @@
     <ul id="clientErrorList" class="list-disc list-inside text-sm ml-7"></ul>
 </div>
 
-{{-- ============================= --}}
-{{-- FORM TAMBAH PRODUK            --}}
-{{-- ============================= --}}
+
+
+
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
     <div class="px-6 py-4 border-b border-gray-200 bg-[#f8f5f2]">
         <div class="flex items-center gap-3">
@@ -57,74 +55,117 @@
     </div>
 
     <div class="p-6">
-        <form id="productCreateForm" action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
+        <form id="productCreateForm" action="<?php echo e(route('admin.products.store')); ?>" method="POST" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
 
-            {{-- 1. INFORMASI PRODUK --}}
+            
             <div class="flex items-center gap-2 mb-4">
                 <span class="flex items-center justify-center w-6 h-6 rounded-full bg-[#b48a60] text-white text-xs font-semibold">1</span>
                 <h3 class="text-base font-semibold text-[#3c2f2f]">Informasi Produk</h3>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                {{-- Nama produk --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
                         Nama Produk <span class="text-red-500">*</span>
                     </label>
                     <input type="text" name="nama"
-                        value="{{ old('nama') }}"
+                        value="<?php echo e(old('nama')); ?>"
                         placeholder="Masukkan nama produk"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('nama') border-red-500 @enderror"
+                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition <?php $__errorArgs = ['nama'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                         required>
-                    @error('nama')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['nama'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="text-xs text-red-600 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
 
-                {{-- Kategori --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
                         Kategori Produk <span class="text-red-500">*</span>
                     </label>
                     <select name="category_id"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('category_id') border-red-500 @enderror"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition <?php $__errorArgs = ['category_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                             required>
                         <option value="">-- Pilih Kategori --</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
+                        <?php $__currentLoopData = $categories; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $category): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                            <option value="<?php echo e($category->id); ?>" <?php echo e(old('category_id') == $category->id ? 'selected' : ''); ?>>
+                                <?php echo e($category->name); ?>
+
                             </option>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </select>
-                    @error('category_id')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['category_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="text-xs text-red-600 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
             </div>
 
-            {{-- Deskripsi --}}
+            
             <div class="mb-8">
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">
                     Deskripsi Produk <span class="text-red-500">*</span>
                 </label>
                 <textarea name="deskripsi"
                     placeholder="Tuliskan deskripsi produk secara detail..."
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('deskripsi') border-red-500 @enderror"
-                    rows="4" required>{{ old('deskripsi') }}</textarea>
-                @error('deskripsi')
-                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                @enderror
+                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition <?php $__errorArgs = ['deskripsi'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
+                    rows="4" required><?php echo e(old('deskripsi')); ?></textarea>
+                <?php $__errorArgs = ['deskripsi'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                    <p class="text-xs text-red-600 mt-1"><?php echo e($message); ?></p>
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
             </div>
 
-            {{-- 2. HARGA PRODUK --}}
+            
             <div class="flex items-center gap-2 mb-4">
                 <span class="flex items-center justify-center w-6 h-6 rounded-full bg-[#b48a60] text-white text-xs font-semibold">2</span>
                 <h3 class="text-base font-semibold text-[#3c2f2f]">Harga Produk</h3>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                {{-- Harga normal --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
                         Harga Normal <span class="text-red-500">*</span>
@@ -132,17 +173,31 @@
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Rp</span>
                         <input type="number" name="harga_normal"
-                               value="{{ old('harga_normal') }}"
+                               value="<?php echo e(old('harga_normal')); ?>"
                                placeholder="0"
-                               class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('harga_normal') border-red-500 @enderror"
+                               class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition <?php $__errorArgs = ['harga_normal'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                                required>
                     </div>
-                    @error('harga_normal')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['harga_normal'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="text-xs text-red-600 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
 
-                {{-- Harga reseller --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
                         Harga Reseller <span class="text-red-500">*</span>
@@ -150,18 +205,32 @@
                     <div class="relative">
                         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Rp</span>
                         <input type="number" name="harga_reseller"
-                            value="{{ old('harga_reseller') }}"
+                            value="<?php echo e(old('harga_reseller')); ?>"
                             placeholder="0"
-                            class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('harga_reseller') border-red-500 @enderror"
+                            class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition <?php $__errorArgs = ['harga_reseller'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> border-red-500 <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                             required>
                     </div>
-                    @error('harga_reseller')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['harga_reseller'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="text-xs text-red-600 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
             </div>
 
-            {{-- 3. VARIAN PRODUK --}}
+            
             <div class="flex items-center gap-2 mb-4">
                 <span class="flex items-center justify-center w-6 h-6 rounded-full bg-[#b48a60] text-white text-xs font-semibold">3</span>
                 <h3 class="text-base font-semibold text-[#3c2f2f]">Varian & Ukuran Produk</h3>
@@ -169,11 +238,11 @@
 
             <label class="inline-flex items-center gap-2 mb-4 cursor-pointer">
                 <input type="checkbox" id="useVariants" name="use_variants" value="1"
-                       class="w-4 h-4 text-[#b48a60] border-gray-300 rounded focus:ring-[#b48a60]" {{ old('use_variants') ? 'checked' : '' }}>
+                       class="w-4 h-4 text-[#b48a60] border-gray-300 rounded focus:ring-[#b48a60]" <?php echo e(old('use_variants') ? 'checked' : ''); ?>>
                 <span class="text-sm text-gray-700">Produk ini memiliki varian warna</span>
             </label>
 
-            {{-- Section varian (warna) --}}
+            
             <div id="variantSection" class="hidden bg-[#f8f5f2] border border-[#d6c3b3] rounded-lg p-5 mb-6">
                 <p class="text-sm text-gray-600 mb-4">Tambahkan varian warna, lalu atur ukuran dan stoknya.</p>
 
@@ -198,7 +267,7 @@
                 </button>
             </div>
 
-            {{-- Section ukuran default (tanpa varian warna) --}}
+            
             <div id="defaultSizeSection" class="bg-[#f8f5f2] border border-[#d6c3b3] rounded-lg p-5 mb-8">
                 <p class="text-sm text-gray-600 mb-4">
                     Pilih ukuran jika produk <span class="font-semibold">tidak</span> memiliki varian warna.
@@ -206,14 +275,14 @@
                 <div id="defaultSizeList" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
             </div>
 
-            {{-- 4. GAMBAR PRODUK --}}
+            
             <div class="flex items-center gap-2 mb-4">
                 <span class="flex items-center justify-center w-6 h-6 rounded-full bg-[#b48a60] text-white text-xs font-semibold">4</span>
                 <h3 class="text-base font-semibold text-[#3c2f2f]">Gambar Produk</h3>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                {{-- Gambar sampul --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
                         Gambar Sampul <span class="text-red-500">*</span>
@@ -227,12 +296,19 @@
                             <p class="text-xs text-gray-400 mt-1">PNG, JPG, JPEG (Max 2MB)</p>
                         </label>
                     </div>
-                    @error('gambar')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['gambar'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="text-xs text-red-600 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
 
-                {{-- Galeri --}}
+                
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1.5">
                         Galeri Foto <span class="text-gray-400">(Opsional)</span>
@@ -246,17 +322,24 @@
                             <p class="text-xs text-gray-400 mt-1">Pilih beberapa file sekaligus</p>
                         </label>
                     </div>
-                    @error('gallery.*')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
+                    <?php $__errorArgs = ['gallery.*'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <p class="text-xs text-red-600 mt-1"><?php echo e($message); ?></p>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
             </div>
 
-            {{-- Hidden JSON --}}
+            
             <input type="hidden" name="variants" id="variantsData">
             <input type="hidden" name="default_sizes" id="defaultSizesData">
 
-            {{-- Submit --}}
+            
             <div class="flex justify-end pt-4 border-t border-gray-200">
                 <button type="submit"
                     class="inline-flex items-center gap-2 bg-[#3c2f2f] text-white px-6 py-2.5 rounded-lg hover:bg-[#2a2020] transition font-medium">
@@ -268,12 +351,12 @@
     </div>
 </div>
 
-{{-- ========================================= --}}
-{{-- FILTER PRODUK                             --}}
-{{-- ========================================= --}}
+
+
+
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
     <div class="p-5">
-        <form action="{{ route('admin.products') }}" method="GET">
+        <form action="<?php echo e(route('admin.products')); ?>" method="GET">
             <div class="flex flex-col md:flex-row gap-4">
                 <div class="flex-1">
                     <label for="search_nama" class="block text-sm font-medium text-gray-700 mb-1.5">
@@ -284,7 +367,7 @@
                         <input type="text" name="search_nama" id="search_nama"
                                class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition"
                                placeholder="Ketik nama produk..."
-                               value="{{ $filters['search_nama'] ?? '' }}">
+                               value="<?php echo e($filters['search_nama'] ?? ''); ?>">
                     </div>
                 </div>
 
@@ -294,7 +377,7 @@
                         <i data-lucide="search" class="w-4 h-4"></i>
                         Cari
                     </button>
-                    <a href="{{ route('admin.products') }}"
+                    <a href="<?php echo e(route('admin.products')); ?>"
                        class="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                         Reset
@@ -305,9 +388,9 @@
     </div>
 </div>
 
-{{-- ========================================= --}}
-{{-- TABEL PRODUK                              --}}
-{{-- ========================================= --}}
+
+
+
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
     <div class="px-6 py-4 border-b border-gray-200 bg-[#f8f5f2]">
         <div class="flex items-center gap-3">
@@ -316,7 +399,7 @@
             </div>
             <div>
                 <h2 class="text-lg font-semibold text-[#3c2f2f]">Daftar Produk</h2>
-                <p class="text-gray-500 text-sm">Total {{ $products->count() }} produk</p>
+                <p class="text-gray-500 text-sm">Total <?php echo e($products->count()); ?> produk</p>
             </div>
         </div>
     </div>
@@ -336,54 +419,58 @@
             </thead>
 
             <tbody class="bg-white divide-y divide-gray-200">
-                @forelse($products as $index => $product)
+                <?php $__empty_1 = true; $__currentLoopData = $products; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $product): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $index + 1 }}
+                            <?php echo e($index + 1); ?>
+
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center gap-3">
-                                @if($product->gambar)
-                                    <img src="{{ asset('storage/' . $product->gambar) }}" 
+                                <?php if($product->gambar): ?>
+                                    <img src="<?php echo e(asset('storage/' . $product->gambar)); ?>" 
                                          class="w-12 h-12 rounded-lg object-cover border border-gray-200">
-                                @else
+                                <?php else: ?>
                                     <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
                                         <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
                                     </div>
-                                @endif
-                                <span class="font-medium text-gray-900">{{ $product->nama }}</span>
+                                <?php endif; ?>
+                                <span class="font-medium text-gray-900"><?php echo e($product->nama); ?></span>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#f8f5f2] text-[#b48a60]">
-                                {{ $product->category->name ?? 'N/A' }}
+                                <?php echo e($product->category->name ?? 'N/A'); ?>
+
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
-                            Rp{{ number_format($product->harga_normal, 0, ',', '.') }}
+                            Rp<?php echo e(number_format($product->harga_normal, 0, ',', '.')); ?>
+
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
-                            Rp{{ number_format($product->harga_reseller, 0, ',', '.') }}
+                            Rp<?php echo e(number_format($product->harga_reseller, 0, ',', '.')); ?>
+
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold 
-                                {{ $product->total_stok > 10 ? 'bg-green-100 text-green-700' : ($product->total_stok > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') }}">
-                                {{ $product->total_stok }} pcs
+                                <?php echo e($product->total_stok > 10 ? 'bg-green-100 text-green-700' : ($product->total_stok > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700')); ?>">
+                                <?php echo e($product->total_stok); ?> pcs
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('admin.products.edit', $product->id) }}"
+                                <a href="<?php echo e(route('admin.products.edit', $product->id)); ?>"
                                    class="inline-flex items-center gap-1 px-3 py-1.5 bg-[#b48a60] text-white text-xs font-medium rounded-lg hover:bg-[#9a7550] transition">
                                     <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                                     Edit
                                 </a>
 
-                                <form action="{{ route('admin.products.delete', $product->id) }}"
+                                <form action="<?php echo e(route('admin.products.delete', $product->id)); ?>"
                                       method="POST" class="inline"
                                       onsubmit="return confirm('Hapus produk ini?')">
-                                    @csrf
-                                    @method('DELETE')
+                                    <?php echo csrf_field(); ?>
+                                    <?php echo method_field('DELETE'); ?>
                                     <button class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:bg-red-600 transition">
                                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                         Hapus
@@ -392,26 +479,26 @@
                             </div>
                         </td>
                     </tr>
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <tr>
                         <td colspan="7" class="text-center py-12">
                             <i data-lucide="package-x" class="w-12 h-12 mx-auto text-gray-300 mb-3"></i>
                             <p class="text-gray-500">
-                                @if(request()->has('search_nama'))
+                                <?php if(request()->has('search_nama')): ?>
                                     Tidak ada produk yang cocok dengan pencarian Anda.
-                                @else
+                                <?php else: ?>
                                     Belum ada produk. Tambahkan produk pertama Anda!
-                                @endif
+                                <?php endif; ?>
                             </p>
                         </td>
                     </tr>
-                @endforelse
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
 
-{{-- MODAL ATUR UKURAN --}}
+
 <div id="sizeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
     <div class="bg-white p-6 rounded-xl w-[420px] shadow-2xl">
         <div class="flex items-center justify-between mb-5">
@@ -437,12 +524,12 @@
     </div>
 </div>
 
-{{-- ========================================= --}}
-{{-- SCRIPT VARIAN + VALIDASI CLIENT-SIDE     --}}
-{{-- ========================================= --}}
+
+
+
 <script>
     // Data dari server
-    let sizes = @json(\App\Models\Size::all());
+    let sizes = <?php echo json_encode(\App\Models\Size::all(), 15, 512) ?>;
     let variants = [];
     let defaultSizes = [];
     let editingVariant = -1;
@@ -708,4 +795,5 @@
         lucide.createIcons();
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/admin/products.blade.php ENDPATH**/ ?>
