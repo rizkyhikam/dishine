@@ -1,12 +1,10 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Dashboard - DISHINE Admin'); ?>
 
-@section('title', 'Dashboard - DISHINE Admin')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
     <!-- Header Section dengan Gradient -->
     <div class="mb-8">
         <div class="bg-gradient-to-r from-[#b48a60] to-[#d4a574] rounded-2xl p-8 shadow-lg">
-            <h1 class="text-4xl font-bold text-white mb-2">Selamat Datang, {{ Auth::user()->nama }}!</h1>
+            <h1 class="text-4xl font-bold text-white mb-2">Selamat Datang, <?php echo e(Auth::user()->nama); ?>!</h1>
             <p class="text-white text-lg opacity-90">Berikut adalah ringkasan aktivitas toko Anda hari ini.</p>
         </div>
     </div>
@@ -28,7 +26,8 @@
             <div>
                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Pendapatan</p>
                 <p class="text-3xl font-bold text-gray-800 mb-1">
-                    Rp{{ number_format($totalPendapatan, 0, ',', '.') }}
+                    Rp<?php echo e(number_format($totalPendapatan, 0, ',', '.')); ?>
+
                 </p>
                 <p class="text-xs text-gray-500">Pesanan Selesai</p>
             </div>
@@ -44,7 +43,8 @@
             <div>
                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Pesanan Baru</p>
                 <p class="text-3xl font-bold text-gray-800 mb-1">
-                    {{ $pesananBaru }}
+                    <?php echo e($pesananBaru); ?>
+
                 </p>
                 <p class="text-xs text-gray-500">Perlu Diproses</p>
             </div>
@@ -60,7 +60,8 @@
             <div>
                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Produk</p>
                 <p class="text-3xl font-bold text-gray-800 mb-1">
-                    {{ $totalProduk }}
+                    <?php echo e($totalProduk); ?>
+
                 </p>
                 <p class="text-xs text-gray-500">Produk Aktif</p>
             </div>
@@ -76,7 +77,8 @@
             <div>
                 <p class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">Total Pelanggan</p>
                 <p class="text-3xl font-bold text-gray-800 mb-1">
-                    {{ $totalPelanggan }}
+                    <?php echo e($totalPelanggan); ?>
+
                 </p>
                 <p class="text-xs text-gray-500">Pengguna Terdaftar</p>
             </div>
@@ -98,7 +100,7 @@
                     <h2 class="text-2xl font-bold text-white">Pesanan Menunggu Verifikasi</h2>
                 </div>
                 <span class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                    {{ $pesananTerbaru->count() }} Pesanan
+                    <?php echo e($pesananTerbaru->count()); ?> Pesanan
                 </span>
             </div>
         </div>
@@ -126,47 +128,50 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-100">
                     
-                    @forelse ($pesananTerbaru as $order)
+                    <?php $__empty_1 = true; $__currentLoopData = $pesananTerbaru; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $order): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                         <tr class="hover:bg-gray-50 transition-colors duration-150">
                             <td class="px-8 py-5 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="bg-[#b48a60] bg-opacity-10 p-2 rounded-lg mr-3">
                                         <i data-lucide="file-text" class="w-4 h-4 text-[#b48a60]"></i>
                                     </div>
-                                    <span class="font-bold text-gray-900">ORD-{{ $order->id }}</span>
+                                    <span class="font-bold text-gray-900">ORD-<?php echo e($order->id); ?></span>
                                 </div>
                             </td>
                             <td class="px-8 py-5 whitespace-nowrap">
                                 <div class="flex items-center">
                                     <div class="h-10 w-10 rounded-full flex items-center justify-center bg-gray-200 text-gray-600 font-semibold mr-3">
-                                        {{ substr($order->user->nama ?? 'U', 0, 1) }}
+                                        <?php echo e(substr($order->user->nama ?? 'U', 0, 1)); ?>
+
                                     </div>
                                     <div>
-                                        <p class="text-sm font-semibold text-gray-900">{{ $order->user->nama ?? 'User Dihapus' }}</p>
-                                        <p class="text-xs text-gray-500">{{ $order->user->email ?? '-' }}</p>
+                                        <p class="text-sm font-semibold text-gray-900"><?php echo e($order->user->nama ?? 'User Dihapus'); ?></p>
+                                        <p class="text-xs text-gray-500"><?php echo e($order->user->email ?? '-'); ?></p>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-8 py-5 whitespace-nowrap">
                                 <span class="inline-flex items-center px-4 py-2 text-xs font-bold rounded-full bg-yellow-100 text-yellow-800">
                                     <span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-                                    {{ ucwords(str_replace('_', ' ', $order->status)) }}
+                                    <?php echo e(ucwords(str_replace('_', ' ', $order->status))); ?>
+
                                 </span>
                             </td>
                             <td class="px-8 py-5 whitespace-nowrap">
                                 <span class="text-lg font-bold text-gray-900">
-                                    Rp{{ number_format($order->total_harga, 0, ',', '.') }}
+                                    Rp<?php echo e(number_format($order->total_harga, 0, ',', '.')); ?>
+
                                 </span>
                             </td>
                             <td class="px-8 py-5 whitespace-nowrap">
-                                <a href="{{ route('admin.orders.show', $order->id) }}" 
+                                <a href="<?php echo e(route('admin.orders.show', $order->id)); ?>" 
                                    class="inline-flex items-center px-4 py-2 bg-[#b48a60] text-white text-sm font-semibold rounded-lg hover:bg-[#a07850] transition-colors duration-200">
                                     <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
                                     Lihat Detail
                                 </a>
                             </td>
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="5" class="text-center py-16">
                                 <div class="flex flex-col items-center">
@@ -178,7 +183,7 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                     
                 </tbody>
             </table>
@@ -191,4 +196,5 @@
             lucide.createIcons();
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/admin/dashboard.blade.php ENDPATH**/ ?>
