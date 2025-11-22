@@ -1,8 +1,6 @@
-@extends('layouts.admin')
+<?php $__env->startSection('title', 'Edit Slider'); ?>
 
-@section('title', 'Edit Slider')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <!-- Header Section -->
 <div class="mb-8">
     <div class="flex items-center justify-between">
@@ -15,7 +13,7 @@
                 <p class="text-gray-600 mt-1">Perbarui gambar slider untuk halaman utama</p>
             </div>
         </div>
-        <a href="{{ route('admin.sliders.index') }}" 
+        <a href="<?php echo e(route('admin.sliders.index')); ?>" 
            class="inline-flex items-center px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-semibold transition-all space-x-2">
             <i data-lucide="arrow-left" class="w-5 h-5"></i>
             <span>Kembali</span>
@@ -38,9 +36,9 @@
     </div>
 
     <div class="p-8">
-        <form action="{{ route('admin.sliders.update', $slider->id) }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
+        <form action="<?php echo e(route('admin.sliders.update', $slider->id)); ?>" method="POST" enctype="multipart/form-data">
+            <?php echo csrf_field(); ?>
+            <?php echo method_field('PUT'); ?>
             
             <!-- Preview Gambar Saat Ini -->
             <div class="mb-8">
@@ -49,7 +47,7 @@
                     Gambar Slider Saat Ini
                 </label>
                 <div class="relative group">
-                    <img src="{{ asset('storage/' . $slider->image) }}" 
+                    <img src="<?php echo e(asset('storage/' . $slider->image)); ?>" 
                          class="w-full max-w-2xl rounded-2xl border-4 border-[#D4BA98] shadow-lg">
                     <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-2xl flex items-center justify-center">
                         <span class="text-white font-bold opacity-0 group-hover:opacity-100 transition-all">
@@ -90,12 +88,20 @@
                         <img id="previewImg" src="" class="w-full max-w-xl rounded-xl border-2 border-[#CC8650] shadow-md">
                     </div>
                 </div>
-                @error('image')
+                <?php $__errorArgs = ['image'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                     <p class="text-xs text-red-600 mt-2 flex items-center">
                         <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                        {{ $message }}
+                        <?php echo e($message); ?>
+
                     </p>
-                @enderror
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
             </div>
 
             <!-- Alt Text -->
@@ -111,7 +117,7 @@
                     <input type="text" 
                            name="alt" 
                            id="alt" 
-                           value="{{ old('alt', $slider->alt) }}" 
+                           value="<?php echo e(old('alt', $slider->alt)); ?>" 
                            class="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
                            placeholder="Contoh: Banner Promo Lebaran 2024">
                 </div>
@@ -119,12 +125,20 @@
                     <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
                     Teks alternatif untuk SEO dan aksesibilitas
                 </p>
-                @error('alt')
+                <?php $__errorArgs = ['alt'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                     <p class="text-xs text-red-600 mt-1 flex items-center">
                         <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                        {{ $message }}
+                        <?php echo e($message); ?>
+
                     </p>
-                @enderror
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
             </div>
 
             <!-- Posisi Urutan -->
@@ -140,7 +154,7 @@
                     <input type="number" 
                            name="position" 
                            id="position" 
-                           value="{{ old('position', $slider->position) }}" 
+                           value="<?php echo e(old('position', $slider->position)); ?>" 
                            class="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
                            min="0"
                            placeholder="Contoh: 1">
@@ -149,12 +163,20 @@
                     <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
                     Slider dengan posisi lebih kecil akan ditampilkan lebih dulu
                 </p>
-                @error('position')
+                <?php $__errorArgs = ['position'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
                     <p class="text-xs text-red-600 mt-1 flex items-center">
                         <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>
-                        {{ $message }}
+                        <?php echo e($message); ?>
+
                     </p>
-                @enderror
+                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
             </div>
             
             <!-- Status Aktif -->
@@ -164,7 +186,7 @@
                         <input type="checkbox" 
                                name="is_active" 
                                class="w-6 h-6 text-[#CC8650] rounded-lg focus:ring-[#CC8650] focus:ring-2 transition-all" 
-                               {{ old('is_active', $slider->is_active) ? 'checked' : '' }}>
+                               <?php echo e(old('is_active', $slider->is_active) ? 'checked' : ''); ?>>
                         <div class="ml-4 flex items-center space-x-3">
                             <div>
                                 <span class="text-gray-800 font-bold text-lg block">Aktifkan Slider Ini</span>
@@ -177,7 +199,7 @@
 
             <!-- Action Buttons -->
             <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                <a href="{{ route('admin.sliders.index') }}" 
+                <a href="<?php echo e(route('admin.sliders.index')); ?>" 
                    class="inline-flex items-center px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-semibold transition-all space-x-2">
                     <i data-lucide="x" class="w-5 h-5"></i>
                     <span>Batal</span>
@@ -220,4 +242,5 @@
     });
 </script>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/admin/sliders/edit.blade.php ENDPATH**/ ?>

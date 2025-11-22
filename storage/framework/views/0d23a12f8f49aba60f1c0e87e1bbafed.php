@@ -1,190 +1,196 @@
-@extends('layouts.app')
-
-@section('content')
+<?php $__env->startSection('content'); ?>
 <div class="bg-[#f3e8e3] py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {{-- Notifikasi Sukses/Error --}}
-        @if(session('success'))
+        
+        <?php if(session('success')): ?>
             <div class="bg-green-50 border-l-4 border-green-500 text-green-700 px-6 py-4 rounded-lg mb-6 shadow-sm" role="alert">
                 <div class="flex items-center">
                     <i data-lucide="check-circle" class="w-5 h-5 mr-3"></i>
-                    <span class="font-semibold">{{ session('success') }}</span>
+                    <span class="font-semibold"><?php echo e(session('success')); ?></span>
                 </div>
             </div>
-        @endif
-        @if(session('error'))
+        <?php endif; ?>
+        <?php if(session('error')): ?>
             <div class="bg-red-50 border-l-4 border-red-500 text-red-700 px-6 py-4 rounded-lg mb-6 shadow-sm" role="alert">
                 <div class="flex items-center">
                     <i data-lucide="alert-circle" class="w-5 h-5 mr-3"></i>
-                    <span class="font-semibold">{{ session('error') }}</span>
+                    <span class="font-semibold"><?php echo e(session('error')); ?></span>
                 </div>
             </div>
-        @endif
+        <?php endif; ?>
 
-        @php
+        <?php
             $variantData      = $variantData      ?? collect();
             $defaultSizesData = $defaultSizesData ?? collect();
             $hasVariants    = $variantData->count() > 0;
             $hasDefaultSize = !$hasVariants && $defaultSizesData->count() > 0;
-        @endphp
+        ?>
 
-        {{-- CARD PUTIH UTAMA --}}
+        
         <div class="bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
                 
-                {{-- ======================== --}}
-                {{-- KOLOM KIRI: GALERI FOTO  --}}
-                {{-- ======================== --}}
+                
+                
+                
                 <div class="p-8" data-aos="fade-right">
                     <div class="mb-6 rounded-2xl overflow-hidden shadow-lg border-4 border-[#b48a60]">
                         <img
                             id="main-image"
-                            src="{{ asset('storage/' . $product->gambar) }}"
-                            alt="{{ $product->nama }}"
+                            src="<?php echo e(asset('storage/' . $product->gambar)); ?>"
+                            alt="<?php echo e($product->nama); ?>"
                             class="w-full h-auto object-cover transition-all duration-300 aspect-square"
                         >
                     </div>
 
                     <div class="flex space-x-3 overflow-x-auto pb-2">
-                        {{-- Thumbnail cover --}}
+                        
                         <div class="w-20 h-20 flex-shrink-0">
                             <img
-                                src="{{ asset('storage/' . $product->gambar) }}"
+                                src="<?php echo e(asset('storage/' . $product->gambar)); ?>"
                                 alt="Thumbnail"
                                 class="thumbnail-image w-full h-full object-cover rounded-xl cursor-pointer border-3 border-[#b48a60] hover:scale-105 transition-transform shadow-md"
                             >
                         </div>
 
-                        {{-- Thumbnail galeri --}}
-                        @foreach($product->images as $image)
+                        
+                        <?php $__currentLoopData = $product->images; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $image): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="w-20 h-20 flex-shrink-0">
                                 <img
-                                    src="{{ asset('storage/' . $image->path) }}"
+                                    src="<?php echo e(asset('storage/' . $image->path)); ?>"
                                     alt="Thumbnail"
                                     class="thumbnail-image w-full h-full object-cover rounded-xl cursor-pointer border-2 border-gray-300 hover:border-[#b48a60] hover:scale-105 transition-all shadow-md"
                                 >
                             </div>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                 </div>
 
-                {{-- ========================= --}}
-                {{-- KOLOM KANAN: INFO PRODUK  --}}
-                {{-- ========================= --}}
+                
+                
+                
                 <div class="p-8 bg-gradient-to-br from-white to-[#faf8f6]" data-aos="fade-left" data-aos-delay="100">
-                    {{-- Nama Produk --}}
+                    
                     <h1 class="text-3xl lg:text-4xl font-bold text-[#3c2f2f] mb-3">
-                        {{ $product->nama }}
+                        <?php echo e($product->nama); ?>
+
                     </h1>
 
-                    {{-- Kategori --}}
+                    
                     <div class="mb-4">
                         <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-[#b48a60] bg-opacity-20 text-[#8B6F47]">
                             <i data-lucide="tag" class="w-4 h-4 mr-2"></i>
-                            {{ $product->category->name ?? 'N/A' }}
+                            <?php echo e($product->category->name ?? 'N/A'); ?>
+
                         </span>
                     </div>
                     
-                    {{-- Harga --}}
+                    
                     <div class="mb-8">
-                        @auth
-                            @if(Auth::user()->role === 'reseller')
+                        <?php if(auth()->guard()->check()): ?>
+                            <?php if(Auth::user()->role === 'reseller'): ?>
                                 <div class="flex items-baseline space-x-3">
                                     <span class="text-4xl font-bold text-[#d32f2f]">
-                                        Rp{{ number_format($product->harga_reseller, 0, ',', '.') }}
+                                        Rp<?php echo e(number_format($product->harga_reseller, 0, ',', '.')); ?>
+
                                     </span>
                                     <span class="text-xl text-gray-400 line-through">
-                                        Rp{{ number_format($product->harga_normal, 0, ',', '.') }}
+                                        Rp<?php echo e(number_format($product->harga_normal, 0, ',', '.')); ?>
+
                                     </span>
                                 </div>
-                            @else
+                            <?php else: ?>
                                 <span class="text-4xl font-bold text-[#d32f2f]">
-                                    Rp{{ number_format($product->harga_normal, 0, ',', '.') }}
+                                    Rp<?php echo e(number_format($product->harga_normal, 0, ',', '.')); ?>
+
                                 </span>
-                            @endif
-                        @else
+                            <?php endif; ?>
+                        <?php else: ?>
                             <span class="text-4xl font-bold text-[#d32f2f]">
-                                Rp{{ number_format($product->harga_normal, 0, ',', '.') }}
+                                Rp<?php echo e(number_format($product->harga_normal, 0, ',', '.')); ?>
+
                             </span>
-                        @endauth
+                        <?php endif; ?>
                     </div>
 
                     <hr class="border-gray-300 mb-6">
 
-                    {{-- ========================= --}}
-                    {{-- FORM BELI / TAMBAH CART   --}}
-                    {{-- ========================= --}}
+                    
+                    
+                    
                     <form method="POST">
-                        @csrf
+                        <?php echo csrf_field(); ?>
 
                         <input type="hidden" name="variant_size_id" id="variant_size_id">
                         <input type="hidden" name="variant_id" id="variant_id"> 
                         <input type="hidden" name="size_id" id="size_id">
 
-                        {{-- PILIH WARNA --}}
-                        @if($hasVariants)
+                        
+                        <?php if($hasVariants): ?>
                             <div class="mb-6">
                                 <p class="text-base font-bold text-[#3c2f2f] mb-3">Warna:</p>
                                 <div id="warnaContainer" class="flex flex-wrap gap-2">
-                                    @foreach($variantData as $variant)
-                                        @if($variant['stok'] > 0)
+                                    <?php $__currentLoopData = $variantData; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $variant): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php if($variant['stok'] > 0): ?>
                                             <button
                                                 type="button"
                                                 class="warna-btn px-5 py-2.5 rounded-lg border-2 border-gray-300 text-sm font-semibold text-gray-700 bg-white hover:border-[#b48a60] hover:bg-[#f3e8e3] transition-all"
-                                                data-variant-id="{{ $variant['id'] }}"
+                                                data-variant-id="<?php echo e($variant['id']); ?>"
                                             >
-                                                {{ $variant['warna'] }}
+                                                <?php echo e($variant['warna']); ?>
+
                                             </button>
-                                        @endif
-                                    @endforeach
+                                        <?php endif; ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
                             </div>
 
-                            {{-- PILIH UKURAN (per warna) --}}
+                            
                             <div class="mb-6">
                                 <p class="text-base font-bold text-[#3c2f2f] mb-3">Ukuran:</p>
                                 <div id="sizeContainer" class="flex flex-wrap gap-2">
-                                    {{-- Diisi via JS --}}
+                                    
                                 </div>
                                 <p id="sizeStockInfo" class="text-xs text-gray-500 mt-2"></p>
                             </div>
 
-                        @elseif($hasDefaultSize)
-                            {{-- PILIH UKURAN (tanpa varian warna) --}}
+                        <?php elseif($hasDefaultSize): ?>
+                            
                             <div class="mb-6">
                                 <p class="text-base font-bold text-[#3c2f2f] mb-3">Ukuran:</p>
                                 <div id="sizeContainer" class="flex flex-wrap gap-2">
-                                    @foreach($defaultSizesData as $row)
-                                        @if($row['stok'] > 0)
+                                    <?php $__currentLoopData = $defaultSizesData; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <?php if($row['stok'] > 0): ?>
                                             <button
                                                 type="button"
                                                 class="size-btn px-5 py-2.5 rounded-lg border-2 border-gray-300 text-sm font-semibold text-gray-700 bg-white hover:border-[#b48a60] hover:bg-[#f3e8e3] transition-all"
-                                                data-size-id="{{ $row['id'] }}"
-                                                data-size-name="{{ $row['name'] }}"
-                                                data-stock="{{ $row['stok'] }}"
-                                                data-row-id="{{ $row['row_id'] }}"
+                                                data-size-id="<?php echo e($row['id']); ?>"
+                                                data-size-name="<?php echo e($row['name']); ?>"
+                                                data-stock="<?php echo e($row['stok']); ?>"
+                                                data-row-id="<?php echo e($row['row_id']); ?>"
                                             >
-                                                {{ $row['name'] }}
+                                                <?php echo e($row['name']); ?>
+
                                             </button>
-                                        @endif
-                                    @endforeach
+                                        <?php endif; ?>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </div>
                                 <p id="sizeStockInfo" class="text-xs text-gray-500 mt-2"></p>
                             </div>
-                        @endif
+                        <?php endif; ?>
 
-                        {{-- Info Reseller --}}
-                        @if($isReseller)
+                        
+                        <?php if($isReseller): ?>
                             <div class="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 px-4 py-3 rounded-lg mb-6 flex items-start">
                                 <i data-lucide="alert-triangle" class="w-5 h-5 mr-3 mt-0.5 flex-shrink-0"></i>
-                                <span class="text-sm">Minimal pembelian untuk Reseller adalah <strong>{{ $minQuantity }} item</strong>.</span>
+                                <span class="text-sm">Minimal pembelian untuk Reseller adalah <strong><?php echo e($minQuantity); ?> item</strong>.</span>
                             </div>
-                        @endif
+                        <?php endif; ?>
 
-                        {{-- TOMBOL AKSI --}}
+                        
                         <div class="flex items-center space-x-4 mb-8">
-                            {{-- Jumlah --}}
+                            
                             <div class="flex items-center border-2 border-gray-300 rounded-lg overflow-hidden">
                                 <button type="button" onclick="decreaseQty()" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 transition">
                                     <i data-lucide="minus" class="w-5 h-5"></i>
@@ -194,9 +200,9 @@
                                     id="quantity"
                                     name="quantity"
                                     class="w-20 text-center border-0 focus:outline-none font-bold text-lg"
-                                    value="{{ $minQuantity }}"
-                                    min="{{ $minQuantity }}"
-                                    max="{{ $product->stok }}"
+                                    value="<?php echo e($minQuantity); ?>"
+                                    min="<?php echo e($minQuantity); ?>"
+                                    max="<?php echo e($product->stok); ?>"
                                     readonly
                                 >
                                 <button type="button" onclick="increaseQty()" class="px-4 py-3 bg-gray-100 hover:bg-gray-200 transition">
@@ -204,10 +210,10 @@
                                 </button>
                             </div>
 
-                            {{-- Tambah ke Keranjang --}}
+                            
                             <button
                                 type="submit"
-                                formaction="{{ route('cart.add', $product->id) }}"
+                                formaction="<?php echo e(route('cart.add', $product->id)); ?>"
                                 class="flex-1 flex items-center justify-center space-x-2 px-6 py-4 rounded-xl border-2 border-[#8B6F47] text-[#8B6F47] hover:bg-[#8B6F47] hover:text-white transition-all font-bold"
                             >
                                 <i data-lucide="shopping-cart" class="w-5 h-5"></i>
@@ -215,10 +221,10 @@
                             </button>
                         </div>
 
-                        {{-- Beli Sekarang --}}
+                        
                         <button
                             type="submit"
-                            formaction="{{ route('cart.buyNow', $product->id) }}"
+                            formaction="<?php echo e(route('cart.buyNow', $product->id)); ?>"
                             class="w-full bg-gradient-to-r from-[#8B6F47] to-[#6d5636] text-white px-6 py-4 rounded-xl hover:shadow-xl transform hover:-translate-y-0.5 transition-all font-bold text-lg flex items-center justify-center space-x-2"
                         >
                             <i data-lucide="shopping-bag" class="w-5 h-5"></i>
@@ -229,25 +235,26 @@
             </div>
         </div>
 
-        {{-- ========================= --}}
-        {{-- DESKRIPSI PRODUK (CARD TERPISAH DI BAWAH) --}}
-        {{-- ========================= --}}
+        
+        
+        
         <div class="bg-white rounded-2xl shadow-xl p-8" data-aos="fade-up">
             <h2 class="text-2xl font-bold text-[#3c2f2f] mb-6 flex items-center">
                 <i data-lucide="file-text" class="w-6 h-6 mr-3 text-[#b48a60]"></i>
                 Deskripsi Produk
             </h2>
             <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
-                {!! nl2br(e($product->deskripsi)) !!}
+                <?php echo nl2br(e($product->deskripsi)); ?>
+
             </div>
         </div>
 
     </div>
 </div>
 
-{{-- ========================= --}}
-{{-- SCRIPT GALERI & VARIAN  --}}
-{{-- ========================= --}}
+
+
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         
@@ -269,7 +276,7 @@
 
         // ==================== QUANTITY CONTROLS ====================
         const qtyInput = document.getElementById('quantity');
-        const minQty = {{ (int) $minQuantity }};
+        const minQty = <?php echo e((int) $minQuantity); ?>;
 
         window.decreaseQty = function() {
             let current = parseInt(qtyInput.value);
@@ -288,8 +295,8 @@
         };
 
         // ==================== DATA VARIAN / SIZE ====================
-        const variants     = @json($variantData ?? []);
-        const defaultSizes = @json($defaultSizesData ?? []); 
+        const variants     = <?php echo json_encode($variantData ?? [], 15, 512) ?>;
+        const defaultSizes = <?php echo json_encode($defaultSizesData ?? [], 15, 512) ?>; 
         const hasVariants  = variants.length > 0;
 
         const sizeContainer         = document.getElementById('sizeContainer');
@@ -391,7 +398,7 @@
             const sizeButtons = sizeContainer.querySelectorAll('.size-btn');
             attachSizeListeners(sizeButtons);
         } else {
-            setQuantityLimit({{ (int) $product->stok }});
+            setQuantityLimit(<?php echo e((int) $product->stok); ?>);
         }
 
         if (window.lucide) {
@@ -399,4 +406,5 @@
         }
     });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/detail_produk.blade.php ENDPATH**/ ?>

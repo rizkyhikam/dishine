@@ -4,105 +4,209 @@
 
 @section('content')
 <!-- HERO / SLIDER -->
-<div class="relative overflow-hidden">
+<div class="relative overflow-hidden bg-gray-100">
     <div id="slider" class="flex transition-transform duration-700 ease-in-out">
-
         @foreach ($sliders as $slide)
-            <img src="{{ asset('storage/' . $slide->image) }}"
-                 alt="Slider"
-                 class="w-full h-auto object-cover max-h-[550px] flex-shrink-0">
+            <div class="w-full flex-shrink-0 relative">
+                <img src="{{ asset('storage/' . $slide->image) }}"
+                     alt="{{ $slide->alt ?? 'Dishine Slider' }}"
+                     class="w-full h-[70vh] object-cover">
+                <div class="absolute inset-0 bg-black bg-opacity-20"></div>
+            </div>
         @endforeach
     </div>
+
+    <!-- Navigation Dots -->
+    @if($sliders->count() > 1)
+        <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
+            @foreach ($sliders as $index => $slide)
+                <button class="slider-dot w-3 h-3 rounded-full bg-white bg-opacity-50 transition-all duration-300 {{ $index === 0 ? 'bg-opacity-100 w-8' : '' }}"
+                        data-slide="{{ $index }}"></button>
+            @endforeach
+        </div>
+    @endif
 </div>
 
 @if($sliders->isEmpty())
-    <div class="w-full text-center py-10 bg-gray-100 text-gray-600">
-        <p>Belum ada slider ditambahkan.</p>
+    <div class="w-full h-64 bg-gradient-to-r from-[#F0E7DB] to-[#EBE6E6] flex items-center justify-center">
+        <div class="text-center">
+            <i data-lucide="image" class="w-16 h-16 text-[#AE8B56] mx-auto mb-4"></i>
+            <p class="text-gray-600 text-lg">Belum ada slider ditambahkan</p>
+        </div>
     </div>
 @endif
 
-
-<!-- Script auto-slide -->
-<script>
-    const slider = document.getElementById('slider');
-    // Periksa apakah slider ada sebelum melanjutkan
-    if (slider) {
-        const totalSlides = slider.children.length;
-        let index = 0;
-
-        function autoSlide() {
-            index = (index + 1) % totalSlides;
-            slider.style.transform = `translateX(-${index * 100}%)`;
-        }
-
-        if (totalSlides > 1) { // Hanya jalankan jika ada lebih dari 1 slide
-            setInterval(autoSlide, 4000); // ganti setiap 4 detik
-        }
-    }
-</script>
-
-
 <!-- SLOGAN / HERO TEXT -->
-<div class="text-center py-20" style="background-color: #f8f5f2;" data-aos="fade-up">
-    <img src="{{ asset('logodishine.png') }}" 
-         alt="Dishine Logo" 
-         class="mx-auto h-40 mb-6"
-         data-aos="fade-up">
-
-    <h1 class="text-4xl font-serif font-extrabold mb-4" style="color: #AE8B56;"
-        data-aos="fade-up" data-aos-delay="200">
-        Design with Quality, <br>
-        <span style="color: #3c2f2f;">Style with Faith</span>
-    </h1>
-
-    <p class="mb-8 max-w-lg mx-auto text-sm" style="color: #CC8550;" data-aos="fade-up" data-aos-delay="300">
-        Koleksi eksklusif Dishine untuk muslimah yang ingin tampil menawan tanpa meninggalkan kesederhanaan.
-    </p> 
-
-    <a href="{{ route('katalog') }}" 
-       class="inline-block px-8 py-3 rounded-md shadow-lg text-white font-medium" 
-       style="background-color: #3c2f2f;" data-aos="fade-zoom-in" data-aos-delay="400">
-        Order
-    </a>
-</div>
-
-<!-- 
-=================================
-PRODUK UNGGULAN (VERSI UPGRADE)
-=================================
-Menggunakan desain yang sama dengan 'katalog.blade.php'
--->
-<div class="bg-[#f3e8e3] py-20"> <!-- Ganti background agar senada -->
-    <div class="max-w-6xl mx-auto px-6">
-        
-        <div class="text-center mb-12" data-aos="fade-up">
-            <h2 class="text-3xl font-bold text-[#3c2f2f]">Produk Terlaris</h2>
-            <p class="text-lg text-[#a07850] mt-1">Pilihan favorit pelanggan kami.</p>
+<div class="py-20 bg-gradient-to-br from-[#F0E7DB] to-[#EBE6E6]">
+    <div class="max-w-4xl mx-auto px-6 text-center">
+        <!-- Logo -->
+        <div class="mb-8" data-aos="fade-up">
+            <img src="{{ asset('logodishine.png') }}" 
+                 alt="Dishine Logo" 
+                 class="mx-auto h-32 mb-6 drop-shadow-lg">
         </div>
-        
-        @if($featuredProducts->isEmpty())
-            <div class="text-center text-[#a07850] font-medium" data-aos="fade-up">
-                <p>Belum ada produk unggulan untuk ditampilkan.</p>
-                <p class="text-sm">Silakan cek kembali nanti!</p>
-            </div>
-        @else
-            <!-- Kita panggil 'product_card' yang sudah kita buat -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-                @foreach($featuredProducts as $product)
-                    <!-- Ini akan otomatis menampilkan harga reseller/normal -->
-                    @include('partials.product_card', ['product' => $product, 'delay' => $loop->index * 100])
-                @endforeach
-            </div>
-        @endif
 
-        <div class="text-center mt-12" data-aos="fade-up">
+        <!-- Heading -->
+        <h1 class="text-5xl md:text-6xl font-bold mb-6 leading-tight" data-aos="fade-up" data-aos-delay="200">
+            <span class="text-[#AE8B56]">Design with Quality,</span><br>
+            <span class="text-[#3c2f2f]">Style with Faith</span>
+        </h1>
+
+        <!-- Description -->
+        <p class="text-xl text-[#CC8650] mb-10 max-w-2xl mx-auto leading-relaxed" 
+           data-aos="fade-up" data-aos-delay="300">
+            Koleksi eksklusif Dishine untuk muslimah yang ingin tampil menawan 
+            tanpa meninggalkan kesederhanaan dan nilai-nilai islami.
+        </p>
+
+        <!-- CTA Button -->
+        <div data-aos="fade-up" data-aos-delay="400">
             <a href="{{ route('katalog') }}" 
-               class="inline-block px-8 py-3 rounded-md shadow-lg text-white font-medium bg-[#44351f] hover:bg-[#a07850] transition">
-                Lihat Semua Koleksi
+               class="inline-flex items-center px-10 py-4 bg-[#CC8650] text-white text-lg font-semibold rounded-xl hover:bg-[#AE8B56] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                <i data-lucide="shopping-bag" class="w-5 h-5 mr-3"></i>
+                Jelajahi Koleksi
             </a>
         </div>
     </div>
 </div>
-<!-- =============================== -->
 
+<!-- FEATURED PRODUCTS -->
+<div class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+        <!-- Section Header -->
+        <div class="text-center mb-16" data-aos="fade-up">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-[#F0E7DB] rounded-2xl mb-4">
+                <i data-lucide="crown" class="w-8 h-8 text-[#CC8650]"></i>
+            </div>
+            <h2 class="text-4xl font-bold text-gray-800 mb-3">Produk Terlaris</h2>
+            <p class="text-xl text-[#AE8B56] max-w-2xl mx-auto">
+                Pilihan favorit pelanggan kami dengan kualitas terbaik
+            </p>
+        </div>
+        
+        <!-- Products Grid -->
+        @if($featuredProducts->isEmpty())
+            <div class="text-center py-12" data-aos="fade-up">
+                <div class="bg-[#F0E7DB] p-8 rounded-2xl inline-block">
+                    <i data-lucide="package" class="w-16 h-16 text-[#AE8B56] mx-auto mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Belum Ada Produk Unggulan</h3>
+                    <p class="text-gray-500">Silakan cek kembali nanti!</p>
+                </div>
+            </div>
+        @else
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                @foreach($featuredProducts as $product)
+                    @include('partials.product_card', [
+                        'product' => $product, 
+                        'delay' => $loop->index * 100,
+                        'show_badge' => true
+                    ])
+                @endforeach
+            </div>
+        @endif
+
+        <!-- View All Button -->
+        <div class="text-center mt-16" data-aos="fade-up">
+            <a href="{{ route('katalog') }}" 
+               class="inline-flex items-center px-8 py-3 border-2 border-[#CC8650] text-[#CC8650] rounded-xl hover:bg-[#CC8650] hover:text-white font-semibold transition-all duration-300 group">
+                <span>Lihat Semua Koleksi</span>
+                <i data-lucide="arrow-right" class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- FEATURES SECTION -->
+<div class="py-20 bg-gradient-to-br from-[#F0E7DB] to-[#EBE6E6]">
+    <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-4xl font-bold text-gray-800 mb-4">Mengapa Memilih Dishine?</h2>
+            <p class="text-xl text-[#AE8B56]">Keunggulan yang membuat kami berbeda</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Feature 1 -->
+            <div class="text-center p-8 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                <div class="w-16 h-16 bg-[#CC8650] rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="award" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">Kualitas Premium</h3>
+                <p class="text-gray-600">Bahan pilihan dengan jahitan rapi untuk kenyamanan maksimal</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="text-center p-8 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                <div class="w-16 h-16 bg-[#CC8650] rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">Syariah Compliant</h3>
+                <p class="text-gray-600">Desain modis yang tetap menjaga nilai-nilai islami</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="text-center p-8 bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+                <div class="w-16 h-16 bg-[#CC8650] rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="truck" class="w-8 h-8 text-white"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">Pengiriman Cepat</h3>
+                <p class="text-gray-600">Proses pengiriman aman dan cepat ke seluruh Indonesia</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enhanced Slider Functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const slider = document.getElementById('slider');
+        const dots = document.querySelectorAll('.slider-dot');
+        
+        if (slider && slider.children.length > 1) {
+            const totalSlides = slider.children.length;
+            let index = 0;
+            let slideInterval;
+
+            function goToSlide(slideIndex) {
+                index = slideIndex;
+                slider.style.transform = `translateX(-${index * 100}%)`;
+                
+                // Update dots
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('bg-opacity-100', i === index);
+                    dot.classList.toggle('bg-opacity-50', i !== index);
+                    dot.classList.toggle('w-8', i === index);
+                    dot.classList.toggle('w-3', i !== index);
+                });
+            }
+
+            function autoSlide() {
+                index = (index + 1) % totalSlides;
+                goToSlide(index);
+            }
+
+            // Click events for dots
+            dots.forEach((dot, i) => {
+                dot.addEventListener('click', () => {
+                    goToSlide(i);
+                    resetAutoSlide();
+                });
+            });
+
+            function resetAutoSlide() {
+                clearInterval(slideInterval);
+                slideInterval = setInterval(autoSlide, 5000);
+            }
+
+            // Start auto slide
+            slideInterval = setInterval(autoSlide, 5000);
+
+            // Pause on hover
+            slider.addEventListener('mouseenter', () => clearInterval(slideInterval));
+            slider.addEventListener('mouseleave', () => slideInterval = setInterval(autoSlide, 5000));
+        }
+
+        // Initialize Lucide icons
+        lucide.createIcons();
+    });
+</script>
 @endsection

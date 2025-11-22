@@ -1,24 +1,22 @@
-@extends('layouts.app')
+<?php $__env->startSection('title', 'Checkout - Dishine'); ?>
 
-@section('title', 'Checkout - Dishine')
+<?php $__env->startSection('content'); ?>
 
-@section('content')
 
-{{-- 1. PASS DATA PHP KE JAVASCRIPT --}}
 <script>
     window.checkoutData = {
-        subtotal: {{ $total }},
-        totalWeight: {{ $totalWeight }},
-        adminFee: {{ $adminFee }},
+        subtotal: <?php echo e($total); ?>,
+        totalWeight: <?php echo e($totalWeight); ?>,
+        adminFee: <?php echo e($adminFee); ?>,
         // Data User untuk Logika Otomatis
-        userAddress: `{{ Auth::user()->alamat ?? '' }}`,
-        userCityId: "{{ Auth::user()->city_id ?? '' }}",
-        userProvinceId: "{{ Auth::user()->province_id ?? '' }}" 
+        userAddress: `<?php echo e(Auth::user()->alamat ?? ''); ?>`,
+        userCityId: "<?php echo e(Auth::user()->city_id ?? ''); ?>",
+        userProvinceId: "<?php echo e(Auth::user()->province_id ?? ''); ?>" 
     };
 </script>
 
 <div class="container mx-auto px-4 py-8 max-w-6xl">
-    {{-- Header Section --}}
+    
     <div class="mb-8">
         <div class="flex items-center space-x-4">
             <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] p-4 rounded-2xl shadow-lg">
@@ -31,27 +29,27 @@
         </div>
     </div>
 
-    @if($cartItems->isEmpty())
+    <?php if($cartItems->isEmpty()): ?>
         <div class="bg-white rounded-2xl shadow-md p-8 text-center">
             <div class="bg-[#F0E7DB] p-6 rounded-full inline-flex mb-4">
                 <i data-lucide="shopping-cart" class="w-16 h-16 text-[#AE8B56]"></i>
             </div>
             <h3 class="text-xl font-bold text-gray-700 mb-2">Keranjang Belanja Kosong</h3>
             <p class="text-gray-500 mb-4">Silakan tambahkan produk ke keranjang terlebih dahulu</p>
-            <a href="{{ route('katalog') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#CC8650] to-[#D4BA98] text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+            <a href="<?php echo e(route('katalog')); ?>" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#CC8650] to-[#D4BA98] text-white rounded-xl font-semibold hover:shadow-lg transition-all">
                 <i data-lucide="store" class="w-4 h-4 mr-2"></i>
                 Mulai Belanja
             </a>
         </div>
-    @else
+    <?php else: ?>
 
     <form id="checkoutForm" enctype="multipart/form-data">
-        @csrf
+        <?php echo csrf_field(); ?>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-            {{-- Kolom Kiri - Informasi Utama --}}
+            
             <div class="lg:col-span-2 space-y-6">
-                {{-- Alamat Pengiriman --}}
+                
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden">
                     <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-6 py-4">
                         <div class="flex items-center justify-between">
@@ -62,19 +60,20 @@
                                 <h3 class="text-xl font-bold text-white">Alamat Pengiriman</h3>
                             </div>
                             <button type="button" id="toggleAlamatBtn" class="text-white bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-xl font-semibold text-sm transition-all">
-                                {{ Auth::user()->alamat ? 'Ubah Alamat' : 'Isi Alamat Baru' }}
+                                <?php echo e(Auth::user()->alamat ? 'Ubah Alamat' : 'Isi Alamat Baru'); ?>
+
                             </button>
                         </div>
                     </div>
                     
                     <div class="p-6">
-                        <div id="alamatDisplay" class="{{ Auth::user()->alamat ? '' : 'hidden' }} space-y-3">
+                        <div id="alamatDisplay" class="<?php echo e(Auth::user()->alamat ? '' : 'hidden'); ?> space-y-3">
                             <div class="flex items-center space-x-3">
                                 <div class="bg-[#CC8650] bg-opacity-10 p-2 rounded-lg">
                                     <i data-lucide="user" class="w-4 h-4 text-[#CC8650]"></i>
                                 </div>
                                 <p class="font-semibold text-gray-900">
-                                    {{ Auth::user()->nama }} ({{ Auth::user()->no_hp }})
+                                    <?php echo e(Auth::user()->nama); ?> (<?php echo e(Auth::user()->no_hp); ?>)
                                 </p>
                             </div>
                             <div class="flex items-start space-x-3">
@@ -82,12 +81,13 @@
                                     <i data-lucide="home" class="w-4 h-4 text-[#AE8B56]"></i>
                                 </div>
                                 <p class="text-gray-600 leading-relaxed">
-                                    {{ Auth::user()->alamat ?? 'Belum ada alamat tersimpan.' }}
+                                    <?php echo e(Auth::user()->alamat ?? 'Belum ada alamat tersimpan.'); ?>
+
                                 </p>
                             </div>
                         </div>
 
-                        <div id="alamatForm" class="{{ Auth::user()->alamat ? 'hidden' : '' }} mt-4 space-y-4 border-t pt-4">
+                        <div id="alamatForm" class="<?php echo e(Auth::user()->alamat ? 'hidden' : ''); ?> mt-4 space-y-4 border-t pt-4">
                             <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 text-yellow-800 text-sm p-4 rounded-xl mb-3 flex items-center space-x-3">
                                 <div class="bg-yellow-100 p-2 rounded-lg">
                                     <i data-lucide="info" class="w-4 h-4 text-yellow-600"></i>
@@ -104,18 +104,19 @@
                                         </div>
                                         <select name="province_id" id="province_id" class="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 bg-white focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all">
                                             <option value="">-- Pilih Provinsi --</option>
-                                            @foreach($provinces as $prov)
-                                                @php
+                                            <?php $__currentLoopData = $provinces; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $prov): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <?php
                                                     $pId = $prov['province_id'] ?? $prov['id'] ?? null;
                                                     $pName = $prov['province'] ?? $prov['name'] ?? '';
                                                     $isSelected = (Auth::user()->province_id == $pId) ? 'selected' : '';
-                                                @endphp
-                                                @if($pId)
-                                                    <option value="{{ $pId }}" data-name="{{ $pName }}" {{ $isSelected }}>
-                                                        {{ $pName }}
+                                                ?>
+                                                <?php if($pId): ?>
+                                                    <option value="<?php echo e($pId); ?>" data-name="<?php echo e($pName); ?>" <?php echo e($isSelected); ?>>
+                                                        <?php echo e($pName); ?>
+
                                                     </option>
-                                                @endif
-                                            @endforeach
+                                                <?php endif; ?>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </select>
                                     </div>
                                     <input type="hidden" name="provinsi_name" id="provinsi_name">
@@ -140,14 +141,14 @@
                                     <div class="absolute top-3 left-3 pointer-events-none">
                                         <i data-lucide="navigation" class="w-5 h-5 text-gray-400"></i>
                                     </div>
-                                    <textarea name="detail_alamat" id="detail_alamat" class="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all" rows="3" placeholder="Contoh: Jl. Mawar No. 5A, Kec. Cibinong">{{ Auth::user()->alamat }}</textarea>
+                                    <textarea name="detail_alamat" id="detail_alamat" class="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all" rows="3" placeholder="Contoh: Jl. Mawar No. 5A, Kec. Cibinong"><?php echo e(Auth::user()->alamat); ?></textarea>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Produk Dipesan --}}
+                
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden">
                     <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-6 py-4">
                         <div class="flex items-center space-x-3">
@@ -160,27 +161,27 @@
                     
                     <div class="p-6">
                         <div class="space-y-4">
-                            @foreach($cartItems as $item)
-                                @if($item->product)
-                                    @php
+                            <?php $__currentLoopData = $cartItems; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php if($item->product): ?>
+                                    <?php
                                         $price = $isReseller ? $item->product->harga_reseller : $item->product->harga_normal;
                                         $pName = $item->product->nama ?? $item->product->nama_produk ?? 'Produk';
                                         $img = $item->product->gambar ?? null;
-                                    @endphp
+                                    ?>
                                     <div class="flex items-center justify-between border-b border-gray-100 pb-4 last:border-0 last:pb-0">
                                         <div class="flex items-center space-x-4">
-                                            @if($img)
-                                                <img src="{{ asset('storage/' . $img) }}" class="w-16 h-16 object-cover rounded-xl border-2 border-[#D4BA98]" alt="{{ $pName }}">
-                                            @else
+                                            <?php if($img): ?>
+                                                <img src="<?php echo e(asset('storage/' . $img)); ?>" class="w-16 h-16 object-cover rounded-xl border-2 border-[#D4BA98]" alt="<?php echo e($pName); ?>">
+                                            <?php else: ?>
                                                 <div class="w-16 h-16 bg-gray-200 rounded-xl flex items-center justify-center">
                                                     <i data-lucide="image-off" class="w-6 h-6 text-gray-400"></i>
                                                 </div>
-                                            @endif
+                                            <?php endif; ?>
                                             <div>
-                                                <h4 class="font-semibold text-gray-800">{{ $pName }}</h4>
+                                                <h4 class="font-semibold text-gray-800"><?php echo e($pName); ?></h4>
                                                 
-                                                {{-- VARIAN (WARNA/SIZE) --}}
-                                                @php
+                                                
+                                                <?php
                                                     $detailInfo = [];
                                                     if ($item->variantSize) {
                                                         if ($item->variantSize->productVariant && $item->variantSize->productVariant->warna) {
@@ -190,35 +191,38 @@
                                                             $detailInfo[] = "Size: " . $item->variantSize->size->name;
                                                         }
                                                     }
-                                                @endphp
-                                                @if(count($detailInfo) > 0)
+                                                ?>
+                                                <?php if(count($detailInfo) > 0): ?>
                                                     <p class="text-xs text-gray-500 mb-1">
-                                                        {{ implode(' | ', $detailInfo) }}
+                                                        <?php echo e(implode(' | ', $detailInfo)); ?>
+
                                                     </p>
-                                                @endif
+                                                <?php endif; ?>
 
                                                 <p class="text-sm text-gray-500">
-                                                    {{ $item->quantity }} x Rp {{ number_format($price, 0, ',', '.') }}
+                                                    <?php echo e($item->quantity); ?> x Rp <?php echo e(number_format($price, 0, ',', '.')); ?>
+
                                                 </p>
                                             </div>
                                         </div>
                                         <div class="font-semibold text-gray-900 text-lg">
-                                            Rp {{ number_format($price * $item->quantity, 0, ',', '.') }}
+                                            Rp <?php echo e(number_format($price * $item->quantity, 0, ',', '.')); ?>
+
                                         </div>
                                     </div>
-                                @endif
-                            @endforeach
+                                <?php endif; ?>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
                         <div class="text-right text-sm text-gray-500 mt-4 border-t border-gray-100 pt-4">
                             <div class="flex items-center justify-end space-x-2">
                                 <i data-lucide="weight" class="w-4 h-4 text-[#AE8B56]"></i>
-                                <span>Total Berat: <strong>{{ number_format($totalWeight) }} gram</strong></span>
+                                <span>Total Berat: <strong><?php echo e(number_format($totalWeight)); ?> gram</strong></span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Pengiriman --}}
+                
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden">
                     <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-6 py-4">
                         <div class="flex items-center space-x-3">
@@ -260,7 +264,7 @@
                     </div>
                 </div>
 
-                {{-- Pembayaran --}}
+                
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden">
                     <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-6 py-4">
                         <div class="flex items-center space-x-3">
@@ -272,7 +276,7 @@
                     </div>
                     
                     <div class="p-6">
-                        {{-- Info Rekening --}}
+                        
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div class="bg-gradient-to-br from-[#F0E7DB] to-[#EBE6E6] p-4 rounded-xl border border-[#D4BA98]">
                                 <div class="flex items-center space-x-3 mb-2">
@@ -296,7 +300,7 @@
                             </div>
                         </div>
 
-                        {{-- Upload Bukti --}}
+                        
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-3">
                                 Upload Bukti Transfer <span class="text-red-500">*</span>
@@ -316,9 +320,9 @@
                 </div>
             </div>
 
-            {{-- Kolom Kanan - Ringkasan --}}
+            
             <div class="space-y-6">
-                {{-- Ringkasan Pembayaran --}}
+                
                 <div class="bg-white rounded-2xl shadow-md overflow-hidden">
                     <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-6 py-4">
                         <div class="flex items-center space-x-3">
@@ -333,7 +337,7 @@
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Subtotal Produk</span>
-                                <span class="font-semibold text-gray-800">Rp {{ number_format($total, 0, ',', '.') }}</span>
+                                <span class="font-semibold text-gray-800">Rp <?php echo e(number_format($total, 0, ',', '.')); ?></span>
                             </div>
                             
                             <div class="flex justify-between items-center">
@@ -343,7 +347,7 @@
 
                             <div class="flex justify-between items-center">
                                 <span class="text-gray-600">Biaya Admin</span>
-                                <span class="font-semibold text-gray-800">Rp {{ number_format($adminFee, 0, ',', '.') }}</span>
+                                <span class="font-semibold text-gray-800">Rp <?php echo e(number_format($adminFee, 0, ',', '.')); ?></span>
                             </div>
                         </div>
 
@@ -351,15 +355,15 @@
 
                         <div class="flex justify-between items-center text-lg">
                             <span class="font-bold text-gray-800">Total Bayar</span>
-                            <span id="total_display" class="font-bold text-[#CC8650] text-xl">Rp {{ number_format($total + $adminFee, 0, ',', '.') }}</span>
+                            <span id="total_display" class="font-bold text-[#CC8650] text-xl">Rp <?php echo e(number_format($total + $adminFee, 0, ',', '.')); ?></span>
                         </div>
 
-                        {{-- Hidden Inputs --}}
+                        
                         <input type="hidden" id="ongkir_value" name="ongkir_value" value="0">
                         <input type="hidden" id="layanan_name" name="layanan_selected_name" value="">
-                        <input type="hidden" id="destination_id" name="destination" value="{{ Auth::user()->city_id ?? '' }}">
+                        <input type="hidden" id="destination_id" name="destination" value="<?php echo e(Auth::user()->city_id ?? ''); ?>">
                         
-                        {{-- Button Pesan --}}
+                        
                         <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-xl font-bold text-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center space-x-2 mt-4">
                             <i data-lucide="shopping-bag" class="w-5 h-5"></i>
                             <span>Buat Pesanan</span>
@@ -369,10 +373,10 @@
             </div>
         </div>
     </form>
-    @endif
+    <?php endif; ?>
 </div>
 
-{{-- 2. SCRIPT JAVASCRIPT LOGIC --}}
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Init Data
@@ -639,7 +643,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(this);
             
             try {
-                const res = await fetch('{{ route("checkout.store") }}', {
+                const res = await fetch('<?php echo e(route("checkout.store")); ?>', {
                     method: 'POST',
                     headers: {'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')},
                     body: formData
@@ -683,4 +687,5 @@ document.addEventListener('DOMContentLoaded', function() {
     lucide.createIcons();
 });
 </script>
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/checkout/index.blade.php ENDPATH**/ ?>

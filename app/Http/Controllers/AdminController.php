@@ -28,7 +28,8 @@ class AdminController extends Controller
     public function dashboard()
     {
         // 1. Hitung Total Pendapatan (hanya dari pesanan 'selesai')
-        $totalPendapatan = Order::where('status', 'selesai')->sum('total_harga');
+        // PERHATIAN: Pastikan kolomnya 'total' atau 'total_harga' sesuai model Order Anda.
+        $totalPendapatan = Order::where('status', 'selesai')->sum('total'); 
 
         // 2. Hitung Pesanan Baru (yang perlu diproses)
         $pesananBaru = Order::whereIn('status', ['menunggu_verifikasi', 'diproses'])->count();
@@ -40,10 +41,11 @@ class AdminController extends Controller
         $totalPelanggan = User::where('role', '!=', 'admin')->count();
 
         // 5. Ambil 5 Pesanan Terbaru (untuk tabel)
-       $pesananTerbaru = Order::with('user') // Ambil relasi user untuk nama
-                            ->where('status', Order::STATUS_MENUNGGU_VERIFIKASI) // <-- HANYA AMBIL YANG PERLU VERIFIKASI
-                            ->latest()      // Urutkan dari yg terbaru
-                            ->get();       // Ambil SEMUA yang menunggu (bukan cuma 5)
+        // Catatan: Asumsi Anda punya konstanta di model Order: Order::STATUS_MENUNGGU_VERIFIKASI
+        $pesananTerbaru = Order::with('user') // Ambil relasi user untuk nama
+                             ->where('status', 'menunggu_verifikasi') // Ganti dengan string jika konstanta tidak didefinisikan
+                             ->latest()      // Urutkan dari yg terbaru
+                             ->get();      // Ambil SEMUA yang menunggu
 
         // 6. Kirim semua data ke view
         return view('admin.dashboard', compact(
@@ -58,6 +60,10 @@ class AdminController extends Controller
     // ---------------------------------------------------------
     // CRUD PRODUK
     // ---------------------------------------------------------
+    /**
+     * Menampilkan halaman Manajemen Produk
+     * PERBAIKAN: Mengganti ->get() menjadi ->paginate() untuk mengatasi error 'total does not exist'
+     */
     public function manageProducts(Request $request) // <-- Tambahkan Request $request
     {
         // 1. Mulai query dasar
@@ -69,8 +75,8 @@ class AdminController extends Controller
             $query->where('products.nama', 'LIKE', '%' . $request->search_nama . '%');
         }
 
-        // 3. Ambil data
-        $products = $query->get();
+        // 3. Ambil data DENGAN PAGINASI
+        $products = $query->paginate(15)->withQueryString(); // <-- INI PERUBAHANNYA
         $categories = Category::all(); // <-- Tetap ambil kategori untuk form "Tambah"
         
         // 4. Kirim data ke view
@@ -85,22 +91,19 @@ class AdminController extends Controller
     {
         // 1. VALIDASI REQUEST
         $request->validate([
-            'nama'           => 'required|string|max:255',
-            'harga_normal'   => 'required|numeric',
-            'harga_reseller' => 'required|numeric',
-            'deskripsi'      => 'required|string',
-            'category_id'    => 'required|exists:categories,id',
-            'gambar'         => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'nama'            => 'required|string|max:255',
+            'harga_normal'    => 'required|numeric',
+            'harga_reseller'  => 'required|numeric',
+            'deskripsi'       => 'required|string',
+            'category_id'     => 'required|exists:categories,id',
+            'gambar'          => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
             // Kita validasi string JSON-nya saja dulu
-            'variants'       => 'nullable|string',
-            'default_sizes'  => 'nullable|string',
+            'variants'        => 'nullable|string',
+            'default_sizes'   => 'nullable|string',
         ]);
     
         // 2. DEBUGGING (PENTING!)
         // Hapus komentar di bawah ini untuk melihat data mentah yang dikirim browser.
-        // Jika layar Anda menampilkan array data, berarti data sampai ke controller.
-        // Periksa apakah ada key "warna" di dalamnya.
-        
         // $variantsData = json_decode($request->variants, true);
         // dd($variantsData); 
     
@@ -112,13 +115,13 @@ class AdminController extends Controller
     
             // 4. BUAT PRODUK (Stok 0 dulu)
             $product = Product::create([
-                'nama'           => $request->nama,
-                'harga_normal'   => $request->harga_normal,
-                'harga_reseller' => $request->harga_reseller,
-                'deskripsi'      => $request->deskripsi,
-                'category_id'    => $request->category_id,
-                'gambar'         => $gambarPath,
-                'stok'           => 0,
+                'nama'            => $request->nama,
+                'harga_normal'    => $request->harga_normal,
+                'harga_reseller'  => $request->harga_reseller,
+                'deskripsi'       => $request->deskripsi,
+                'category_id'     => $request->category_id,
+                'gambar'          => $gambarPath,
+                'stok'            => 0,
             ]);
     
             $totalStokProduk = 0;
@@ -132,7 +135,6 @@ class AdminController extends Controller
                 if (empty($variants)) {
                     // Jika user centang "Pakai Varian" tapi tidak isi varian, kita bisa throw error
                     // atau biarkan produk tersimpan tanpa stok.
-                    // return back()->withErrors(['msg' => 'Data varian kosong!']);
                 }
     
                 foreach ($variants as $index => $v) {
@@ -141,7 +143,6 @@ class AdminController extends Controller
                     // Validasi Warna Manual
                     if ($warna === '') {
                         // Jika warna kosong, kita skip atau lempar error spesifik
-                        // throw new \Exception("Warna pada varian ke-" . ($index+1) . " wajib diisi.");
                         continue; 
                     }
     
@@ -234,112 +235,145 @@ class AdminController extends Controller
      * -----------------------------------------------------------
      */
     public function editProduct($id)
-{
-    $product = Product::with([
-        'variants.sizes.size',      // varian + size + nama size
-        'defaultSizes.size',        // ukuran default
-        'images'                    // galeri
-    ])->findOrFail($id);
+    {
+        $product = Product::with([
+            'variants.sizes.size',      // varian + size + nama size
+            'defaultSizes.size',        // ukuran default
+            'images'                    // galeri
+        ])->findOrFail($id);
 
-    $categories = Category::all();
-    $sizes = \App\Models\Size::all();
+        $categories = Category::all();
+        $sizes = \App\Models\Size::all();
 
-    return view('admin.products_edit', compact('product', 'categories', 'sizes'));
-}
+        return view('admin.products_edit', compact('product', 'categories', 'sizes'));
+    }
 
-public function updateProduct(Request $request, $id)
-{
-    $product = Product::findOrFail($id);
+    public function updateProduct(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
 
-    // VALIDASI DASAR
-    $request->validate([
-        'nama'           => 'required|string',
-        'deskripsi'      => 'required|string',
-        'harga_normal'   => 'required|numeric',
-        'harga_reseller' => 'required|numeric',
-        'category_id'    => 'required|exists:categories,id',
-    ]);
+        // VALIDASI DASAR
+        $request->validate([
+            'nama'           => 'required|string',
+            'deskripsi'      => 'required|string',
+            'harga_normal'   => 'required|numeric',
+            'harga_reseller' => 'required|numeric',
+            'category_id'    => 'required|exists:categories,id',
+        ]);
 
-    // UPDATE DATA PRODUK UTAMA
-    $product->update([
-        'nama'           => $request->nama,
-        'deskripsi'      => $request->deskripsi,
-        'harga_normal'   => $request->harga_normal,
-        'harga_reseller' => $request->harga_reseller,
-        'category_id'    => $request->category_id,
-    ]);
+        // UPDATE DATA PRODUK UTAMA
+        $product->update([
+            'nama'           => $request->nama,
+            'deskripsi'      => $request->deskripsi,
+            'harga_normal'   => $request->harga_normal,
+            'harga_reseller' => $request->harga_reseller,
+            'category_id'    => $request->category_id,
+        ]);
 
-    /* ============================================================
-       1. MODE VARIAN (warna + size)
-    ============================================================ */
-    $useVariants = $request->use_variants == 1;
+        /* ============================================================
+          1. MODE VARIAN (warna + size)
+        ============================================================ */
+        $useVariants = $request->use_variants == 1;
 
-    if ($useVariants) {
+        if ($useVariants) {
 
-        // HAPUS default sizes (karena pake varian)
-        DefaultProductSize::where('product_id', $product->id)->delete();
+            // HAPUS default sizes (karena pake varian)
+            DefaultProductSize::where('product_id', $product->id)->delete();
 
-        // Ambil VARIANTS JSON
-        $variants = json_decode($request->variants, true);
+            // Ambil VARIANTS JSON
+            $variants = json_decode($request->variants, true);
 
-        // Hapus varian lama + ukuran lama
-        ProductVariant::where('product_id', $product->id)->delete();
+            // Hapus varian lama + ukuran lama
+            // Hapus data VariantSize terlebih dahulu (melalui relasi jika diatur, atau manual)
+            VariantSize::whereIn('product_variant_id', $product->variants()->pluck('id'))->delete();
+            ProductVariant::where('product_id', $product->id)->delete();
 
-        // Simpan semua varian baru
-        foreach ($variants as $v) {
+            // Simpan semua varian baru
+            foreach ($variants as $v) {
+                // Skip jika data varian tidak lengkap atau tidak ada
+                if (empty($v['warna']) || !isset($v['sizes'])) continue;
 
-            // Insert varian warna
-            $variant = ProductVariant::create([
-                'product_id' => $product->id,
-                'warna'      => $v['warna'],
-                'stok'       => array_sum(array_column($v['sizes'], 'stok')), // total stok
-            ]);
-
-            // Insert ukuran tiap varian
-            foreach ($v['sizes'] as $s) {
-                VariantSize::create([
-                    'product_variant_id' => $variant->id,
-                    'size_id'            => $s['id'],
-                    'stok'               => $s['stok'],
+                // Insert varian warna
+                $variant = ProductVariant::create([
+                    'product_id' => $product->id,
+                    'warna'      => $v['warna'],
+                    // total stok dihitung dari array_sum
+                    'stok'       => collect($v['sizes'])->sum(fn($s) => $s['stok']), 
                 ]);
+
+                // Insert ukuran tiap varian
+                foreach ($v['sizes'] as $s) {
+                    if (isset($s['id']) && $s['stok'] > 0) {
+                        VariantSize::create([
+                            'product_variant_id' => $variant->id,
+                            'size_id'            => $s['id'],
+                            'stok'               => $s['stok'],
+                        ]);
+                    }
+                }
             }
         }
-    }
 
-    /* ============================================================
-       2. MODE NON-VARIAN (default size saja)
-    ============================================================ */
-    else {
+        /* ============================================================
+          2. MODE NON-VARIAN (default size saja)
+        ============================================================ */
+        else {
 
-        // HAPUS semua varian warna
-        ProductVariant::where('product_id', $product->id)->delete();
+            // HAPUS semua varian warna + ukuran varian
+            VariantSize::whereIn('product_variant_id', $product->variants()->pluck('id'))->delete();
+            ProductVariant::where('product_id', $product->id)->delete();
 
-        // Ambil DEFAULT SIZE JSON
-        $defaultSizes = json_decode($request->default_sizes, true);
 
-        // Hapus ukuran lama
-        DefaultProductSize::where('product_id', $product->id)->delete();
+            // Ambil DEFAULT SIZE JSON
+            $defaultSizes = json_decode($request->default_sizes, true);
 
-        // Simpan ukuran baru
-        foreach ($defaultSizes as $s) {
-            DefaultProductSize::create([
-                'product_id' => $product->id,
-                'size_id'    => $s['id'],
-                'stok'       => $s['stok'],
-            ]);
+            // Hapus ukuran lama
+            DefaultProductSize::where('product_id', $product->id)->delete();
+
+            // Simpan ukuran baru
+            foreach ($defaultSizes as $s) {
+                if (isset($s['id']) && $s['stok'] > 0) {
+                    DefaultProductSize::create([
+                        'product_id' => $product->id,
+                        'size_id'    => $s['id'],
+                        'stok'       => $s['stok'],
+                    ]);
+                }
+            }
         }
-    }
+        
+        // RECALCULATE TOTAL STOK (penting!)
+        $totalStokProduk = 0;
+        if ($useVariants) {
+            $totalStokProduk = $product->variants->sum('stok'); // Hitung dari total stok varian
+        } else {
+            $totalStokProduk = $product->defaultSizes->sum('stok'); // Hitung dari total stok default sizes
+        }
 
-    return redirect()
-        ->route('admin.products.edit', $product->id)
-        ->with('success', 'Produk berhasil diperbarui!');
-}
+        $product->update(['stok' => $totalStokProduk]);
+
+
+        return redirect()
+            ->route('admin.products.edit', $product->id)
+            ->with('success', 'Produk berhasil diperbarui!');
+    }
 
 
 
     public function destroyProduct($id)
     {
+        // 1. Hapus relasi gambar
+        ProductImage::where('product_id', $id)->delete();
+        
+        // 2. Hapus varian dan default sizes (diasumsikan sudah di-cascading di model, jika tidak, harus dihapus manual)
+        // Jika tidak ada cascading delete:
+        // VariantSize::whereIn('product_variant_id', ProductVariant::where('product_id', $id)->pluck('id'))->delete();
+        // ProductVariant::where('product_id', $id)->delete();
+        // DefaultProductSize::where('product_id', $id)->delete();
+
+        // 3. Hapus produk utama
         Product::findOrFail($id)->delete();
+        
         return redirect()->route('admin.products')->with('success', 'Produk berhasil dihapus.');
     }
 
@@ -349,7 +383,8 @@ public function updateProduct(Request $request, $id)
     public function manageOrders(Request $request)
     {
         // 1. Mulai query dasar (jangan panggil ->get() dulu)
-        $query = Order::with(['user', 'orderItems', 'payment']);
+        $query = Order::with(['user', 'orderItems', 'payment'])
+                      ->latest('tanggal_pesan'); // Urutkan terbaru secara default
 
         // 2. Terapkan Filter NAMA PELANGGAN (jika ada)
         if ($request->filled('search_nama')) {
@@ -358,9 +393,8 @@ public function updateProduct(Request $request, $id)
             // 'whereHas' mencari di dalam relasi 'user'
             $query->whereHas('user', function ($q) use ($searchTerm) {
                 
-                // --- INI DIA PERBAIKANNYA ---
-                // Kolom Anda 'nama', bukan 'name'
-                $q->where('users.nama', 'LIKE', "%{$searchTerm}%");
+                // --- PENTING: Pastikan kolomnya benar (nama di tabel users) ---
+                $q->where('nama', 'LIKE', "%{$searchTerm}%");
             
             });
         }
@@ -375,8 +409,8 @@ public function updateProduct(Request $request, $id)
             $query->whereDate('tanggal_pesan', '<=', $request->tanggal_selesai);
         }
 
-        // 5. Ambil hasilnya (setelah semua filter diterapkan)
-        $orders = $query->latest()->get();
+        // 5. Ambil hasilnya dengan PAGINASI (solusi untuk error "total does not exist")
+        $orders = $query->paginate(10)->withQueryString();
         
         // 6. Kirim data pesanan DAN data filter (agar input tetap terisi)
         return view('admin.orders', [
@@ -465,8 +499,8 @@ public function updateProduct(Request $request, $id)
     {
         // Ambil data order LENGKAP dengan relasinya
         $order = Order::with(['user', 'orderItems.product', 'payment'])
-                    ->findOrFail($id);
-                    
+                      ->findOrFail($id);
+                      
         return view('admin.orders_show', compact('order'));
     }
 

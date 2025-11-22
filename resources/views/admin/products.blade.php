@@ -1,254 +1,302 @@
 @extends('layouts.admin')
 
-@section('title', 'Manajemen Produk - DISHINE Admin')
-
 @section('content')
-<div class="mb-6">
-    <h1 class="text-2xl font-semibold text-[#3c2f2f]">Manajemen Produk</h1>
-    <p class="text-sm text-gray-500 mt-1">Kelola semua produk toko Anda di sini.</p>
-</div>
-
-{{-- ALERT SUCCESS --}}
-@if(session('success'))
-    <div class="flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg mb-6">
-        <i data-lucide="check-circle" class="w-5 h-5"></i>
-        <span>{{ session('success') }}</span>
-    </div>
-@endif
-
-{{-- ALERT ERROR DARI LARAVEL --}}
-@if ($errors->any())
-    <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6">
-        <div class="flex items-center gap-2 mb-2">
-            <i data-lucide="alert-circle" class="w-5 h-5"></i>
-            <p class="font-semibold">Ada kesalahan pada input:</p>
+<!-- Header Section -->
+<div class="mb-8">
+    <div class="flex items-center space-x-4">
+        <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] p-4 rounded-2xl shadow-lg">
+            <i data-lucide="package" class="w-8 h-8 text-white"></i>
         </div>
-        <ul class="list-disc list-inside text-sm ml-7">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
+        <div>
+            <h1 class="text-4xl font-bold text-gray-800">Manajemen Produk</h1>
+            <p class="text-gray-600 mt-1">Kelola produk dan stok toko Anda</p>
+        </div>
+    </div>
+</div>
+
+{{-- Alert Section --}}
+@if(session('success'))
+    <div class="bg-green-50 border-l-4 border-green-500 text-green-700 p-4 rounded-lg mb-6 flex items-center shadow-sm">
+        <div class="bg-green-100 p-2 rounded-lg mr-3">
+            <i data-lucide="check-circle" class="w-5 h-5 text-green-600"></i>
+        </div>
+        <div>
+            <p class="font-semibold">Berhasil!</p>
+            <p class="text-sm">{{ session('success') }}</p>
+        </div>
     </div>
 @endif
 
-{{-- ALERT ERROR DARI JAVASCRIPT --}}
-<div id="clientErrorBox" class="hidden bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6">
-    <div class="flex items-center gap-2 mb-2">
-        <i data-lucide="alert-circle" class="w-5 h-5"></i>
-        <p class="font-semibold">Ada kesalahan pada form:</p>
+@if ($errors->any())
+    <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 shadow-sm">
+        <div class="flex items-start">
+            <div class="bg-red-100 p-2 rounded-lg mr-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-red-600"></i>
+            </div>
+            <div class="flex-1">
+                <p class="font-semibold mb-2">Ada kesalahan pada input:</p>
+                <ul class="list-disc list-inside space-y-1 text-sm">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
     </div>
-    <ul id="clientErrorList" class="list-disc list-inside text-sm ml-7"></ul>
+@endif
+
+<div id="clientErrorBox" class="hidden bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg mb-6 shadow-sm">
+    <div class="flex items-start">
+        <div class="bg-red-100 p-2 rounded-lg mr-3">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600"></i>
+        </div>
+        <div class="flex-1">
+            <p class="font-semibold mb-2">Ada kesalahan pada form:</p>
+            <ul id="clientErrorList" class="list-disc list-inside space-y-1 text-sm"></ul>
+        </div>
+    </div>
 </div>
 
-{{-- ============================= --}}
-{{-- FORM TAMBAH PRODUK            --}}
-{{-- ============================= --}}
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
-    <div class="px-6 py-4 border-b border-gray-200 bg-[#f8f5f2]">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-[#b48a60] rounded-lg">
-                <i data-lucide="plus-circle" class="w-5 h-5 text-white"></i>
+{{-- Form Tambah Produk --}}
+<div class="bg-white rounded-2xl shadow-md mb-8 overflow-hidden">
+    <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-8 py-6">
+        <div class="flex items-center space-x-3">
+            <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                <i data-lucide="plus-circle" class="w-6 h-6 text-white"></i>
             </div>
             <div>
-                <h2 class="text-lg font-semibold text-[#3c2f2f]">Tambah Produk Baru</h2>
-                <p class="text-gray-500 text-sm">Isi data di bawah ini untuk menambahkan produk baru.</p>
+                <h2 class="text-2xl font-bold text-white">Tambah Produk Baru</h2>
+                <p class="text-white text-sm opacity-90 mt-1">Isi data di bawah ini untuk menambahkan produk baru.</p>
             </div>
         </div>
     </div>
 
-    <div class="p-6">
+    <div class="p-8">
         <form id="productCreateForm" action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
-            {{-- 1. INFORMASI PRODUK --}}
-            <div class="flex items-center gap-2 mb-4">
-                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-[#b48a60] text-white text-xs font-semibold">1</span>
-                <h3 class="text-base font-semibold text-[#3c2f2f]">Informasi Produk</h3>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                {{-- Nama produk --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Nama Produk <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" name="nama"
-                        value="{{ old('nama') }}"
-                        placeholder="Masukkan nama produk"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('nama') border-red-500 @enderror"
-                        required>
-                    @error('nama')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                {{-- Kategori --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Kategori Produk <span class="text-red-500">*</span>
-                    </label>
-                    <select name="category_id"
-                            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm bg-white focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('category_id') border-red-500 @enderror"
-                            required>
-                        <option value="">-- Pilih Kategori --</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('category_id')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
-            {{-- Deskripsi --}}
+            {{-- Informasi Produk --}}
             <div class="mb-8">
-                <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                    Deskripsi Produk <span class="text-red-500">*</span>
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="bg-[#CC8650] bg-opacity-10 p-2 rounded-lg">
+                        <i data-lucide="info" class="w-5 h-5 text-[#CC8650]"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">1. Informasi Produk</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Nama produk --}}
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            Nama Produk <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i data-lucide="tag" class="w-5 h-5 text-gray-400"></i>
+                            </div>
+                            <input type="text" name="nama" value="{{ old('nama') }}"
+                                class="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('nama') border-red-500 @enderror"
+                                placeholder="Contoh: Blouse Casual" required>
+                        </div>
+                        @error('nama')
+                            <p class="text-xs text-red-600 mt-1 flex items-center">
+                                <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>{{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
+                    {{-- Kategori --}}
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            Kategori Produk <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i data-lucide="layers" class="w-5 h-5 text-gray-400"></i>
+                            </div>
+                            <select name="category_id"
+                                class="w-full border-2 border-gray-200 rounded-xl pl-10 pr-4 py-3 bg-white focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('category_id') border-red-500 @enderror"
+                                required>
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @error('category_id')
+                            <p class="text-xs text-red-600 mt-1 flex items-center">
+                                <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>{{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+                </div>
+
+                {{-- Deskripsi --}}
+                <div class="mt-6">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                        Deskripsi Produk <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="deskripsi"
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('deskripsi') border-red-500 @enderror"
+                        rows="4" placeholder="Deskripsikan produk Anda secara detail..." required>{{ old('deskripsi') }}</textarea>
+                    @error('deskripsi')
+                        <p class="text-xs text-red-600 mt-1 flex items-center">
+                            <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>{{ $message }}
+                        </p>
+                    @enderror
+                </div>
+            </div>
+
+            {{-- Harga Produk --}}
+            <div class="mb-8">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="bg-[#D4BA98] bg-opacity-30 p-2 rounded-lg">
+                        <i data-lucide="dollar-sign" class="w-5 h-5 text-[#AE8B56]"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">2. Harga Produk</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Harga normal --}}
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            Harga Normal <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 font-semibold">Rp</span>
+                            </div>
+                            <input type="number" name="harga_normal" value="{{ old('harga_normal') }}"
+                                class="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('harga_normal') border-red-500 @enderror"
+                                placeholder="150000" required>
+                        </div>
+                        @error('harga_normal')
+                            <p class="text-xs text-red-600 mt-1 flex items-center">
+                                <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>{{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+
+                    {{-- Harga reseller --}}
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            Harga Reseller <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 font-semibold">Rp</span>
+                            </div>
+                            <input type="number" name="harga_reseller" value="{{ old('harga_reseller') }}"
+                                class="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all @error('harga_reseller') border-red-500 @enderror"
+                                placeholder="120000" required>
+                        </div>
+                        @error('harga_reseller')
+                            <p class="text-xs text-red-600 mt-1 flex items-center">
+                                <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>{{ $message }}
+                            </p>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+
+            {{-- Varian Produk --}}
+            <div class="mb-8">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="bg-[#AE8B56] bg-opacity-10 p-2 rounded-lg">
+                        <i data-lucide="palette" class="w-5 h-5 text-[#AE8B56]"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">3. Varian & Ukuran Produk</h3>
+                </div>
+
+                <label class="flex items-center gap-3 mb-4 bg-[#F0E7DB] p-4 rounded-xl cursor-pointer hover:bg-[#EBE6E6] transition-all">
+                    <input type="checkbox" id="useVariants" name="use_variants" value="1"
+                        class="w-5 h-5 text-[#CC8650] rounded focus:ring-[#CC8650]" {{ old('use_variants') ? 'checked' : '' }}>
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="check-square" class="w-5 h-5 text-[#AE8B56]"></i>
+                        <span class="text-gray-800 font-semibold">Produk ini memiliki varian warna</span>
+                    </div>
                 </label>
-                <textarea name="deskripsi"
-                    placeholder="Tuliskan deskripsi produk secara detail..."
-                    class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('deskripsi') border-red-500 @enderror"
-                    rows="4" required>{{ old('deskripsi') }}</textarea>
-                @error('deskripsi')
-                    <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                @enderror
-            </div>
 
-            {{-- 2. HARGA PRODUK --}}
-            <div class="flex items-center gap-2 mb-4">
-                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-[#b48a60] text-white text-xs font-semibold">2</span>
-                <h3 class="text-base font-semibold text-[#3c2f2f]">Harga Produk</h3>
-            </div>
+                {{-- Section varian (warna) --}}
+                <div id="variantSection" class="hidden bg-gradient-to-br from-[#F0E7DB] to-[#EBE6E6] border-2 border-[#D4BA98] rounded-2xl p-6 mb-6">
+                    <p class="text-sm text-gray-700 mb-4 flex items-center">
+                        <i data-lucide="info" class="w-4 h-4 mr-2 text-[#AE8B56]"></i>
+                        Tambahkan varian warna, lalu atur ukuran dan stoknya.
+                    </p>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                {{-- Harga normal --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Harga Normal <span class="text-red-500">*</span>
-                    </label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Rp</span>
-                        <input type="number" name="harga_normal"
-                               value="{{ old('harga_normal') }}"
-                               placeholder="0"
-                               class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('harga_normal') border-red-500 @enderror"
-                               required>
+                    <div class="bg-white rounded-xl overflow-hidden shadow-sm mb-4">
+                        <table class="w-full text-sm">
+                            <thead class="bg-[#CC8650] text-white">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-bold">Warna</th>
+                                    <th class="px-4 py-3 text-left font-bold">Ukuran & Stok</th>
+                                    <th class="px-4 py-3 text-left font-bold">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variantList" class="divide-y divide-gray-200"></tbody>
+                        </table>
                     </div>
-                    @error('harga_normal')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
+
+                    <button type="button" id="addVariantBtn"
+                        class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] text-white px-6 py-3 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold flex items-center space-x-2">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                        <span>Tambah Varian</span>
+                    </button>
                 </div>
 
-                {{-- Harga reseller --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Harga Reseller <span class="text-red-500">*</span>
-                    </label>
-                    <div class="relative">
-                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">Rp</span>
-                        <input type="number" name="harga_reseller"
-                            value="{{ old('harga_reseller') }}"
-                            placeholder="0"
-                            class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition @error('harga_reseller') border-red-500 @enderror"
-                            required>
+                {{-- Section ukuran default (tanpa varian warna) --}}
+                <div id="defaultSizeSection" class="bg-gradient-to-br from-[#F0E7DB] to-[#EBE6E6] border-2 border-[#D4BA98] rounded-2xl p-6">
+                    <p class="text-sm text-gray-700 mb-4 flex items-center">
+                        <i data-lucide="ruler" class="w-4 h-4 mr-2 text-[#AE8B56]"></i>
+                        Pilih ukuran jika produk <span class="font-bold mx-1">tidak</span> memiliki varian warna.
+                    </p>
+                    <div id="defaultSizeList" class="space-y-3"></div>
+                </div>
+            </div>
+
+            {{-- Gambar Produk --}}
+            <div class="mb-8">
+                <div class="flex items-center space-x-3 mb-4">
+                    <div class="bg-[#D0B682] bg-opacity-20 p-2 rounded-lg">
+                        <i data-lucide="image" class="w-5 h-5 text-[#8B6F47]"></i>
                     </div>
-                    @error('harga_reseller')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-            </div>
-
-            {{-- 3. VARIAN PRODUK --}}
-            <div class="flex items-center gap-2 mb-4">
-                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-[#b48a60] text-white text-xs font-semibold">3</span>
-                <h3 class="text-base font-semibold text-[#3c2f2f]">Varian & Ukuran Produk</h3>
-            </div>
-
-            <label class="inline-flex items-center gap-2 mb-4 cursor-pointer">
-                <input type="checkbox" id="useVariants" name="use_variants" value="1"
-                       class="w-4 h-4 text-[#b48a60] border-gray-300 rounded focus:ring-[#b48a60]" {{ old('use_variants') ? 'checked' : '' }}>
-                <span class="text-sm text-gray-700">Produk ini memiliki varian warna</span>
-            </label>
-
-            {{-- Section varian (warna) --}}
-            <div id="variantSection" class="hidden bg-[#f8f5f2] border border-[#d6c3b3] rounded-lg p-5 mb-6">
-                <p class="text-sm text-gray-600 mb-4">Tambahkan varian warna, lalu atur ukuran dan stoknya.</p>
-
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="text-left text-gray-600 border-b border-[#d6c3b3]">
-                                <th class="pb-3 font-medium">Warna</th>
-                                <th class="pb-3 font-medium">Ukuran & Stok</th>
-                                <th class="pb-3 font-medium">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="variantList"></tbody>
-                    </table>
+                    <h3 class="text-xl font-bold text-gray-800">4. Gambar Produk</h3>
                 </div>
 
-                <button type="button"
-                    id="addVariantBtn"
-                    class="mt-4 inline-flex items-center gap-2 bg-[#b48a60] text-white px-4 py-2 rounded-lg hover:bg-[#9a7550] transition text-sm font-medium">
-                    <i data-lucide="plus" class="w-4 h-4"></i>
-                    Tambah Varian
-                </button>
-            </div>
-
-            {{-- Section ukuran default (tanpa varian warna) --}}
-            <div id="defaultSizeSection" class="bg-[#f8f5f2] border border-[#d6c3b3] rounded-lg p-5 mb-8">
-                <p class="text-sm text-gray-600 mb-4">
-                    Pilih ukuran jika produk <span class="font-semibold">tidak</span> memiliki varian warna.
-                </p>
-                <div id="defaultSizeList" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
-            </div>
-
-            {{-- 4. GAMBAR PRODUK --}}
-            <div class="flex items-center gap-2 mb-4">
-                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-[#b48a60] text-white text-xs font-semibold">4</span>
-                <h3 class="text-base font-semibold text-[#3c2f2f]">Gambar Produk</h3>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
-                {{-- Gambar sampul --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Gambar Sampul <span class="text-red-500">*</span>
-                    </label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#b48a60] transition cursor-pointer">
-                        <input type="file" name="gambar" id="gambarInput"
-                            class="hidden" required>
-                        <label for="gambarInput" class="cursor-pointer">
-                            <i data-lucide="image" class="w-8 h-8 mx-auto text-gray-400 mb-2"></i>
-                            <p class="text-sm text-gray-500">Klik untuk upload gambar</p>
-                            <p class="text-xs text-gray-400 mt-1">PNG, JPG, JPEG (Max 2MB)</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {{-- Gambar sampul --}}
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            Gambar Sampul <span class="text-red-500">*</span>
                         </label>
+                        <div class="border-2 border-dashed border-[#D4BA98] rounded-xl p-4 hover:border-[#CC8650] transition-all bg-[#F0E7DB] bg-opacity-30">
+                            <input type="file" name="gambar"
+                                class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#CC8650] file:text-white hover:file:bg-[#AE8B56] @error('gambar') border-red-500 @enderror" required>
+                        </div>
+                        @error('gambar')
+                            <p class="text-xs text-red-600 mt-1 flex items-center">
+                                <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>{{ $message }}
+                            </p>
+                        @enderror
                     </div>
-                    @error('gambar')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
 
-                {{-- Galeri --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1.5">
-                        Galeri Foto <span class="text-gray-400">(Opsional)</span>
-                    </label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-[#b48a60] transition cursor-pointer">
-                        <input type="file" name="gallery[]" id="galleryInput" multiple
-                            class="hidden">
-                        <label for="galleryInput" class="cursor-pointer">
-                            <i data-lucide="images" class="w-8 h-8 mx-auto text-gray-400 mb-2"></i>
-                            <p class="text-sm text-gray-500">Klik untuk upload galeri</p>
-                            <p class="text-xs text-gray-400 mt-1">Pilih beberapa file sekaligus</p>
+                    {{-- Galeri --}}
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">
+                            Galeri Foto <span class="text-gray-500 text-xs">(Opsional)</span>
                         </label>
+                        <div class="border-2 border-dashed border-[#D4BA98] rounded-xl p-4 hover:border-[#CC8650] transition-all bg-[#F0E7DB] bg-opacity-30">
+                            <input type="file" name="gallery[]" multiple
+                                class="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#AE8B56] file:text-white hover:file:bg-[#8B6F47] @error('gallery.*') border-red-500 @enderror">
+                        </div>
+                        @error('gallery.*')
+                            <p class="text-xs text-red-600 mt-1 flex items-center">
+                                <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i>{{ $message }}
+                            </p>
+                        @enderror
                     </div>
-                    @error('gallery.*')
-                        <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
-                    @enderror
                 </div>
             </div>
 
@@ -257,46 +305,84 @@
             <input type="hidden" name="default_sizes" id="defaultSizesData">
 
             {{-- Submit --}}
-            <div class="flex justify-end pt-4 border-t border-gray-200">
+            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <a href="{{ route('admin.products') }}" class="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 font-semibold transition-all flex items-center space-x-2">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                    <span>Batal</span>
+                </a>
                 <button type="submit"
-                    class="inline-flex items-center gap-2 bg-[#3c2f2f] text-white px-6 py-2.5 rounded-lg hover:bg-[#2a2020] transition font-medium">
-                    <i data-lucide="save" class="w-4 h-4"></i>
-                    Simpan Produk
+                    class="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-bold flex items-center space-x-2">
+                    <i data-lucide="save" class="w-5 h-5"></i>
+                    <span>Simpan Produk</span>
                 </button>
             </div>
         </form>
     </div>
 </div>
 
-{{-- ========================================= --}}
-{{-- FILTER PRODUK                             --}}
-{{-- ========================================= --}}
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-    <div class="p-5">
+{{-- Modal Atur Ukuran --}}
+<div id="sizeModal" class="fixed inset-0 bg-black bg-opacity-60 hidden justify-center items-center z-50">
+    <div class="bg-white p-6 rounded-2xl w-[450px] shadow-2xl">
+        <div class="flex items-center space-x-3 mb-5">
+            <div class="bg-[#CC8650] bg-opacity-10 p-2 rounded-lg">
+                <i data-lucide="ruler" class="w-6 h-6 text-[#CC8650]"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800">Atur Ukuran & Stok</h3>
+        </div>
+
+        <div id="modalSizeList" class="max-h-80 overflow-y-auto pr-2 space-y-3"></div>
+
+        <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+            <button type="button" id="closeModal"
+                class="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 rounded-xl font-semibold transition-all flex items-center space-x-2">
+                <i data-lucide="x" class="w-4 h-4"></i>
+                <span>Batal</span>
+            </button>
+
+            <button type="button" id="saveSizeModal"
+                class="px-5 py-2.5 bg-gradient-to-r from-[#CC8650] to-[#D4BA98] hover:shadow-lg rounded-xl text-white font-semibold transition-all flex items-center space-x-2">
+                <i data-lucide="check" class="w-4 h-4"></i>
+                <span>Simpan</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+{{-- Filter Produk --}}
+<div class="bg-white rounded-2xl shadow-md mb-6 overflow-hidden">
+    <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-8 py-6">
+        <div class="flex items-center space-x-3 mb-4">
+            <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                <i data-lucide="filter" class="w-5 h-5 text-white"></i>
+            </div>
+            <h2 class="text-xl font-bold text-white">Filter & Pencarian Produk</h2>
+        </div>
+        
         <form action="{{ route('admin.products') }}" method="GET">
-            <div class="flex flex-col md:flex-row gap-4">
-                <div class="flex-1">
-                    <label for="search_nama" class="block text-sm font-medium text-gray-700 mb-1.5">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div class="md:col-span-3">
+                    <label for="search_nama" class="block text-sm font-semibold text-white mb-2">
                         Cari Nama Produk
                     </label>
                     <div class="relative">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                        </div>
                         <input type="text" name="search_nama" id="search_nama"
-                               class="w-full border border-gray-300 rounded-lg pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none transition"
-                               placeholder="Ketik nama produk..."
-                               value="{{ $filters['search_nama'] ?? '' }}">
+                            class="w-full border-2 border-white border-opacity-30 bg-white rounded-xl pl-10 pr-4 py-3 text-sm focus:border-white focus:ring focus:ring-white focus:ring-opacity-30 transition-all"
+                            placeholder="Ketik nama produk..." value="{{ $filters['search_nama'] ?? '' }}">
                     </div>
                 </div>
 
-                <div class="flex items-end gap-2">
+                <div class="flex space-x-2">
                     <button type="submit"
-                        class="inline-flex items-center gap-2 bg-[#3c2f2f] text-white px-5 py-2.5 rounded-lg hover:bg-[#2a2020] transition text-sm font-medium">
-                        <i data-lucide="search" class="w-4 h-4"></i>
+                        class="flex-1 bg-white text-[#CC8650] px-4 py-3 rounded-xl hover:shadow-lg font-bold text-sm flex items-center justify-center transition-all">
+                        <i data-lucide="search" class="w-4 h-4 mr-2"></i>
                         Cari
                     </button>
                     <a href="{{ route('admin.products') }}"
-                       class="inline-flex items-center gap-2 bg-gray-100 text-gray-700 px-5 py-2.5 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                        class="flex-1 bg-[#8B6F47] text-white px-4 py-3 rounded-xl hover:bg-[#725a38] font-semibold text-sm flex items-center justify-center transition-all">
+                        <i data-lucide="x" class="w-4 h-4 mr-1"></i>
                         Reset
                     </a>
                 </div>
@@ -305,87 +391,100 @@
     </div>
 </div>
 
-{{-- ========================================= --}}
-{{-- TABEL PRODUK                              --}}
-{{-- ========================================= --}}
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-    <div class="px-6 py-4 border-b border-gray-200 bg-[#f8f5f2]">
-        <div class="flex items-center gap-3">
-            <div class="p-2 bg-[#b48a60] rounded-lg">
-                <i data-lucide="package" class="w-5 h-5 text-white"></i>
+{{-- Tabel Produk --}}
+<div class="bg-white rounded-2xl shadow-md overflow-hidden">
+    <div class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] px-8 py-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white bg-opacity-20 p-2 rounded-lg">
+                    <i data-lucide="package-search" class="w-6 h-6 text-white"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white">Daftar Produk</h2>
             </div>
-            <div>
-                <h2 class="text-lg font-semibold text-[#3c2f2f]">Daftar Produk</h2>
-                <p class="text-gray-500 text-sm">Total {{ $products->count() }} produk</p>
-            </div>
+            <span class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                {{ $products->total() }} Produk
+            </span>
         </div>
     </div>
-    
+
     <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">No</th>
-                    <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Produk</th>
-                    <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Kategori</th>
-                    <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Harga Normal</th>
-                    <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Harga Reseller</th>
-                    <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Stok</th>
-                    <th class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Aksi</th>
+                    <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">No</th>
+                    <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Produk</th>
+                    <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Kategori</th>
+                    <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Harga</th>
+                    <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Stok</th>
+                    <th class="px-8 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Aksi</th>
                 </tr>
             </thead>
 
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-white divide-y divide-gray-100">
                 @forelse($products as $index => $product)
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $index + 1 }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center gap-3">
-                                @if($product->gambar)
-                                    <img src="{{ asset('storage/' . $product->gambar) }}" 
-                                         class="w-12 h-12 rounded-lg object-cover border border-gray-200">
-                                @else
-                                    <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
-                                        <i data-lucide="image" class="w-5 h-5 text-gray-400"></i>
-                                    </div>
-                                @endif
-                                <span class="font-medium text-gray-900">{{ $product->nama }}</span>
+                    <tr class="hover:bg-gradient-to-r hover:from-[#F0E7DB] hover:to-transparent transition-all duration-150">
+                        <td class="px-8 py-5 whitespace-nowrap">
+                            <div class="flex items-center justify-center w-10 h-10 rounded-full bg-[#CC8650] bg-opacity-10 text-[#CC8650] font-bold">
+                                {{ $index + 1 }}
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-[#f8f5f2] text-[#b48a60]">
+                        <td class="px-8 py-5">
+                            <div class="flex items-center space-x-4">
+                                @if($product->gambar)
+                                    <img src="{{ asset('storage/' . $product->gambar) }}" 
+                                        class="w-16 h-16 rounded-xl object-cover shadow-md border-2 border-[#D4BA98]">
+                                @else
+                                    <div class="w-16 h-16 rounded-xl bg-gray-200 flex items-center justify-center">
+                                        <i data-lucide="image-off" class="w-6 h-6 text-gray-400"></i>
+                                    </div>
+                                @endif
+                                <div>
+                                    <p class="font-bold text-gray-900">{{ $product->nama }}</p>
+                                    <p class="text-xs text-gray-500 line-clamp-1">{{ Str::limit($product->deskripsi, 40) }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-8 py-5 whitespace-nowrap">
+                            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold bg-[#D4BA98] text-white">
+                                <i data-lucide="tag" class="w-3 h-3 mr-1"></i>
                                 {{ $product->category->name ?? 'N/A' }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
-                            Rp{{ number_format($product->harga_normal, 0, ',', '.') }}
+                        <td class="px-8 py-5 whitespace-nowrap">
+                            <div class="space-y-1">
+                                <div class="flex items-center text-sm">
+                                    <span class="text-gray-500 text-xs mr-2">Normal:</span>
+                                    <span class="font-bold text-gray-900">Rp{{ number_format($product->harga_normal, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="flex items-center text-sm">
+                                    <span class="text-gray-500 text-xs mr-2">Reseller:</span>
+                                    <span class="font-bold text-[#CC8650]">Rp{{ number_format($product->harga_reseller, 0, ',', '.') }}</span>
+                                </div>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 font-medium">
-                            Rp{{ number_format($product->harga_reseller, 0, ',', '.') }}
+                        <td class="px-8 py-5 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
+                                <div class="bg-[#AE8B56] bg-opacity-10 p-2 rounded-lg">
+                                    <i data-lucide="package" class="w-4 h-4 text-[#AE8B56]"></i>
+                                </div>
+                                <span class="text-lg font-bold text-gray-900">{{ $product->total_stok }}</span>
+                            </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold 
-                                {{ $product->total_stok > 10 ? 'bg-green-100 text-green-700' : ($product->total_stok > 0 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700') }}">
-                                {{ $product->total_stok }} pcs
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center gap-2">
+                        <td class="px-8 py-5 whitespace-nowrap">
+                            <div class="flex items-center space-x-2">
                                 <a href="{{ route('admin.products.edit', $product->id) }}"
-                                   class="inline-flex items-center gap-1 px-3 py-1.5 bg-[#b48a60] text-white text-xs font-medium rounded-lg hover:bg-[#9a7550] transition">
-                                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                                    class="inline-flex items-center px-4 py-2 bg-[#AE8B56] text-white text-sm font-semibold rounded-lg hover:bg-[#8B6F47] transition-all">
+                                    <i data-lucide="edit" class="w-4 h-4 mr-1"></i>
                                     Edit
                                 </a>
 
                                 <form action="{{ route('admin.products.delete', $product->id) }}"
-                                      method="POST" class="inline"
-                                      onsubmit="return confirm('Hapus produk ini?')">
+                                    method="POST" class="inline"
+                                    onsubmit="return confirm('Yakin ingin menghapus produk ini?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:bg-red-600 transition">
-                                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                    <button class="inline-flex items-center px-4 py-2 bg-red-50 text-red-600 text-sm font-semibold rounded-lg hover:bg-red-100 transition-all border border-red-200">
+                                        <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>
                                         Hapus
                                     </button>
                                 </form>
@@ -394,52 +493,50 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center py-12">
-                            <i data-lucide="package-x" class="w-12 h-12 mx-auto text-gray-300 mb-3"></i>
-                            <p class="text-gray-500">
+                        <td colspan="6" class="text-center py-16">
+                            <div class="flex flex-col items-center">
                                 @if(request()->has('search_nama'))
-                                    Tidak ada produk yang cocok dengan pencarian Anda.
+                                    <div class="bg-[#F0E7DB] p-6 rounded-full mb-4">
+                                        <i data-lucide="search-x" class="w-16 h-16 text-[#AE8B56]"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-700 mb-2">Tidak Ada Hasil</h3>
+                                    <p class="text-gray-500 mb-4">Tidak ada produk yang cocok dengan pencarian Anda.</p>
+                                    <a href="{{ route('admin.products') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-[#CC8650] to-[#D4BA98] text-white rounded-xl font-semibold hover:shadow-lg transition-all">
+                                        <i data-lucide="x" class="w-4 h-4 mr-2"></i>
+                                        Hapus Filter
+                                    </a>
                                 @else
-                                    Belum ada produk. Tambahkan produk pertama Anda!
+                                    <div class="bg-[#F0E7DB] p-6 rounded-full mb-4">
+                                        <i data-lucide="package-x" class="w-16 h-16 text-[#AE8B56]"></i>
+                                    </div>
+                                    <h3 class="text-xl font-bold text-gray-700 mb-2">Belum Ada Produk</h3>
+                                    <p class="text-gray-500">Silakan tambahkan produk pertama Anda menggunakan form di atas.</p>
                                 @endif
-                            </p>
+                            </div>
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+
+    {{-- Pagination --}}
+    @if($products->hasPages())
+        <div class="bg-gradient-to-r from-[#EBE6E6] to-[#F0E7DB] px-8 py-4 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-600">
+                    Menampilkan <span class="font-bold text-[#CC8650]">{{ $products->firstItem() }}</span> - 
+                    <span class="font-bold text-[#CC8650]">{{ $products->lastItem() }}</span> dari 
+                    <span class="font-bold text-[#CC8650]">{{ $products->total() }}</span> produk
+                </div>
+                <div>
+                    {{ $products->links() }}
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 
-{{-- MODAL ATUR UKURAN --}}
-<div id="sizeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden justify-center items-center z-50">
-    <div class="bg-white p-6 rounded-xl w-[420px] shadow-2xl">
-        <div class="flex items-center justify-between mb-5">
-            <h3 class="text-lg font-semibold text-[#3c2f2f]">Atur Ukuran</h3>
-            <button type="button" id="closeModalX" class="text-gray-400 hover:text-gray-600">
-                <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
-        </div>
-
-        <div id="modalSizeList" class="max-h-64 overflow-y-auto pr-2 space-y-2"></div>
-
-        <div class="flex justify-end gap-2 mt-6 pt-4 border-t">
-            <button type="button" id="closeModal"
-                class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition">
-                Batal
-            </button>
-
-            <button type="button" id="saveSizeModal"
-                class="px-4 py-2 bg-[#b48a60] hover:bg-[#9a7550] rounded-lg text-white text-sm font-medium transition">
-                Simpan
-            </button>
-        </div>
-    </div>
-</div>
-
-{{-- ========================================= --}}
-{{-- SCRIPT VARIAN + VALIDASI CLIENT-SIDE     --}}
-{{-- ========================================= --}}
 <script>
     // Data dari server
     let sizes = @json(\App\Models\Size::all());
@@ -448,20 +545,19 @@
     let editingVariant = -1;
 
     const useVariantsCheckbox = document.getElementById("useVariants");
-    const variantSection      = document.getElementById("variantSection");
-    const defaultSizeSection  = document.getElementById("defaultSizeSection");
-    const variantList         = document.getElementById("variantList");
-    const defaultSizeList     = document.getElementById("defaultSizeList");
-    const variantsInput       = document.getElementById("variantsData");
-    const defaultSizesInput   = document.getElementById("defaultSizesData");
-    const form                = document.getElementById("productCreateForm");
+    const variantSection = document.getElementById("variantSection");
+    const defaultSizeSection = document.getElementById("defaultSizeSection");
+    const variantList = document.getElementById("variantList");
+    const defaultSizeList = document.getElementById("defaultSizeList");
+    const variantsInput = document.getElementById("variantsData");
+    const defaultSizesInput = document.getElementById("defaultSizesData");
+    const form = document.getElementById("productCreateForm");
 
-    // Toggle mode
+    // Toggle varian section
     useVariantsCheckbox.addEventListener("change", function () {
         const use = this.checked;
         variantSection.classList.toggle("hidden", !use);
         defaultSizeSection.classList.toggle("hidden", use);
-        lucide.createIcons();
     });
 
     // Tambah varian
@@ -470,35 +566,39 @@
         renderVariants();
     };
 
+    // Update warna varian
     window.updateVariantColor = function(index, value) {
         variants[index].warna = value;
         updateHiddenJson();
     };
 
+    // Render daftar varian
     function renderVariants() {
         let html = "";
         variants.forEach((v, i) => {
             html += `
-                <tr class="border-b border-[#d6c3b3] last:border-0">
-                    <td class="py-3 pr-3">
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3">
                         <input type="text" 
-                            class="border border-gray-300 px-3 py-2 rounded-lg w-full text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none"
+                            class="border-2 border-gray-200 px-3 py-2 rounded-lg w-full focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
                             placeholder="Contoh: Hitam"
                             value="${v.warna}"
                             oninput="updateVariantColor(${i}, this.value)">
                     </td>
-                    <td class="py-3 pr-3">
-                        <button class="inline-flex items-center gap-1.5 bg-white border border-gray-300 px-3 py-2 rounded-lg text-xs hover:bg-gray-50 transition" type="button"
+
+                    <td class="px-4 py-3">
+                        <button class="bg-[#D4BA98] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#CC8650] transition font-semibold flex items-center space-x-2" type="button"
                             onclick="openSizeModal(${i})">
-                            <i data-lucide="settings-2" class="w-3.5 h-3.5"></i>
-                            Atur ukuran (${v.sizes.length} dipilih)
+                            <i data-lucide="settings" class="w-4 h-4"></i>
+                            <span>Atur (${v.sizes.length})</span>
                         </button>
                     </td>
-                    <td class="py-3">
-                        <button type="button" class="inline-flex items-center gap-1 bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-red-600 transition"
+
+                    <td class="px-4 py-3">
+                        <button type="button" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-600 transition font-semibold flex items-center space-x-2"
                             onclick="deleteVariant(${i})">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            Hapus
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            <span>Hapus</span>
                         </button>
                     </td>
                 </tr>
@@ -506,31 +606,34 @@
         });
 
         variantList.innerHTML = html;
-        updateHiddenJson();
         lucide.createIcons();
+        updateHiddenJson();
     }
 
+    // Hapus varian
     window.deleteVariant = function(index) {
         variants.splice(index, 1);
         renderVariants();
     }
 
+    // Buka modal ukuran
     window.openSizeModal = function (index) {
         editingVariant = index;
         let html = "";
 
         sizes.forEach(size => {
             let found = variants[index].sizes.find(s => s.id === size.id);
-            let stok  = found ? found.stok : "";
+            let stok = found ? found.stok : "";
 
             html += `
-                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
                     <input type="checkbox" ${found ? "checked" : ""}
-                        class="w-4 h-4 text-[#b48a60] border-gray-300 rounded focus:ring-[#b48a60]"
+                        class="w-5 h-5 text-[#CC8650] rounded focus:ring-[#CC8650]"
                         onchange="toggleSize(${index}, ${size.id}, this.checked)">
-                    <span class="w-16 font-medium text-sm text-gray-700">${size.name}</span>
+                    <span class="w-24 font-bold text-gray-700">${size.name}</span>
+
                     <input type="number" value="${stok}" placeholder="Stok"
-                        class="border border-gray-300 px-3 py-1.5 rounded-lg w-24 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none"
+                        class="border-2 border-gray-200 px-3 py-2 rounded-lg w-28 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
                         style="display: ${found ? 'block' : 'none'}"
                         id="modal-stok-${index}-${size.id}"
                         onchange="updateSizeStok(${index}, ${size.id}, this.value)">
@@ -541,21 +644,23 @@
         document.getElementById("modalSizeList").innerHTML = html;
         document.getElementById("sizeModal").classList.remove("hidden");
         document.getElementById("sizeModal").classList.add("flex");
+        lucide.createIcons();
     };
 
-    document.getElementById("closeModal").onclick = closeModal;
-    document.getElementById("closeModalX").onclick = closeModal;
-
-    function closeModal() {
+    // Tutup modal
+    document.getElementById("closeModal").onclick = () => {
         document.getElementById("sizeModal").classList.add("hidden");
         document.getElementById("sizeModal").classList.remove("flex");
-    }
+    };
 
+    // Simpan modal
     document.getElementById("saveSizeModal").onclick = () => {
-        closeModal();
+        document.getElementById("sizeModal").classList.add("hidden");
+        document.getElementById("sizeModal").classList.remove("flex");
         renderVariants();
     };
 
+    // Toggle ukuran di modal
     window.toggleSize = function (variantIndex, sizeId, checked) {
         let stokInput = document.getElementById(`modal-stok-${variantIndex}-${sizeId}`);
         
@@ -573,45 +678,44 @@
         updateHiddenJson();
     };
 
+    // Update stok ukuran
     window.updateSizeStok = function (variantIndex, sizeId, value) {
         let item = variants[variantIndex].sizes.find(s => s.id === sizeId);
         if (item) item.stok = parseInt(value || 0);
         updateHiddenJson();
     };
 
+    // Render ukuran default
     function renderDefaultSizes() {
         let html = "";
 
         sizes.forEach(size => {
             let found = defaultSizes.find(s => s.id === size.id);
-            let stok  = found ? found.stok : "";
+            let stok = found ? found.stok : "";
 
             html += `
-                <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg">
+                <div class="flex items-center gap-3 p-3 bg-white rounded-lg hover:bg-gray-50 transition">
                     <input type="checkbox"
-                        class="w-4 h-4 text-[#b48a60] border-gray-300 rounded focus:ring-[#b48a60]"
                         ${found ? "checked" : ""}
+                        class="w-5 h-5 text-[#CC8650] rounded focus:ring-[#CC8650]"
                         onchange="toggleDefaultSize(${size.id}, this.checked)">
-                    
-                    <span class="font-medium text-sm text-gray-700">${size.name}</span>
+                    <span class="w-24 font-bold text-gray-700">${size.name}</span>
 
-                    <input 
-                        type="number" 
-                        placeholder="Stok" 
-                        class="border border-gray-300 rounded-lg px-3 py-1.5 w-20 text-sm focus:ring-2 focus:ring-[#b48a60] focus:border-[#b48a60] outline-none"
+                    <input type="number" placeholder="Stok" 
+                        class="border-2 border-gray-200 px-3 py-2 rounded-lg w-28 focus:border-[#CC8650] focus:ring focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
                         value="${stok}"
                         onchange="updateDefaultSize(${size.id}, this.value)"
                         style="display: ${found ? 'block' : 'none'}"
-                        id="stok-input-${size.id}"
-                    >
+                        id="stok-input-${size.id}">
                 </div>
             `;
         });
 
         defaultSizeList.innerHTML = html;
+        lucide.createIcons();
     }
-    renderDefaultSizes();
 
+    // Toggle ukuran default
     window.toggleDefaultSize = function (sizeId, checked) {
         let input = document.getElementById('stok-input-' + sizeId);
 
@@ -626,25 +730,26 @@
             input.style.display = "none";
             input.value = "";
         }
-
         updateHiddenJson();
     };
 
+    // Update ukuran default
     window.updateDefaultSize = function (sizeId, value) {
         let item = defaultSizes.find(s => s.id === sizeId);
         if (item) item.stok = parseInt(value || 0);
         updateHiddenJson();
     };
 
+    // Update hidden JSON
     function updateHiddenJson() {
-        variantsInput.value     = JSON.stringify(variants);
+        variantsInput.value = JSON.stringify(variants);
         defaultSizesInput.value = JSON.stringify(defaultSizes);
     }
 
-    // Validasi client-side
+    // Validasi form submit
     form.addEventListener('submit', function (e) {
         let errors = [];
-        const clientErrorBox  = document.getElementById('clientErrorBox');
+        const clientErrorBox = document.getElementById('clientErrorBox');
         const clientErrorList = document.getElementById('clientErrorList');
         clientErrorList.innerHTML = '';
         clientErrorBox.classList.add('hidden');
@@ -700,11 +805,13 @@
             });
             clientErrorBox.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            lucide.createIcons();
         }
     });
 
-    // Re-init icons
+    // Initialize
     document.addEventListener('DOMContentLoaded', function() {
+        renderDefaultSizes();
         lucide.createIcons();
     });
 </script>

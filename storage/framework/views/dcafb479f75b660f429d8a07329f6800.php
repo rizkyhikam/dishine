@@ -3,148 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- === INI BARIS YANG SAYA TAMBAHKAN (WAJIB ADA) === -->
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
-    <!-- ================================================= -->
-
     <title><?php echo $__env->yieldContent('title', 'Dishine - E-commerce Terpercaya'); ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #f8f5f2; color: #3c2f2f; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background-color: #f8f5f2; 
+            color: #3c2f2f; 
+            margin: 0;
+            padding: 0;
+        }
         .btn-primary { background-color: #b48a60; color: white; }
         .btn-primary:hover { background-color: #a07850; }
+        
+        /* Mobile Menu Animation */
+        .mobile-menu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .mobile-menu.active {
+            max-height: 500px;
+        }
     </style>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
-<body class="bg-[#f8f5f2] text-[#3c2f2f]">
+<body class="bg-[#f8f5f2] text-[#3c2f2f] flex flex-col min-h-screen">
 
     <!-- Navbar -->
-    <nav class="fixed top-0 left-0 w-full bg-[#f8f5f2] border-b border-[#d6c3b3] py-3 px-8 z-50">
-        <div class="grid grid-cols-3 items-center">
-            <!-- Left: Logo -->
-            <div class="flex justify-start">
-                <a href="/" class="inline-block">
-                    <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-10">
-                </a>
-            </div>
-
-            <!-- Center: Search Bar + Cart -->
-            <div class="flex items-center justify-center space-x-3">
-                <!-- Cart icon -->
-                <a href="/cart" class="p-2 text-[#b48a60] hover:text-[#a07850] relative flex-shrink-0">
-                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
-                    <?php if(session('cart_count', 0) > 0): ?>
-                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 min-w-[20px] h-5 flex items-center justify-center">
-                            <?php echo e(session('cart_count')); ?>
-
-                        </span>
-                    <?php endif; ?>
-                </a>
-
-                <!-- Search Bar -->
-                <form action="<?php echo e(url('/katalog')); ?>" method="GET" 
-                    class="flex items-center border border-[#d6c3b3] rounded-md bg-white overflow-hidden shadow-sm w-96">
-                    <input type="text" 
-                        name="q"
-                        value="<?php echo e(request('q')); ?>"
-                        placeholder="Cari dress, kerudung..."
-                        class="w-full px-3 py-1.5 text-sm focus:outline-none">
-                    <button type="submit" class="px-3 text-[#b48a60] hover:text-[#a07850] flex-shrink-0">
-                        <i data-lucide="search" class="w-4 h-4"></i>
-                    </button>
-                </form>
-            </div>
-
-            <!-- Right: Menu -->
-            <div class="flex items-center justify-end space-x-4">
-                <!-- Home -->
-                <a href="/" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1.5 
-                                pb-1 border-b-2 transition-colors
-                                <?php echo e(request()->is('/') ? 'border-[#3c2f2f]' : 'border-transparent'); ?>">
-                    <i data-lucide="home" class="w-4 h-4"></i>
-                    <span class="text-sm font-medium">Beranda</span>
-                </a>
-
-                <!-- Catalog -->
-                <a href="/katalog" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1.5 
-                                    pb-1 border-b-2 transition-colors
-                                    <?php echo e(request()->is('katalog*') ? 'border-[#3c2f2f]' : 'border-transparent'); ?>">
-                    <i data-lucide="tag" class="w-4 h-4"></i>
-                    <span class="text-sm font-medium">Katalog</span>
-                </a>
-
-                <!-- Auth Section -->
-                <?php if(auth()->guard()->check()): ?>
-                    <!-- Link ke Riwayat Pesanan -->
-                    <a href="<?php echo e(route('orders.view')); ?>" class="flex items-center text-[#3c2f2f] hover:text-[#b48a60] space-x-1.5 
-                                                        pb-1 border-b-2 transition-colors
-                                                        <?php echo e(request()->is('orders*') ? 'border-[#3c2f2f]' : 'border-transparent'); ?>">
-                        <i data-lucide="archive" class="w-4 h-4"></i>
-                        <span class="text-sm font-medium">Pesanan</span>
-                    </a>
-
-                    <!-- Link Profil -->
-                    <a href="/profil" class="flex items-center text-[#3c2f2f] hover:text-[#a07850] space-x-2">
-                        <div class="h-7 w-7 rounded-full border border-[#d6c3b3] flex items-center justify-center bg-white">
-                            <i data-lucide="user" class="w-4 h-4 text-[#6b5a4a]"></i>
-                        </div>
-                        <span class="text-sm font-medium"><?php echo e(Auth::user()->nama); ?></span>
-                    </a>
+    <nav class="fixed top-0 left-0 w-full bg-gradient-to-r from-[#f8f5f2] to-[#f0e7e0] border-b-2 border-[#d6c3b3] shadow-md z-50">
+        <div class="max-w-7xl mx-auto px-4 lg:px-6">
+            <div class="flex items-center justify-between h-16 lg:h-20">
                 
-                <?php else: ?>
-                    <!-- Link Login -->
-                    <a href="/login" class="bg-[#b48a60] text-white px-4 py-1.5 rounded-md hover:bg-[#a07850] flex items-center space-x-1.5 transition-colors shadow-sm">
-                        <i data-lucide="log-in" class="w-4 h-4"></i>
-                        <span class="text-sm font-medium">Login</span>
+                <!-- Logo (Kiri) -->
+                <div class="flex items-center">
+                    <a href="/" class="inline-block">
+                        <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-10 lg:h-12 w-auto object-contain">
                     </a>
-                <?php endif; ?>
+                </div>
+
+                <!-- Desktop Navigation (Center-Right) -->
+                <div class="hidden lg:flex items-center flex-1 justify-end space-x-6">
+                    
+                    <!-- Search Bar -->
+
+                    <!-- Cart Icon -->
+                    <a href="/cart" class="relative p-2 text-[#CC8650] hover:text-[#8B6F47] transition-colors hover:bg-white/50 rounded-lg">
+                        <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                        <?php if(session('cart_count', 0) > 0): ?>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md">
+                                <?php echo e(session('cart_count')); ?>
+
+                            </span>
+                        <?php endif; ?>
+                    </a>
+
+                    <form action="<?php echo e(url('/katalog')); ?>" method="GET" 
+                        class="flex items-center border-2 border-[#d6c3b3] rounded-xl bg-white overflow-hidden shadow-sm w-80 hover:border-[#CC8650] transition-all">
+                        <input type="text" 
+                            name="q"
+                            value="<?php echo e(request('q')); ?>"
+                            placeholder="Cari produk impian Anda..."
+                            class="w-full px-4 py-2.5 text-sm focus:outline-none">
+                        <button type="submit" class="px-4 text-[#b48a60] hover:text-[#CC8650] transition-colors">
+                            <i data-lucide="search" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+
+                    <!-- Menu Items -->
+                    <a href="/" class="flex items-center text-[#3c2f2f] hover:text-[#CC8650] space-x-2 transition-colors px-3 py-2 rounded-lg hover:bg-white/50 <?php echo e(request()->is('/') ? 'text-[#CC8650] font-semibold bg-white/70' : ''); ?>">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                        <span class="text-sm font-medium">Beranda</span>
+                    </a>
+
+                    <a href="/katalog" class="flex items-center text-[#3c2f2f] hover:text-[#CC8650] space-x-2 transition-colors px-3 py-2 rounded-lg hover:bg-white/50 <?php echo e(request()->is('katalog*') ? 'text-[#CC8650] font-semibold bg-white/70' : ''); ?>">
+                        <i data-lucide="tag" class="w-5 h-5"></i>
+                        <span class="text-sm font-medium">Katalog</span>
+                    </a>
+
+                    <?php if(auth()->guard()->check()): ?>
+                        <!-- Pesanan -->
+                        <a href="<?php echo e(route('orders.view')); ?>" class="flex items-center text-[#3c2f2f] hover:text-[#CC8650] space-x-2 transition-colors px-3 py-2 rounded-lg hover:bg-white/50 <?php echo e(request()->is('orders*') ? 'text-[#CC8650] font-semibold bg-white/70' : ''); ?>">
+                            <i data-lucide="package" class="w-5 h-5"></i>
+                            <span class="text-sm font-medium">Pesanan</span>
+                        </a>
+
+                        <!-- User Profile -->
+                        <a href="/profil" class="flex items-center space-x-2 px-4 py-2 rounded-full bg-white border-2 border-[#d6c3b3] hover:border-[#CC8650] transition-all shadow-sm">
+                            <div class="h-8 w-8 rounded-full bg-gradient-to-br from-[#CC8650] to-[#D4BA98] flex items-center justify-center text-white font-bold shadow-sm">
+                                <?php echo e(substr(explode(' ', Auth::user()->nama)[0], 0, 1)); ?>
+
+                            </div>
+                            <span class="text-sm font-semibold text-[#3c2f2f]"><?php echo e(explode(' ', Auth::user()->nama)[0]); ?></span>
+                        </a>
+                    <?php else: ?>
+                        <!-- Login Button -->
+                        <a href="/login" class="bg-gradient-to-r from-[#CC8650] to-[#D4BA98] text-white px-6 py-2.5 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center space-x-2 font-semibold">
+                            <i data-lucide="log-in" class="w-5 h-5"></i>
+                            <span>Masuk</span>
+                        </a>
+                    <?php endif; ?>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="flex lg:hidden items-center space-x-3">
+                    <!-- Cart Icon (Mobile) -->
+                    <a href="/cart" class="relative p-2 text-[#CC8650]">
+                        <i data-lucide="shopping-cart" class="w-6 h-6"></i>
+                        <?php if(session('cart_count', 0) > 0): ?>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                <?php echo e(session('cart_count')); ?>
+
+                            </span>
+                        <?php endif; ?>
+                    </a>
+
+                    <button id="mobileMenuToggle" class="p-2 text-[#3c2f2f] hover:text-[#CC8650] transition-colors">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobileMenu" class="mobile-menu lg:hidden border-t border-[#d6c3b3] bg-white/50 backdrop-blur-sm">
+                <div class="py-4 space-y-2 px-4">
+                    <!-- Search Bar (Mobile) -->
+                    <form action="<?php echo e(url('/katalog')); ?>" method="GET" 
+                        class="flex items-center border-2 border-[#d6c3b3] rounded-xl bg-white overflow-hidden mb-4">
+                        <input type="text" 
+                            name="q"
+                            value="<?php echo e(request('q')); ?>"
+                            placeholder="Cari produk..."
+                            class="w-full px-4 py-2 text-sm focus:outline-none">
+                        <button type="submit" class="px-3 text-[#b48a60]">
+                            <i data-lucide="search" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+
+                    <a href="/" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white transition-colors <?php echo e(request()->is('/') ? 'bg-white text-[#CC8650] font-semibold' : 'text-[#3c2f2f]'); ?>">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                        <span>Beranda</span>
+                    </a>
+
+                    <a href="/katalog" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white transition-colors <?php echo e(request()->is('katalog*') ? 'bg-white text-[#CC8650] font-semibold' : 'text-[#3c2f2f]'); ?>">
+                        <i data-lucide="tag" class="w-5 h-5"></i>
+                        <span>Katalog</span>
+                    </a>
+
+                    <?php if(auth()->guard()->check()): ?>
+                        <a href="<?php echo e(route('orders.view')); ?>" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white transition-colors <?php echo e(request()->is('orders*') ? 'bg-white text-[#CC8650] font-semibold' : 'text-[#3c2f2f]'); ?>">
+                            <i data-lucide="package" class="w-5 h-5"></i>
+                            <span>Pesanan Saya</span>
+                        </a>
+
+                        <a href="/profil" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-white transition-colors <?php echo e(request()->is('profil*') ? 'bg-white text-[#CC8650] font-semibold' : 'text-[#3c2f2f]'); ?>">
+                            <div class="h-8 w-8 rounded-full bg-gradient-to-br from-[#CC8650] to-[#D4BA98] flex items-center justify-center text-white font-bold">
+                                <?php echo e(substr(explode(' ', Auth::user()->nama)[0], 0, 1)); ?>
+
+                            </div>
+                            <span><?php echo e(explode(' ', Auth::user()->nama)[0]); ?></span>
+                        </a>
+                    <?php else: ?>
+                        <a href="/login" class="flex items-center justify-center space-x-2 bg-gradient-to-r from-[#CC8650] to-[#D4BA98] text-white px-4 py-3 rounded-xl font-semibold shadow-md mx-4">
+                            <i data-lucide="log-in" class="w-5 h-5"></i>
+                            <span>Masuk / Daftar</span>
+                        </a>
+                    <?php endif; ?>
+                </div>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="pt-20 min-h-screen">
+    <main class="flex-1 w-full pt-16 lg:pt-20">
         <?php echo $__env->yieldContent('content'); ?>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-[#5d4a42] text-[#cbbbaa] py-6 mt-10">
-        <div class="flex justify-between items-start px-10 md:px-16 lg:px-24">
-            
-            <!-- Left: Logo dan Copyright -->
-            <div class="flex flex-col items-start space-y-2">
-                <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-12">
-                <p class="text-sm">&copy; 2025 Dishine. All rights reserved.</p>
+    <footer class="bg-gradient-to-r from-[#5d4a42] to-[#4a3832] text-[#cbbbaa] py-8 lg:py-12 w-full mt-auto">
+        <div class="max-w-7xl mx-auto px-4 lg:px-6">
+            <!-- Desktop Footer -->
+            <div class="hidden lg:flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-10 brightness-200">
+                    <div>
+                        <p class="text-sm font-semibold text-white">Dishine</p>
+                        <p class="text-xs">&copy; 2025 All rights reserved</p>
+                    </div>
+                </div>
+
+                <div class="flex space-x-8 text-sm">
+                    <a href="#" class="hover:text-white transition-colors">Privacy Policy</a>
+                    <a href="#" class="hover:text-white transition-colors">Terms & Conditions</a>
+                    <a href="#" class="hover:text-white transition-colors">Contact Us</a>
+                </div>
             </div>
 
-            <!-- Right: Links -->
-            <div class="flex space-x-6 text-sm mt-2">
-                <a href="#" class="hover:text-white transition">Privacy Policy</a>
-                <a href="#" class="hover:text-white transition">Terms & Conditions</a>
-                <a href="#" class="hover:text-white transition">Cookie Policy</a>
-                <a href="#" class="hover:text-white transition">Contact</a>
+            <!-- Mobile Footer -->
+            <div class="lg:hidden text-center space-y-4">
+                <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-8 mx-auto brightness-200">
+                <p class="text-xs">&copy; 2025 Dishine. All rights reserved</p>
+                <div class="flex justify-center space-x-4 text-xs">
+                    <a href="#" class="hover:text-white transition-colors">Privacy</a>
+                    <span>•</span>
+                    <a href="#" class="hover:text-white transition-colors">Terms</a>
+                    <span>•</span>
+                    <a href="#" class="hover:text-white transition-colors">Contact</a>
+                </div>
             </div>
         </div>
     </footer>
 
+    <!-- WhatsApp Floating Button -->
     <?php
-        $username = auth()->check() ? auth()->user()->nama : 'pengunjung';
-        $message = urlencode("Halo admin Dishine, saya $username ingin bertanya seputar produk Dishine.");
+        $firstName = auth()->check() ? explode(' ', auth()->user()->nama)[0] : 'pengunjung';
+        $message = urlencode("Halo admin Dishine, saya $firstName ingin bertanya seputar produk Dishine.");
     ?>
 
     <a href="https://wa.me/6281291819276?text=<?php echo e($message); ?>"
-    target="_blank"
-    class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-lg 
-            flex items-center justify-center z-50 transition-all">
+       target="_blank"
+       class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-2xl flex items-center justify-center z-50 transition-all transform hover:scale-110 hover:shadow-green-500/50">
         <i data-lucide="message-circle" class="w-6 h-6"></i>
     </a>
 
     <!-- Scripts -->
     <script>
+        // Initialize Lucide Icons
         lucide.createIcons();
+
+        // Mobile Menu Toggle
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+
+        mobileMenuToggle?.addEventListener('click', () => {
+            mobileMenu.classList.toggle('active');
+            const icon = mobileMenuToggle.querySelector('i');
+            if (mobileMenu.classList.contains('active')) {
+                icon.setAttribute('data-lucide', 'x');
+            } else {
+                icon.setAttribute('data-lucide', 'menu');
+            }
+            lucide.createIcons();
+        });
+
+        // Re-initialize icons after dynamic changes
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+        });
     </script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>

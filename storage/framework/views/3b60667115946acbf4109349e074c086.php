@@ -295,7 +295,7 @@ unset($__errorArgs, $__bag); ?>
                                    name="use_variants"
                                    value="1"
                                    class="w-5 h-5 text-[#CC8650] focus:ring-[#CC8650] rounded"
-                                   <?php echo e(old('use_variants', $hasVariants) ? 'checked' : ''); ?>>
+                                   <?php echo e((old('use_variants', $hasVariants)) ? 'checked' : ''); ?>>
                             <span class="text-gray-700 font-medium">Produk ini memiliki varian warna</span>
                         </label>
                     </div>
@@ -521,288 +521,353 @@ unset($__errorArgs, $__bag); ?>
     </div>
 
     
+
+    
     
     
     <script>
-        // Data dari server
-        let sizes = <?php echo json_encode(\App\Models\Size::all(), 15, 512) ?>;
-        let variants      = <?php echo json_encode($initialVariants, 15, 512) ?>; // dari PHP
-        let defaultSizes  = []; // default: kosong (kalau nanti punya tabel default sizes, bisa diisi dari backend)
-        let editingVariant = -1;
+    // 1. DATA DARI SERVER (PENTING!)
+    // Ambil semua ukuran master
+    let sizes = <?php echo json_encode(\App\Models\Size::select('id','name')->get()); ?>;
 
-        const useVariantsCheckbox = document.getElementById("useVariants");
-        const variantSection      = document.getElementById("variantSection");
-        const defaultSizeSection  = document.getElementById("defaultSizeSection");
-        const variantList         = document.getElementById("variantList");
-        const defaultSizeList     = document.getElementById("defaultSizeList");
-        const variantsInput       = document.getElementById("variantsData");
-        const defaultSizesInput   = document.getElementById("defaultSizesData");
-        const form                = document.getElementById("productEditForm");
+// Semua variant + size
+let variants = <?php echo json_encode(
+    $product->variants->map(function($v){
+        return [
+            'id'    => $v->id,
+            'warna' => $v->warna,
+            'sizes' => $v->sizes->map(function($s){
+                return [
+                    'id'   => $s->size_id,
+                    'stok' => $s->stok
+                ];
+            })
+        ];
+    })
+); ?>;
 
-        // ====== INITIAL MODE (ON LOAD) ======
-        function applyVariantModeOnLoad() {
-            const use = useVariantsCheckbox.checked;
-            variantSection.classList.toggle("hidden", !use);
-            defaultSizeSection.classList.toggle("hidden", use);
-            renderVariants();
-            renderDefaultSizes();
-        }
-        applyVariantModeOnLoad();
+// Default sizes (tanpa varian)
+let defaultSizes = <?php echo json_encode(
+    $product->defaultSizes->map(function($s){
+        return [
+            'id'   => $s->size_id,
+            'stok' => $s->stok
+        ];
+    })
+); ?>;
 
-        // Toggle mode: varian warna / default size
-        useVariantsCheckbox.addEventListener("change", function () {
-            const use = this.checked;
-            variantSection.classList.toggle("hidden", !use);
-            defaultSizeSection.classList.toggle("hidden", use);
+    let editingVariant = -1;
+
+    const useVariantsCheckbox = document.getElementById("useVariants");
+    const variantSection      = document.getElementById("variantSection");
+    const defaultSizeSection  = document.getElementById("defaultSizeSection");
+    const variantList         = document.getElementById("variantList");
+    const defaultSizeList     = document.getElementById("defaultSizeList");
+    const variantsInput       = document.getElementById("variantsData");
+    const defaultSizesInput   = document.getElementById("defaultSizesData");
+    const form                = document.getElementById("productEditForm");
+
+    // ====== INITIAL MODE (ON LOAD) ======
+    function applyVariantModeOnLoad() {
+        // Cek apakah produk ini pakai varian atau tidak
+        // Jika variants array ada isinya, berarti pakai varian.
+        // Atau cek checkbox state (yang sudah diset di Blade `old('use_variants', ...)`)
+        const use = useVariantsCheckbox.checked;
+        
+        variantSection.classList.toggle("hidden", !use);
+        defaultSizeSection.classList.toggle("hidden", use);
+        
+        renderVariants();
+        renderDefaultSizes();
+        updateHiddenJson(); // Pastikan input hidden terisi data awal
+    }
+    
+    // Jalankan saat halaman selesai dimuat
+    document.addEventListener('DOMContentLoaded', applyVariantModeOnLoad);
+
+    // Toggle mode: varian warna / default size
+    useVariantsCheckbox.addEventListener("change", function () {
+        const use = this.checked;
+        variantSection.classList.toggle("hidden", !use);
+        defaultSizeSection.classList.toggle("hidden", use);
+    });
+
+    // ====== VARIANTS ======
+    document.getElementById("addVariantBtn").onclick = function () {
+        variants.push({ warna: "", sizes: [] });
+        renderVariants();
+    };
+
+    // Update Warna
+    window.updateVariantColor = function(index, value) {
+        variants[index].warna = value;
+        updateHiddenJson();
+    };
+
+    function renderVariants() {
+        let html = "";
+        variants.forEach((v, i) => {
+            // Hitung total stok untuk info
+            let totalStok = 0;
+            if (v.sizes && v.sizes.length > 0) {
+                totalStok = v.sizes.reduce((acc, curr) => acc + parseInt(curr.stok || 0), 0);
+            }
+
+            html += `
+                <tr class="border-b border-gray-100 hover:bg-white transition-all">
+                    <td class="py-4 align-top">
+                        <input type="text"
+                            class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
+                            placeholder="Contoh: Hitam"
+                            value="${v.warna || ''}"
+                            oninput="updateVariantColor(${i}, this.value)">
+                    </td>
+                    <td class="py-4 align-top">
+                        <div class="text-xs text-gray-500 mb-1">
+                            Terpilih: <b>${v.sizes ? v.sizes.length : 0}</b> ukuran | Total Stok: <b>${totalStok}</b>
+                        </div>
+                        <button class="inline-flex items-center px-4 py-2 bg-[#AE8B56] text-white rounded-lg hover:shadow-md text-xs font-semibold transition-all" type="button"
+                            onclick="openSizeModal(${i})">
+                            <i data-lucide="ruler" class="w-3 h-3 mr-1.5"></i>
+                            Atur Ukuran & Stok
+                        </button>
+                    </td>
+                    <td class="py-4 align-top">
+                        <button type="button"
+                            class="inline-flex items-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-all"
+                            onclick="deleteVariant(${i})">
+                            <i data-lucide="trash-2" class="w-3 h-3 mr-1"></i>
+                            Hapus
+                        </button>
+                    </td>
+                </tr>
+            `;
         });
 
-        // ====== VARIANTS ======
-        document.getElementById("addVariantBtn").onclick = function () {
-            variants.push({ warna: "", sizes: [] });
-            renderVariants();
-        };
-
-        function renderVariants() {
-            let html = "";
-            variants.forEach((v, i) => {
-                const sizesCount = v.sizes ? v.sizes.length : 0;
-                html += `
-                    <tr class="border-b border-gray-100 hover:bg-white transition-all">
-                        <td class="py-4">
-                            <input type="text"
-                                class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
-                                placeholder="Contoh: Hitam"
-                                value="${v.warna || ''}"
-                                onchange="variants[${i}].warna = this.value">
-                        </td>
-                        <td class="py-4">
-                            <button class="inline-flex items-center px-4 py-2 bg-[#AE8B56] text-white rounded-lg hover:shadow-md text-xs font-semibold transition-all" type="button"
-                                onclick="openSizeModal(${i})">
-                                <i data-lucide="ruler" class="w-3 h-3 mr-1.5"></i>
-                                ${sizesCount} ukuran
-                            </button>
-                        </td>
-                        <td class="py-4">
-                            <button type="button"
-                                class="inline-flex items-center px-3 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-xs font-semibold transition-all"
-                                onclick="deleteVariant(${i})">
-                                <i data-lucide="trash-2" class="w-3 h-3 mr-1"></i>
-                                Hapus
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            variantList.innerHTML = html;
-            updateHiddenJson();
+        variantList.innerHTML = html;
+        
+        // Re-init icons karena konten baru ditambahkan
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
         }
+        
+        updateHiddenJson();
+    }
 
-        function deleteVariant(index) {
+    window.deleteVariant = function(index) {
+        if (confirm('Hapus varian ini?')) {
             variants.splice(index, 1);
             renderVariants();
         }
+    }
 
-        // Buka modal ukuran untuk varian tertentu
-        window.openSizeModal = function (index) {
-            editingVariant = index;
-            let html = "";
+    // ====== MODAL SIZE ======
+    window.openSizeModal = function (index) {
+        editingVariant = index;
+        let html = "";
 
-            sizes.forEach(size => {
-                let found = (variants[index].sizes || []).find(s => s.id === size.id);
-                let stok  = found ? found.stok : "";
+        sizes.forEach(size => {
+            // Cek apakah ukuran ini sudah dipilih di varian ini
+            let found = (variants[index].sizes || []).find(s => s.id == size.id);
+            let stok  = found ? found.stok : "";
+            let isChecked = found ? "checked" : "";
+            let displayStyle = found ? "block" : "none";
 
-                html += `
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-white transition-all">
-                        <div class="flex items-center gap-3">
-                            <input type="checkbox" ${found ? "checked" : ""}
-                                onchange="toggleSize(${index}, ${size.id}, this.checked)"
-                                class="w-4 h-4 text-[#CC8650] focus:ring-[#CC8650] rounded">
-                            <span class="font-medium text-gray-700">${size.name}</span>
-                        </div>
-                        <input type="number" value="${stok}" placeholder="0"
-                            class="w-20 border-2 border-gray-200 rounded-lg px-3 py-1 text-center focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
-                            onchange="updateSizeStok(${index}, ${size.id}, this.value)"
-                            ${found ? '' : 'disabled'}>
+            html += `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-white transition-all mb-2">
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" ${isChecked}
+                            onchange="toggleSize(${index}, ${size.id}, this.checked)"
+                            class="w-4 h-4 text-[#CC8650] focus:ring-[#CC8650] rounded cursor-pointer">
+                        <span class="font-medium text-gray-700 select-none">${size.name}</span>
                     </div>
-                `;
-            });
+                    <input type="number" value="${stok}" placeholder="0"
+                        class="w-24 border-2 border-gray-200 rounded-lg px-3 py-1 text-center focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
+                        id="modal-stok-${size.id}"
+                        style="display: ${displayStyle}"
+                        oninput="updateSizeStok(${index}, ${size.id}, this.value)">
+                </div>
+            `;
+        });
 
-            document.getElementById("modalSizeList").innerHTML = html;
-            document.getElementById("sizeModal").classList.remove("hidden");
-        };
+        document.getElementById("modalSizeList").innerHTML = html;
+        
+        const modal = document.getElementById("sizeModal");
+        modal.classList.remove("hidden");
+        modal.classList.add("flex");
+    };
 
-        document.getElementById("closeModal").onclick = () =>
-            document.getElementById("sizeModal").classList.add("hidden");
-        document.getElementById("saveSizeModal").onclick = () =>
-            document.getElementById("sizeModal").classList.add("hidden");
+    function closeSizeModal() {
+        const modal = document.getElementById("sizeModal");
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        renderVariants(); // Update tampilan stok di tabel
+    }
 
-        window.toggleSize = function (variantIndex, sizeId, checked) {
-            if (checked) {
-                if (!variants[variantIndex].sizes) variants[variantIndex].sizes = [];
-                if (!variants[variantIndex].sizes.find(s => s.id === sizeId)) {
-                    variants[variantIndex].sizes.push({ id: sizeId, stok: 0 });
-                }
-            } else {
-                variants[variantIndex].sizes =
-                    (variants[variantIndex].sizes || []).filter(s => s.id !== sizeId);
+    document.getElementById("closeModal").onclick = closeSizeModal;
+    document.getElementById("saveSizeModal").onclick = closeSizeModal;
+
+    window.toggleSize = function (variantIndex, sizeId, checked) {
+        let stokInput = document.getElementById(`modal-stok-${sizeId}`);
+        
+        // Pastikan array sizes ada
+        if (!variants[variantIndex].sizes) variants[variantIndex].sizes = [];
+
+        if (checked) {
+            // Tambah jika belum ada
+            if (!variants[variantIndex].sizes.find(s => s.id == sizeId)) {
+                variants[variantIndex].sizes.push({ id: sizeId, stok: 0 });
             }
-            updateHiddenJson();
-            // Re-render modal untuk update disabled state
-            openSizeModal(variantIndex);
-        };
+            stokInput.style.display = 'block';
+            stokInput.focus();
+        } else {
+            // Hapus
+            variants[variantIndex].sizes = variants[variantIndex].sizes.filter(s => s.id != sizeId);
+            stokInput.style.display = 'none';
+            stokInput.value = '';
+        }
+        updateHiddenJson();
+    };
 
-        window.updateSizeStok = function (variantIndex, sizeId, value) {
-            let item = (variants[variantIndex].sizes || []).find(s => s.id === sizeId);
-            if (item) item.stok = parseInt(value || 0);
-            updateHiddenJson();
-        };
+    window.updateSizeStok = function (variantIndex, sizeId, value) {
+        let item = variants[variantIndex].sizes.find(s => s.id == sizeId);
+        if (item) {
+            item.stok = parseInt(value || 0);
+        }
+        updateHiddenJson();
+    };
 
-        // ====== DEFAULT SIZES (TANPA VARIAN WARNA) ======
-        function renderDefaultSizes() {
-            let html = "";
+    // ====== DEFAULT SIZES (TANPA VARIAN WARNA) ======
+    function renderDefaultSizes() {
+        let html = "";
 
-            sizes.forEach(size => {
-                let found = defaultSizes.find(s => s.id === size.id);
-                let stok  = found ? found.stok : "";
+        sizes.forEach(size => {
+            let found = defaultSizes.find(s => s.id == size.id);
+            let stok  = found ? found.stok : "";
+            let isChecked = found ? "checked" : "";
+            let displayStyle = found ? "block" : "none";
 
-                html += `
-                    <div class="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-[#CC8650] transition-all">
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="font-semibold text-gray-700">${size.name}</span>
-                            <input type="checkbox"
-                                ${found ? "checked" : ""}
-                                onchange="toggleDefaultSize(${size.id}, this.checked)"
-                                class="w-4 h-4 text-[#CC8650] focus:ring-[#CC8650] rounded">
-                        </div>
-                        <input 
-                            type="number" 
-                            placeholder="Stok" 
-                            class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 text-center focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
+            html += `
+                <div class="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-[#CC8650] transition-all">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="font-semibold text-gray-700">${size.name}</span>
+                        <input type="checkbox"
+                            ${isChecked}
+                            onchange="toggleDefaultSize(${size.id}, this.checked)"
+                            class="w-5 h-5 text-[#CC8650] focus:ring-[#CC8650] rounded cursor-pointer">
+                    </div>
+                    <div id="default-stok-container-${size.id}" style="display: ${displayStyle}">
+                        <label class="text-xs text-gray-500 mb-1 block">Stok:</label>
+                        <input type="number" 
+                            placeholder="0" 
+                            class="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-[#CC8650] focus:ring-2 focus:ring-[#CC8650] focus:ring-opacity-20 transition-all"
                             value="${stok}"
-                            onchange="updateDefaultSize(${size.id}, this.value)"
-                            style="display: ${found ? 'block' : 'none'}"
-                            id="stok-input-${size.id}"
-                        >
+                            oninput="updateDefaultSize(${size.id}, this.value)">
                     </div>
-                `;
-            });
+                </div>
+            `;
+        });
 
-            defaultSizeList.innerHTML = html;
-        }
+        defaultSizeList.innerHTML = html;
+        updateHiddenJson();
+    }
 
-        window.toggleDefaultSize = function (sizeId, checked) {
-            let input = document.getElementById('stok-input-' + sizeId);
+    window.toggleDefaultSize = function (sizeId, checked) {
+        let container = document.getElementById(`default-stok-container-${sizeId}`);
+        let input = container.querySelector('input');
 
-            if (checked) {
-                if (!defaultSizes.find(s => s.id === sizeId)) {
-                    defaultSizes.push({ id: sizeId, stok: 0 });
-                }
-                input.style.display = "block";
-            } else {
-                defaultSizes = defaultSizes.filter(s => s.id !== sizeId);
-                input.style.display = "none";
-                input.value = "";
+        if (checked) {
+            if (!defaultSizes.find(s => s.id == sizeId)) {
+                defaultSizes.push({ id: sizeId, stok: 0 });
             }
-
-            updateHiddenJson();
-        };
-
-        window.updateDefaultSize = function (sizeId, value) {
-            let item = defaultSizes.find(s => s.id === sizeId);
-            if (item) item.stok = parseInt(value || 0);
-            updateHiddenJson();
-        };
-
-        // ====== SYNC HIDDEN FIELD JSON ======
-        function updateHiddenJson() {
-            variantsInput.value     = JSON.stringify(variants || []);
-            defaultSizesInput.value = JSON.stringify(defaultSizes || []);
+            container.style.display = "block";
+            input.focus();
+        } else {
+            defaultSizes = defaultSizes.filter(s => s.id != sizeId);
+            container.style.display = "none";
+            input.value = "";
         }
-        // initial sync
+
+        updateHiddenJson();
+    };
+
+    window.updateDefaultSize = function (sizeId, value) {
+        let item = defaultSizes.find(s => s.id == sizeId);
+        if (item) {
+            item.stok = parseInt(value || 0);
+        }
+        updateHiddenJson();
+    };
+
+    // Update input hidden JSON untuk dikirim ke server
+    function updateHiddenJson() {
+        variantsInput.value     = JSON.stringify(variants);
+        defaultSizesInput.value = JSON.stringify(defaultSizes);
+    }
+
+    // ====== VALIDASI FORM SEBELUM SUBMIT ======
+    form.addEventListener('submit', function (e) {
+        let errors = [];
+        const clientErrorBox  = document.getElementById('clientErrorBox');
+        const clientErrorList = document.getElementById('clientErrorList');
+        
+        // Reset error
+        clientErrorList.innerHTML = '';
+        clientErrorBox.classList.add('hidden');
+
+        // Pastikan JSON terupdate
         updateHiddenJson();
 
-        // ====== VALIDASI CLIENT-SIDE ======
-        form.addEventListener('submit', function (e) {
-            let errors = [];
-            const clientErrorBox  = document.getElementById('clientErrorBox');
-            const clientErrorList = document.getElementById('clientErrorList');
-            clientErrorList.innerHTML = '';
-            clientErrorBox.classList.add('hidden');
+        const useVariants = useVariantsCheckbox.checked;
 
-            const nama          = form.querySelector('input[name="nama"]').value.trim();
-            const categoryId    = form.querySelector('select[name="category_id"]').value;
-            const deskripsi     = form.querySelector('textarea[name="deskripsi"]').value.trim();
-            const hargaNormal   = form.querySelector('input[name="harga_normal"]').value;
-            const hargaReseller = form.querySelector('input[name="harga_reseller"]').value;
-            const useVariants   = useVariantsCheckbox.checked;
-
-            if (!nama) {
-                errors.push('Nama produk wajib diisi.');
-            }
-            if (!categoryId) {
-                errors.push('Kategori produk wajib dipilih.');
-            }
-            if (!deskripsi) {
-                errors.push('Deskripsi produk wajib diisi.');
-            }
-            if (!hargaNormal || parseInt(hargaNormal) <= 0) {
-                errors.push('Harga normal wajib diisi dan harus lebih dari 0.');
-            }
-            if (!hargaReseller || parseInt(hargaReseller) <= 0) {
-                errors.push('Harga reseller wajib diisi dan harus lebih dari 0.');
+        if (useVariants) {
+            if (variants.length === 0) {
+                errors.push('Tambahkan minimal 1 varian warna.');
             }
 
-            if (useVariants) {
-                if (!variants || variants.length === 0) {
-                    errors.push('Tambahkan minimal 1 varian warna.');
+            variants.forEach((v, index) => {
+                if (!v.warna || v.warna.trim() === '') {
+                    errors.push(`Varian #${index + 1}: warna wajib diisi.`);
                 }
-                (variants || []).forEach((v, index) => {
-                    if (!v.warna || v.warna.trim() === '') {
-                        errors.push(`Varian #${index + 1}: warna wajib diisi.`);
-                    }
-                    if (!v.sizes || v.sizes.length === 0) {
-                        errors.push(`Varian "${v.warna || ('#'+(index+1))}" wajib memiliki minimal 1 ukuran.`);
-                    } else {
-                        v.sizes.forEach(s => {
-                            if (!s.stok || s.stok <= 0) {
-                                errors.push(`Stok untuk ukuran ID ${s.id} pada varian "${v.warna || ('#'+(index+1))}" wajib diisi dan > 0.`);
-                            }
-                        });
-                    }
-                });
-            } else {
-                if (defaultSizes.length === 0) {
-                    const lanjut = confirm('Anda belum memilih ukuran sama sekali. Lanjutkan tanpa ukuran?');
-                    if (!lanjut) {
-                        e.preventDefault();
-                        return;
-                    }
+                if (!v.sizes || v.sizes.length === 0) {
+                    errors.push(`Varian "${v.warna || ('#'+(index+1))}" wajib memiliki minimal 1 ukuran.`);
                 } else {
-                    defaultSizes.forEach(s => {
-                        if (!s.stok || s.stok <= 0) {
-                            errors.push('Semua stok ukuran yang dicentang wajib diisi dan harus > 0.');
+                    v.sizes.forEach(s => {
+                        let sizeName = sizes.find(sz => sz.id == s.id)?.name || 'Unknown';
+                        if (s.stok === "" || parseInt(s.stok) < 0) {
+                            errors.push(`Stok untuk ukuran ${sizeName} pada varian "${v.warna}" tidak valid.`);
                         }
                     });
                 }
-            }
-
-            if (errors.length > 0) {
-                e.preventDefault();
-                errors.forEach(msg => {
-                    const li = document.createElement('li');
-                    li.textContent = msg;
-                    clientErrorList.appendChild(li);
+            });
+        } else {
+            if (defaultSizes.length === 0) {
+                const confirmNoStock = confirm('Anda belum memilih ukuran sama sekali. Produk ini tidak akan memiliki stok. Lanjutkan?');
+                if (!confirmNoStock) {
+                    e.preventDefault();
+                    return;
+                }
+            } else {
+                defaultSizes.forEach(s => {
+                    let sizeName = sizes.find(sz => sz.id == s.id)?.name || 'Unknown';
+                    if (s.stok === "" || parseInt(s.stok) < 0) {
+                        errors.push(`Stok untuk ukuran ${sizeName} tidak valid.`);
+                    }
                 });
-                clientErrorBox.classList.remove('hidden');
-                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-        });
+        }
 
-        // Inisialisasi Lucide Icons
-        document.addEventListener('DOMContentLoaded', function() {
-            lucide.createIcons();
-        });
-    </script>
+        if (errors.length > 0) {
+            e.preventDefault();
+            errors.forEach(msg => {
+                const li = document.createElement('li');
+                li.textContent = msg;
+                clientErrorList.appendChild(li);
+            });
+            clientErrorBox.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+</script>
 <?php $__env->stopSection(); ?>
 <?php echo $__env->make('layouts.admin', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Aulia\dataD\KULIAH\PJBL\dishine\resources\views/admin/products_edit.blade.php ENDPATH**/ ?>
