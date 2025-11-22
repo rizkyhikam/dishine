@@ -11,7 +11,8 @@
 <body class="flex items-center justify-center min-h-screen">
     <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-[#d6c3b3]">
         <div class="text-center mb-6">
-            <img src="<?php echo e(asset('logo.png')); ?>" alt="Dishine Logo" class="h-12 mx-auto mb-4">
+            
+            <img src="<?php echo e(asset('logodishine.png')); ?>" alt="Dishine Logo" class="h-20 mx-auto mb-4 object-contain">
             <h2 class="text-2xl font-bold text-[#3c2f2f]">Lupa Password?</h2>
             <p class="text-sm text-gray-600 mt-2">Masukkan email Anda, kami akan mengirimkan link untuk reset password.</p>
         </div>

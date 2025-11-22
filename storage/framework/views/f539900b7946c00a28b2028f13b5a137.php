@@ -11,29 +11,29 @@
 <body class="flex items-center justify-center min-h-screen">
     <div class="w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-[#d6c3b3]">
         <div class="text-center mb-6">
-            <img src="{{ asset('logodishine.png') }}" alt="Dishine Logo" class="h-20 mx-auto mb-4 object-contain">
+            <img src="<?php echo e(asset('logodishine.png')); ?>" alt="Dishine Logo" class="h-20 mx-auto mb-4 object-contain">
             <h2 class="text-2xl font-bold text-[#3c2f2f]">Reset Password</h2>
             <p class="text-sm text-gray-600 mt-2">Silakan buat password baru Anda.</p>
         </div>
 
-        @if ($errors->any())
+        <?php if($errors->any()): ?>
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-sm">
                 <ul class="list-disc list-inside">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
+                    <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <li><?php echo e($error); ?></li>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </ul>
             </div>
-        @endif
+        <?php endif; ?>
 
-        <form method="POST" action="{{ route('password.update') }}">
-            @csrf
+        <form method="POST" action="<?php echo e(route('password.update')); ?>">
+            <?php echo csrf_field(); ?>
             <!-- Token Reset Password (WAJIB) -->
-            <input type="hidden" name="token" value="{{ $token }}">
+            <input type="hidden" name="token" value="<?php echo e($token); ?>">
 
             <div class="mb-4">
                 <label for="email" class="block text-sm font-medium text-[#6b5a4a] mb-1">Email</label>
-                <input type="email" id="email" name="email" value="{{ $email ?? old('email') }}" required readonly
+                <input type="email" id="email" name="email" value="<?php echo e($email ?? old('email')); ?>" required readonly
                     class="w-full px-4 py-2 border border-[#d6c3b3] bg-gray-100 rounded-lg focus:outline-none text-gray-500 cursor-not-allowed">
             </div>
 
@@ -55,4 +55,4 @@
         </form>
     </div>
 </body>
-</html>
+</html><?php /**PATH C:\Users\althof\Documents\KULYEAH\SEMESTER 3\pjbl lagi\dishine\resources\views/auth/reset-password.blade.php ENDPATH**/ ?>
